@@ -51,8 +51,7 @@ struct AlbumImportSheet: View {
                 }
             }
             .task {
-                let service = PhotoLibraryService()
-                phoneAlbums = service.fetchAlbums()
+                phoneAlbums = PhotoLibraryService.shared.fetchAlbums()
                 isLoading = false
             }
         }

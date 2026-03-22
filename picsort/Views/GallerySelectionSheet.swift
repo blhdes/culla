@@ -134,7 +134,7 @@ struct GallerySelectionSheet: View {
 
         // Create matching iPhone Photos album
         Task {
-            let service = PhotoLibraryService()
+            let service = PhotoLibraryService.shared
             if let albumID = await service.createAlbum(name: name) {
                 await MainActor.run {
                     gallery.albumIdentifier = albumID

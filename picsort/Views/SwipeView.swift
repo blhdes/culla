@@ -10,7 +10,7 @@ struct SwipeView: View {
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     @State private var viewModel: SwipeViewModel?
-    @State private var photoService = PhotoLibraryService()
+    private let photoService = PhotoLibraryService.shared
 
     // Drag state
     @State private var cardOffset: CGSize = .zero
@@ -139,7 +139,7 @@ struct SwipeView: View {
 
                 // "Delete All" button — bottom left
                 .overlay(alignment: .bottomLeading) {
-                    if let viewModel, viewModel.dismissedCount > 0 {
+                    if viewModel.dismissedCount > 0 {
                         Button {
                             performBatchDelete(viewModel: viewModel)
                         } label: {

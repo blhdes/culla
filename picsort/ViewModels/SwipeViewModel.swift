@@ -24,10 +24,16 @@ final class SwipeViewModel {
 
     private var identifierQueue: [String] = []
     private let batchSize = 50
+    private var cachedIdentifiers: [String] = []
 
     // MARK: - Undo
 
     private(set) var lastAction: SwipeAction?
+
+    // MARK: - Cached Counts
+
+    /// Cached count of dismissed photos — updated only on dismiss/undo/delete, not every frame.
+    private(set) var dismissedCount: Int = 0
 
     // MARK: - Init
 
@@ -41,6 +47,12 @@ final class SwipeViewModel {
         self.modelContext = modelContext
         self.startDate = startDate
         self.albumIdentifier = albumIdentifier
+        self.dismissedCount = Self.fetchDismissedCount(modelContext: modelContext)
+    }
+
+    private static func fetchDismissedCount(modelContext: ModelContext) -> Int {
+        let descriptor = FetchDescriptor<DismissedPhoto>()
+        return (try? modelContext.fetchCount(descriptor)) ?? 0
     }
 
     // MARK: - Initial Load
@@ -78,12 +90,10 @@ final class SwipeViewModel {
         identifierQueue = queue + identifierQueue
 
         // Preload upcoming photos
-        let cacheWindow = Array(identifierQueue.prefix(3))
         let screenSize = UIScreen.main.bounds.size
-        photoService.startCaching(
-            identifiers: cacheWindow,
-            targetSize: CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
-        )
+        let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
+        cachedIdentifiers = Array(identifierQueue.prefix(3))
+        photoService.startCaching(identifiers: cachedIdentifiers, targetSize: targetSize)
 
         isLoading = false
     }
@@ -100,6 +110,7 @@ final class SwipeViewModel {
         try? modelContext.save()
 
         lastAction = .dismissed(assetIdentifier: identifier)
+        dismissedCount += 1
         advance()
     }
 
@@ -155,6 +166,7 @@ final class SwipeViewModel {
         switch action {
         case .dismissed(let identifier):
             deleteDismissedPhoto(identifier: identifier)
+            dismissedCount = max(dismissedCount - 1, 0)
             pushBackToFront(identifier: identifier)
 
         case .sorted(let identifier, let gallery):
@@ -192,15 +204,10 @@ final class SwipeViewModel {
                 modelContext.delete(record)
             }
             try? modelContext.save()
+            dismissedCount = 0
         }
 
         return deletedCount
-    }
-
-    /// Number of photos currently marked for deletion.
-    var dismissedCount: Int {
-        let descriptor = FetchDescriptor<DismissedPhoto>()
-        return (try? modelContext.fetchCount(descriptor)) ?? 0
     }
 
     // MARK: - Private
@@ -219,11 +226,16 @@ final class SwipeViewModel {
 
         nextIdentifier = identifierQueue.removeFirst()
 
-        // Update cache window
-        let cacheWindow = Array(identifierQueue.prefix(3))
+        // Update cache window — stop caching old images, start caching new ones
         let screenSize = UIScreen.main.bounds.size
         let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
-        photoService.startCaching(identifiers: cacheWindow, targetSize: targetSize)
+        let newWindow = Array(identifierQueue.prefix(3))
+        let stale = cachedIdentifiers.filter { !newWindow.contains($0) }
+        if !stale.isEmpty {
+            photoService.stopCaching(identifiers: stale, targetSize: targetSize)
+        }
+        cachedIdentifiers = newWindow
+        photoService.startCaching(identifiers: newWindow, targetSize: targetSize)
     }
 
     private func pushBackToFront(identifier: String) {

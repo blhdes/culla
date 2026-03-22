@@ -4,6 +4,9 @@ import UIKit
 @Observable
 final class PhotoLibraryService {
 
+    /// Shared instance — avoids creating multiple PHCachingImageManagers.
+    static let shared = PhotoLibraryService()
+
     var authorizationStatus: PHAuthorizationStatus = .notDetermined
 
     private let imageManager = PHCachingImageManager()
@@ -333,12 +336,7 @@ final class PhotoLibraryService {
     }
 
     func stopCachingAll() {
-        imageManager.stopCachingImages(
-            for: [],
-            targetSize: .zero,
-            contentMode: .aspectFit,
-            options: nil
-        )
+        imageManager.stopCachingImagesForAllAssets()
     }
 
     // MARK: - Private

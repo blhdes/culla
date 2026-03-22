@@ -80,8 +80,7 @@ struct AlbumPickerView: View {
             }
         }
         .task {
-            let service = PhotoLibraryService()
-            unsortedCount = service.unsortedPhotoCount()
+            unsortedCount = PhotoLibraryService.shared.unsortedPhotoCount()
         }
     }
 

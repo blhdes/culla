@@ -3,7 +3,7 @@ import SwiftUI
 struct GalleryDetailView: View {
     let gallery: Gallery
 
-    @State private var photoService = PhotoLibraryService()
+    private let photoService = PhotoLibraryService.shared
 
     private let columns = [GridItem(.adaptive(minimum: 100), spacing: 2)]
 

@@ -6,7 +6,7 @@ struct DatePickerView: View {
     @Binding var selectedAlbum: PhoneAlbum?
 
     @State private var pickerDate = Date()
-    @State private var photoService = PhotoLibraryService()
+    private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
     @State private var latestDate: Date?
     @State private var albums: [PhoneAlbum] = []
