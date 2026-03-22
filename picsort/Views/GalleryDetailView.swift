@@ -17,6 +17,21 @@ struct GalleryDetailView: View {
                 )
             } else {
                 ScrollView {
+                    // Info header with pastel accent
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(Color.pastel(for: gallery.displayOrder))
+                            .frame(width: 8, height: 8)
+
+                        Text("\(gallery.sortedPhotos.count) photos")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+
                     LazyVGrid(columns: columns, spacing: 2) {
                         ForEach(sortedPhotos) { photo in
                             PhotoThumbnailView(

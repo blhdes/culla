@@ -90,6 +90,26 @@ final class PhotoLibraryService {
         }
     }
 
+    /// Permanently deletes photos from the iPhone library. iOS shows one confirmation dialog.
+    /// Returns the number of photos actually deleted.
+    func deletePhotos(identifiers: [String]) async -> Int {
+        guard !identifiers.isEmpty else { return 0 }
+
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        guard assets.count > 0 else { return 0 }
+
+        let count = assets.count
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.deleteAssets(assets as NSFastEnumeration)
+            }
+            return count
+        } catch {
+            print("picsort: Failed to delete photos: \(error)")
+            return 0
+        }
+    }
+
     /// Removes a photo from an iPhone Photos album (does NOT delete the photo itself).
     func removePhoto(assetIdentifier: String, fromAlbum albumIdentifier: String) async {
         guard let asset = PHAsset.fetchAssets(
@@ -143,11 +163,17 @@ final class PhotoLibraryService {
     /// Returns asset identifiers for photos taken on or after `startDate`,
     /// sorted by creation date ascending, excluding identifiers in `excludedIDs`.
     /// If `albumIdentifier` is provided, only fetches photos from that album.
+    /// The special sentinel `PhoneAlbum.unsortedIdentifier` fetches only unsorted photos.
     func fetchAssetIdentifiers(
         from startDate: Date,
         excluding excludedIDs: Set<String>,
         inAlbum albumIdentifier: String? = nil
     ) -> [String] {
+        // Handle the "Unsorted Photos" virtual album
+        if albumIdentifier == PhoneAlbum.unsortedIdentifier {
+            return fetchUnsortedAssetIdentifiers(from: startDate, excluding: excludedIDs)
+        }
+
         let fetchOptions = PHFetchOptions()
         fetchOptions.predicate = NSPredicate(
             format: "creationDate >= %@ AND mediaType == %d",
@@ -177,6 +203,73 @@ final class PhotoLibraryService {
         }
 
         return identifiers
+    }
+
+    /// Returns the count of photos not in any user-created album.
+    func unsortedPhotoCount() -> Int {
+        let albummedIDs = identifiersInAllUserAlbums()
+
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(
+            format: "mediaType == %d",
+            PHAssetMediaType.image.rawValue
+        )
+        let allAssets = PHAsset.fetchAssets(with: options)
+
+        var count = 0
+        allAssets.enumerateObjects { asset, _, _ in
+            if !albummedIDs.contains(asset.localIdentifier) {
+                count += 1
+            }
+        }
+        return count
+    }
+
+    // MARK: - Unsorted Fetching
+
+    /// Returns identifiers for photos not in any user-created album,
+    /// filtered by start date and exclusion set.
+    private func fetchUnsortedAssetIdentifiers(
+        from startDate: Date,
+        excluding excludedIDs: Set<String>
+    ) -> [String] {
+        let albummedIDs = identifiersInAllUserAlbums()
+
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.predicate = NSPredicate(
+            format: "creationDate >= %@ AND mediaType == %d",
+            startDate as NSDate,
+            PHAssetMediaType.image.rawValue
+        )
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+
+        let allAssets = PHAsset.fetchAssets(with: fetchOptions)
+
+        var identifiers: [String] = []
+        allAssets.enumerateObjects { asset, _, _ in
+            let id = asset.localIdentifier
+            if !albummedIDs.contains(id) && !excludedIDs.contains(id) {
+                identifiers.append(id)
+            }
+        }
+        return identifiers
+    }
+
+    /// Collects all asset identifiers that belong to at least one user-created album.
+    private func identifiersInAllUserAlbums() -> Set<String> {
+        var albummedIDs = Set<String>()
+
+        let userAlbums = PHAssetCollection.fetchAssetCollections(
+            with: .album, subtype: .any, options: nil
+        )
+        userAlbums.enumerateObjects { collection, _, _ in
+            let assets = PHAsset.fetchAssets(in: collection, options: nil)
+            assets.enumerateObjects { asset, _, _ in
+                albummedIDs.insert(asset.localIdentifier)
+            }
+        }
+
+        return albummedIDs
     }
 
     // MARK: - Image Loading

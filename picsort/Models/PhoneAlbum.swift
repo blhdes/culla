@@ -12,6 +12,24 @@ struct PhoneAlbum: Identifiable, Hashable {
     /// The underlying PhotoKit collection identifier, used to fetch photos from this album.
     let collectionIdentifier: String
 
+    /// Sentinel identifier for the "Unsorted Photos" virtual album.
+    static let unsortedIdentifier = "__picsort_unsorted__"
+
+    /// Whether this represents the virtual "Unsorted Photos" filter.
+    var isUnsorted: Bool { collectionIdentifier == Self.unsortedIdentifier }
+
+    /// Creates a virtual album representing photos not in any user-created album.
+    static func unsorted(photoCount: Int) -> PhoneAlbum {
+        PhoneAlbum(
+            id: unsortedIdentifier,
+            name: "Unsorted Photos",
+            photoCount: photoCount,
+            startDate: nil,
+            endDate: nil,
+            collectionIdentifier: unsortedIdentifier
+        )
+    }
+
     init(collection: PHAssetCollection) {
         self.id = collection.localIdentifier
         self.collectionIdentifier = collection.localIdentifier
@@ -32,6 +50,22 @@ struct PhoneAlbum: Identifiable, Hashable {
             )
             self.photoCount = PHAsset.fetchAssets(in: collection, options: options).count
         }
+    }
+
+    init(
+        id: String,
+        name: String,
+        photoCount: Int,
+        startDate: Date?,
+        endDate: Date?,
+        collectionIdentifier: String
+    ) {
+        self.id = id
+        self.name = name
+        self.photoCount = photoCount
+        self.startDate = startDate
+        self.endDate = endDate
+        self.collectionIdentifier = collectionIdentifier
     }
 }
 

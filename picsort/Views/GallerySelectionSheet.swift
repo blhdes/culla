@@ -24,7 +24,7 @@ struct GallerySelectionSheet: View {
                             galleryRow(gallery)
                         }
                     } header: {
-                        Text("\(selectedIDs.count)/\(maxSelection) selected")
+                        Text("\(selectedIDs.count) of \(maxSelection) selected")
                     }
                 }
 
@@ -81,27 +81,29 @@ struct GallerySelectionSheet: View {
                 selectedIDs.insert(gallery.id)
             }
         } label: {
-            HStack {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(Color.pastel(for: gallery.displayOrder))
+                    .frame(width: 10, height: 10)
+
                 Text(gallery.name)
+                    .fontWeight(.medium)
                     .foregroundStyle(.primary)
 
                 Spacer()
 
-                Text("\(gallery.sortedPhotos.count) photos")
+                Text("\(gallery.sortedPhotos.count)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
 
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.blue)
-                } else {
-                    Image(systemName: "circle")
-                        .foregroundStyle(.tertiary)
-                }
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .primary : .quaternary)
+                    .font(.title3)
             }
+            .padding(.vertical, 2)
         }
         .disabled(!isSelected && atLimit)
-        .opacity(!isSelected && atLimit ? 0.4 : 1.0)
+        .opacity(!isSelected && atLimit ? 0.35 : 1.0)
     }
 
     // MARK: - Filtering

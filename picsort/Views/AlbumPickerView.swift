@@ -8,40 +8,69 @@ struct AlbumPickerView: View {
     @State private var searchText = ""
     @State private var sortOption: AlbumSortOption = .name
     @State private var sortAscending = true
+    @State private var unsortedCount: Int?
 
     var body: some View {
-        List(filteredAlbums) { album in
-            Button {
-                onSelect(album)
-                dismiss()
-            } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(album.name)
-                            .foregroundStyle(.primary)
+        List {
+            // "Unsorted Photos" — pinned at the top
+            if searchText.isEmpty, let count = unsortedCount, count > 0 {
+                Section {
+                    Button {
+                        onSelect(.unsorted(photoCount: count))
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 14) {
+                            // Warm accent circle to distinguish from regular albums
+                            Circle()
+                                .fill(.tertiary)
+                                .frame(width: 10, height: 10)
 
-                        HStack(spacing: 12) {
-                            Label("\(album.photoCount)", systemImage: "photo")
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Unsorted Photos")
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.primary)
 
-                            if let startDate = album.startDate {
-                                Label(
-                                    startDate.formatted(.dateTime.month(.abbreviated).year()),
-                                    systemImage: "calendar"
-                                )
+                                Text("\(count) photos not in any album")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
                             }
+
+                            Spacer()
                         }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 4)
                     }
+                }
+            }
 
-                    Spacer()
+            // Regular albums
+            Section {
+                ForEach(filteredAlbums) { album in
+                    Button {
+                        onSelect(album)
+                        dismiss()
+                    } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(album.name)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.primary)
 
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                            HStack(spacing: 4) {
+                                Text("\(album.photoCount) photos")
+
+                                if let startDate = album.startDate {
+                                    Text("·")
+                                    Text(startDate.formatted(.dateTime.month(.abbreviated).year()))
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
             }
         }
+        .listStyle(.plain)
         .searchable(text: $searchText, prompt: "Search albums")
         .navigationTitle("Albums")
         .navigationBarTitleDisplayMode(.inline)
@@ -49,6 +78,10 @@ struct AlbumPickerView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 sortMenu
             }
+        }
+        .task {
+            let service = PhotoLibraryService()
+            unsortedCount = service.unsortedPhotoCount()
         }
     }
 

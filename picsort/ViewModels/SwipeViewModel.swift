@@ -172,6 +172,37 @@ final class SwipeViewModel {
         lastAction = nil
     }
 
+    // MARK: - Batch Delete
+
+    /// Deletes all dismissed photos from the iPhone library.
+    /// Returns the number of photos deleted (0 if user denied or nothing to delete).
+    @MainActor
+    func batchDeleteDismissed() async -> Int {
+        let descriptor = FetchDescriptor<DismissedPhoto>()
+        guard let dismissed = try? modelContext.fetch(descriptor), !dismissed.isEmpty else {
+            return 0
+        }
+
+        let identifiers = dismissed.map(\.assetIdentifier)
+        let deletedCount = await photoService.deletePhotos(identifiers: identifiers)
+
+        // Only clean up records if the deletion actually happened
+        if deletedCount > 0 {
+            for record in dismissed {
+                modelContext.delete(record)
+            }
+            try? modelContext.save()
+        }
+
+        return deletedCount
+    }
+
+    /// Number of photos currently marked for deletion.
+    var dismissedCount: Int {
+        let descriptor = FetchDescriptor<DismissedPhoto>()
+        return (try? modelContext.fetchCount(descriptor)) ?? 0
+    }
+
     // MARK: - Private
 
     @MainActor

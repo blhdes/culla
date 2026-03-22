@@ -96,18 +96,20 @@ struct GalleriesView: View {
 
     @ViewBuilder
     private func galleryRow(_ gallery: Gallery) -> some View {
-        HStack {
-            Image(systemName: gallery.iconName)
-                .foregroundStyle(Color(hex: gallery.colorHex) ?? .blue)
-                .frame(width: 28)
+        HStack(spacing: 12) {
+            Circle()
+                .fill(Color.pastel(for: gallery.displayOrder))
+                .frame(width: 10, height: 10)
 
             Text(gallery.name)
+                .fontWeight(.medium)
 
             Spacer()
 
             Text("\(gallery.sortedPhotos.count)")
-                .foregroundStyle(.secondary)
                 .font(.subheadline)
+                .foregroundStyle(.tertiary)
         }
+        .padding(.vertical, 4)
     }
 }

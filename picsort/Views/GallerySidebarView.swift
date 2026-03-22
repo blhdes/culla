@@ -27,7 +27,7 @@ struct GallerySidebarView: View {
                 ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
                     GallerySidebarItem(
                         gallery: gallery,
-                        pastelColor: pastelColor(for: index),
+                        pastelColor: .pastel(for: index),
                         isHighlighted: gallery.id == highlightedID,
                         isDragging: isDragging,
                         dragProgress: dragProgress
@@ -46,22 +46,26 @@ struct GallerySidebarView: View {
         }
     }
 
-    // MARK: - Pastel Colors
+}
 
-    private func pastelColor(for index: Int) -> Color {
-        let pastels: [Color] = [
-            Color(red: 0.95, green: 0.6, blue: 0.6),   // soft pink
-            Color(red: 0.6, green: 0.8, blue: 0.95),    // soft blue
-            Color(red: 0.7, green: 0.9, blue: 0.7),     // soft green
-            Color(red: 0.9, green: 0.75, blue: 0.95),   // soft lavender
-            Color(red: 0.95, green: 0.85, blue: 0.55),  // soft yellow
-            Color(red: 0.95, green: 0.7, blue: 0.5),    // soft peach
-            Color(red: 0.6, green: 0.85, blue: 0.85),   // soft teal
-            Color(red: 0.85, green: 0.65, blue: 0.85),  // soft mauve
-            Color(red: 0.75, green: 0.85, blue: 0.6),   // soft lime
-            Color(red: 0.8, green: 0.7, blue: 0.95),    // soft violet
-        ]
-        return pastels[index % pastels.count]
+// MARK: - Shared Pastel Palette
+
+extension Color {
+    static let pastels: [Color] = [
+        Color(red: 0.95, green: 0.6, blue: 0.6),   // soft pink
+        Color(red: 0.6, green: 0.8, blue: 0.95),    // soft blue
+        Color(red: 0.7, green: 0.9, blue: 0.7),     // soft green
+        Color(red: 0.9, green: 0.75, blue: 0.95),   // soft lavender
+        Color(red: 0.95, green: 0.85, blue: 0.55),  // soft yellow
+        Color(red: 0.95, green: 0.7, blue: 0.5),    // soft peach
+        Color(red: 0.6, green: 0.85, blue: 0.85),   // soft teal
+        Color(red: 0.85, green: 0.65, blue: 0.85),  // soft mauve
+        Color(red: 0.75, green: 0.85, blue: 0.6),   // soft lime
+        Color(red: 0.8, green: 0.7, blue: 0.95),    // soft violet
+    ]
+
+    static func pastel(for index: Int) -> Color {
+        pastels[index % pastels.count]
     }
 }
 

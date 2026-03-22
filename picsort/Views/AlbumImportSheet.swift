@@ -34,6 +34,7 @@ struct AlbumImportSheet: View {
                             Text("\(selectedAlbumIDs.count) selected")
                         }
                     }
+                    .listStyle(.plain)
                     .searchable(text: $searchText, prompt: "Search albums")
                 }
             }
@@ -85,24 +86,24 @@ struct AlbumImportSheet: View {
                 selectedAlbumIDs.insert(album.id)
             }
         } label: {
-            HStack {
-                Text(album.name)
-                    .foregroundStyle(.primary)
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(album.name)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+
+                    Text("\(album.photoCount) photos")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
 
                 Spacer()
 
-                Text("\(album.photoCount) photos")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.blue)
-                } else {
-                    Image(systemName: "circle")
-                        .foregroundStyle(.tertiary)
-                }
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .primary : .quaternary)
+                    .font(.title3)
             }
+            .padding(.vertical, 2)
         }
     }
 

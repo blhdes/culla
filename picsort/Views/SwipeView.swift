@@ -25,6 +25,11 @@ struct SwipeView: View {
     @State private var showGallerySelector = false
     @State private var hasInitializedSidebar = false
 
+    // Delete state
+    @State private var isDeleting = false
+    @State private var deleteMessage: DeleteFeedback?
+    @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
+
     private let swipeThreshold: CGFloat = 150
     private let maxSidebarGalleries = 10
 
@@ -131,7 +136,34 @@ struct SwipeView: View {
                     .padding(.trailing, 16)
                     .padding(.bottom, 16)
                 }
+
+                // "Delete All" button — bottom left
+                .overlay(alignment: .bottomLeading) {
+                    if let viewModel, viewModel.dismissedCount > 0 {
+                        Button {
+                            performBatchDelete(viewModel: viewModel)
+                        } label: {
+                            Text("Delete \(viewModel.dismissedCount)")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(.ultraThinMaterial, in: Capsule())
+                        }
+                        .disabled(isDeleting)
+                        .padding(.leading, 16)
+                        .padding(.bottom, 16)
+                    }
+                }
         }
+        // Success message overlay
+        .overlay {
+            if let feedback = deleteMessage {
+                deleteFeedbackOverlay(feedback)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: deleteMessage != nil)
         .overlay(alignment: .bottom) {
             undoButton(viewModel: viewModel)
                 .padding(.bottom, 32)
@@ -288,6 +320,48 @@ struct SwipeView: View {
         }
     }
 
+    // MARK: - Batch Delete
+
+    private func performBatchDelete(viewModel: SwipeViewModel) {
+        isDeleting = true
+        Task {
+            let count = await viewModel.batchDeleteDismissed()
+            await MainActor.run {
+                isDeleting = false
+                if count > 0 {
+                    totalDeletedPhotos += count
+                    deleteMessage = DeleteFeedback(
+                        sessionCount: count,
+                        totalCount: totalDeletedPhotos
+                    )
+                    // Auto-dismiss after 2.5 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        deleteMessage = nil
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func deleteFeedbackOverlay(_ feedback: DeleteFeedback) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 36))
+                .foregroundStyle(.primary)
+
+            Text("\(feedback.sessionCount) photos deleted")
+                .font(.title3)
+                .fontWeight(.semibold)
+
+            Text("\(feedback.totalCount) cleaned up in total")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(32)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+    }
+
     // MARK: - Empty State
 
     private var emptyStateView: some View {
@@ -307,4 +381,11 @@ struct SwipeView: View {
                 .padding(.horizontal, 40)
         }
     }
+}
+
+// MARK: - Delete Feedback
+
+struct DeleteFeedback: Equatable {
+    let sessionCount: Int
+    let totalCount: Int
 }
