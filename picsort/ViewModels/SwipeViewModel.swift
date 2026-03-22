@@ -20,6 +20,11 @@ final class SwipeViewModel {
     // Current photo metadata
     var currentPhotoDate: Date?
 
+    // Focus Session tracking
+    private(set) var sessionSortedCount: Int = 0
+    private(set) var sessionDismissedCount: Int = 0
+    private(set) var sessionGalleries: Set<UUID> = []
+
     // MARK: - Dependencies
 
     private let photoService: PhotoLibraryService
@@ -124,6 +129,7 @@ final class SwipeViewModel {
 
         lastAction = .dismissed(assetIdentifier: identifier)
         dismissedCount += 1
+        sessionDismissedCount += 1
         advance()
     }
 
@@ -152,6 +158,8 @@ final class SwipeViewModel {
         try? modelContext.save()
 
         lastAction = .sorted(assetIdentifier: identifier, gallery: gallery)
+        sessionSortedCount += 1
+        sessionGalleries.insert(gallery.id)
         showGalleryPicker = false
         advance()
 
@@ -186,10 +194,12 @@ final class SwipeViewModel {
         case .dismissed(let identifier):
             deleteDismissedPhoto(identifier: identifier)
             dismissedCount = max(dismissedCount - 1, 0)
+            sessionDismissedCount = max(sessionDismissedCount - 1, 0)
             pushBackToFront(identifier: identifier)
 
         case .sorted(let identifier, let gallery):
             deleteSortedPhoto(identifier: identifier)
+            sessionSortedCount = max(sessionSortedCount - 1, 0)
             pushBackToFront(identifier: identifier)
 
             // Also remove from iPhone Photos album

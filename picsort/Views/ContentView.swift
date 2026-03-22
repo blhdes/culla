@@ -4,6 +4,7 @@ struct ContentView: View {
     @State private var startDate: Date?
     @State private var selectedAlbum: PhoneAlbum?
     @State private var sortMode: SortMode = .copy
+    @State private var focusDuration: TimeInterval?
     @State private var showGalleries = false
 
     var body: some View {
@@ -12,12 +13,18 @@ struct ContentView: View {
                 SwipeView(
                     startDate: startDate,
                     albumIdentifier: selectedAlbum?.collectionIdentifier,
-                    sortMode: sortMode
+                    sortMode: sortMode,
+                    focusDuration: focusDuration,
+                    onSessionEnd: {
+                        self.startDate = nil
+                        self.focusDuration = nil
+                    }
                 )
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button {
                             self.startDate = nil
+                            self.focusDuration = nil
                         } label: {
                             Image(systemName: "calendar")
                         }
@@ -40,7 +47,8 @@ struct ContentView: View {
                 DatePickerView(
                     selectedDate: $startDate,
                     selectedAlbum: $selectedAlbum,
-                    sortMode: $sortMode
+                    sortMode: $sortMode,
+                    focusDuration: $focusDuration
                 )
             }
         }

@@ -5,6 +5,7 @@ struct DatePickerView: View {
     @Binding var selectedDate: Date?
     @Binding var selectedAlbum: PhoneAlbum?
     @Binding var sortMode: SortMode
+    @Binding var focusDuration: TimeInterval?
 
     @State private var pickerDate = Date()
     private let photoService = PhotoLibraryService.shared
@@ -51,6 +52,24 @@ struct DatePickerView: View {
                         selectedDate = earliestDate
                     }
                     .font(.subheadline)
+                }
+
+                // Focus Session
+                VStack(spacing: 10) {
+                    Text("Focus Session")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 12) {
+                        ForEach([2, 5, 10], id: \.self) { minutes in
+                            Button("\(minutes) min") {
+                                focusDuration = TimeInterval(minutes * 60)
+                                selectedDate = pickerDate
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
+                        }
+                    }
                 }
             } else {
                 ProgressView("Loading your library...")

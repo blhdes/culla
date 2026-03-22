@@ -1,11 +1,14 @@
 import SwiftUI
 import SwiftData
 import Photos
+import Combine
 
 struct SwipeView: View {
     let startDate: Date
     let albumIdentifier: String?
     let sortMode: SortMode
+    let focusDuration: TimeInterval?
+    var onSessionEnd: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
@@ -29,6 +32,11 @@ struct SwipeView: View {
     // Toast state
     @State private var toastMessage: String?
     @State private var toastTask: Task<Void, Never>?
+
+    // Focus session timer
+    @State private var remainingSeconds: Int = 0
+    @State private var timerActive: Bool = false
+    @State private var showSessionSummary: Bool = false
 
     // Delete state
     @State private var isDeleting = false
@@ -82,6 +90,19 @@ struct SwipeView: View {
                 )
                 viewModel = vm
                 await vm.loadInitialBatch()
+
+                if let duration = focusDuration {
+                    remainingSeconds = Int(duration)
+                    timerActive = true
+                }
+            }
+        }
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+            guard timerActive, remainingSeconds > 0 else { return }
+            remainingSeconds -= 1
+            if remainingSeconds == 0 {
+                timerActive = false
+                showSessionSummary = true
             }
         }
         .onChange(of: galleries.count) {
@@ -174,6 +195,12 @@ struct SwipeView: View {
         // Counter + toast at top
         .overlay(alignment: .top) {
             VStack(spacing: 6) {
+                if focusDuration != nil, timerActive {
+                    FocusTimerArcView(
+                        remainingSeconds: remainingSeconds,
+                        totalSeconds: Int(focusDuration ?? 0)
+                    )
+                }
                 if viewModel.totalCount > 0 {
                     Text("\(viewModel.processedCount + 1) / \(viewModel.totalCount)")
                         .font(.caption)
@@ -196,6 +223,14 @@ struct SwipeView: View {
             .padding(.top, 8)
             .animation(.easeInOut(duration: 0.25), value: toastMessage)
         }
+        // Focus session summary
+        .overlay {
+            if showSessionSummary {
+                sessionSummaryOverlay(viewModel: viewModel)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.4), value: showSessionSummary)
         // Photo date + undo at bottom
         .overlay(alignment: .bottom) {
             VStack(spacing: 10) {
@@ -429,6 +464,72 @@ struct SwipeView: View {
         }
         .padding(32)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    // MARK: - Session Summary
+
+    @ViewBuilder
+    private func sessionSummaryOverlay(viewModel: SwipeViewModel) -> some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture { }
+
+            VStack(spacing: 20) {
+                Image(systemName: "checkmark.circle")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.primary)
+
+                Text("Session Complete")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                VStack(spacing: 12) {
+                    summaryRow("Time", value: formatDuration(Int(focusDuration ?? 0)))
+                    summaryRow("Reviewed", value: "\(viewModel.processedCount)")
+                    summaryRow("Sorted", value: "\(viewModel.sessionSortedCount)")
+                    summaryRow("Dismissed", value: "\(viewModel.sessionDismissedCount)")
+                    summaryRow("Galleries", value: "\(viewModel.sessionGalleries.count)")
+                }
+
+                VStack(spacing: 12) {
+                    Button("Keep Going") {
+                        showSessionSummary = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+
+                    Button("Done") {
+                        showSessionSummary = false
+                        onSessionEnd?()
+                    }
+                    .font(.subheadline)
+                }
+                .padding(.top, 8)
+            }
+            .padding(32)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .padding(.horizontal, 40)
+        }
+    }
+
+    private func summaryRow(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .fontWeight(.medium)
+                .monospacedDigit()
+        }
+        .font(.body)
+    }
+
+    private func formatDuration(_ totalSeconds: Int) -> String {
+        let m = totalSeconds / 60
+        let s = totalSeconds % 60
+        if s == 0 { return "\(m) min" }
+        return "\(m)m \(s)s"
     }
 
     // MARK: - Empty State
