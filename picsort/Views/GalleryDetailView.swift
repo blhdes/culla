@@ -9,6 +9,7 @@ struct GalleryDetailView: View {
 
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
+    @State private var showColorPicker = false
 
     private let columns = [GridItem(.adaptive(minimum: 100), spacing: 2)]
 
@@ -30,16 +31,49 @@ struct GalleryDetailView: View {
                 ProgressView()
             } else {
                 VStack(spacing: 0) {
-                    HStack(spacing: 8) {
-                        Circle()
-                            .fill(Color.pastel(for: gallery.displayOrder))
-                            .frame(width: 8, height: 8)
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showColorPicker.toggle()
+                                }
+                            } label: {
+                                Circle()
+                                    .fill(Color.pastel(for: gallery.colorIndex))
+                                    .frame(width: 12, height: 12)
+                            }
 
-                        Text("\(allIdentifiers.count) photos")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            Text("\(allIdentifiers.count) photos")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
 
-                        Spacer()
+                            Spacer()
+                        }
+
+                        if showColorPicker {
+                            HStack(spacing: 10) {
+                                ForEach(0..<Color.pastels.count, id: \.self) { index in
+                                    Button {
+                                        gallery.colorIndex = index
+                                        try? modelContext.save()
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            showColorPicker = false
+                                        }
+                                    } label: {
+                                        Circle()
+                                            .fill(Color.pastel(for: index))
+                                            .frame(width: 24, height: 24)
+                                            .overlay {
+                                                if gallery.colorIndex == index {
+                                                    Circle()
+                                                        .strokeBorder(.primary, lineWidth: 2)
+                                                }
+                                            }
+                                    }
+                                }
+                            }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)

@@ -27,7 +27,7 @@ struct GallerySidebarView: View {
                 ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
                     GallerySidebarItem(
                         gallery: gallery,
-                        pastelColor: .pastel(for: index),
+                        pastelColor: .pastel(for: gallery.colorIndex),
                         isHighlighted: gallery.id == highlightedID,
                         isDragging: isDragging,
                         dragProgress: dragProgress

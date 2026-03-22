@@ -8,6 +8,7 @@ final class Gallery {
     var iconName: String
     var colorHex: String
     var displayOrder: Int
+    var colorIndex: Int
     var createdAt: Date
 
     /// Links to a real iPhone Photos album. Nil until the album is created.
@@ -28,6 +29,7 @@ final class Gallery {
         self.iconName = iconName
         self.colorHex = colorHex
         self.displayOrder = displayOrder
+        self.colorIndex = displayOrder
         self.createdAt = .now
         self.albumIdentifier = albumIdentifier
         self.sortedPhotos = []
