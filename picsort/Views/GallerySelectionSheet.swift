@@ -12,6 +12,7 @@ struct GallerySelectionSheet: View {
     @State private var searchText = ""
     @State private var newGalleryName = ""
     @State private var showCreateField = false
+    @State private var showAlbumImport = false
     @FocusState private var isFieldFocused: Bool
 
     var body: some View {
@@ -43,6 +44,12 @@ struct GallerySelectionSheet: View {
                             isFieldFocused = true
                         }
                     }
+
+                    Button {
+                        showAlbumImport = true
+                    } label: {
+                        Label("Import from Phone", systemImage: "square.and.arrow.down")
+                    }
                 }
             }
             .searchable(text: $searchText, prompt: "Search galleries")
@@ -54,6 +61,9 @@ struct GallerySelectionSheet: View {
                         .fontWeight(.semibold)
                 }
             }
+        }
+        .sheet(isPresented: $showAlbumImport) {
+            AlbumImportSheet()
         }
     }
 

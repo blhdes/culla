@@ -7,6 +7,7 @@ struct GalleriesView: View {
 
     @State private var newGalleryName = ""
     @State private var showCreateAlert = false
+    @State private var showAlbumImport = false
 
     var body: some View {
         Group {
@@ -49,12 +50,27 @@ struct GalleriesView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateAlert = true
+                Menu {
+                    Button {
+                        showCreateAlert = true
+                    } label: {
+                        Label("Create New", systemImage: "plus")
+                    }
+
+                    Button {
+                        showAlbumImport = true
+                    } label: {
+                        Label("Import from Phone", systemImage: "square.and.arrow.down")
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }
             }
+        }
+        .sheet(isPresented: $showAlbumImport, onDismiss: {
+            viewModel?.fetchGalleries()
+        }) {
+            AlbumImportSheet()
         }
         .alert("New Gallery", isPresented: $showCreateAlert) {
             TextField("Name", text: $newGalleryName)

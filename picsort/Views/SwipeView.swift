@@ -17,6 +17,9 @@ struct SwipeView: View {
     @State private var highlightedGalleryID: UUID?
     @State private var galleryFrames: [UUID: CGRect] = [:]
 
+    // Long-press preview
+    @State private var isLongPressing = false
+
     // Sidebar gallery selection (up to 10)
     @State private var sidebarGalleryIDs: Set<UUID> = []
     @State private var showGallerySelector = false
@@ -90,8 +93,12 @@ struct SwipeView: View {
     @ViewBuilder
     private func swipeContent(viewModel: SwipeViewModel) -> some View {
         GeometryReader { geo in
-            // Card stack — receives the drag gesture
+            // Card stack — receives drag, double-tap, and long-press gestures
             cardStack(viewModel: viewModel)
+                .onTapGesture(count: 2) {
+                    viewModel.skipCurrent()
+                }
+                .gesture(longPressGesture)
                 .gesture(dragGesture(viewModel: viewModel))
 
                 // Sidebar overlay — visible ABOVE the photo, non-interactive
@@ -101,10 +108,11 @@ struct SwipeView: View {
                         GallerySidebarView(
                             galleries: sidebarGalleries,
                             highlightedID: highlightedGalleryID,
-                            dragProgress: rightDragProgress
+                            dragProgress: isLongPressing ? 1.0 : rightDragProgress
                         )
                         .frame(width: geo.size.width * 0.5)
                     }
+                    .ignoresSafeArea()
                     .allowsHitTesting(false)
                 }
 
@@ -155,6 +163,23 @@ struct SwipeView: View {
                 .id(currentID)
             }
         }
+    }
+
+    // MARK: - Long Press
+
+    private var longPressGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.3)
+            .onEnded { _ in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isLongPressing = true
+                }
+            }
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onEnded { _ in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isLongPressing = false
+                }
+            }
     }
 
     // MARK: - Gesture
@@ -215,6 +240,7 @@ struct SwipeView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             cardOffset = .zero
             highlightedGalleryID = nil
+            isLongPressing = false
             action()
         }
     }
@@ -224,6 +250,7 @@ struct SwipeView: View {
             cardOffset = .zero
         }
         highlightedGalleryID = nil
+        isLongPressing = false
     }
 
     // MARK: - Helpers

@@ -103,6 +103,14 @@ final class SwipeViewModel {
         advance()
     }
 
+    /// Double-tap: skip photo without dismissing — it will reappear next session.
+    @MainActor
+    func skipCurrent() {
+        guard currentIdentifier != nil else { return }
+        lastAction = nil
+        advance()
+    }
+
     /// Swipe right: show gallery picker (don't advance yet).
     @MainActor
     func sortCurrent() {
