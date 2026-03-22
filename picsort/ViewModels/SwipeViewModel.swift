@@ -13,6 +13,13 @@ final class SwipeViewModel {
     var isEmpty = false
     var showGalleryPicker = false
 
+    // Progress
+    private(set) var totalCount: Int = 0
+    private(set) var processedCount: Int = 0
+
+    // Current photo metadata
+    var currentPhotoDate: Date?
+
     // MARK: - Dependencies
 
     private let photoService: PhotoLibraryService
@@ -72,6 +79,8 @@ final class SwipeViewModel {
             inAlbum: albumIdentifier
         )
 
+        totalCount = fetched.count
+
         // Take the first batch
         let batch = Array(fetched.prefix(batchSize))
         identifierQueue = Array(fetched.dropFirst(batchSize))
@@ -84,6 +93,7 @@ final class SwipeViewModel {
 
         var queue = batch
         currentIdentifier = queue.removeFirst()
+        currentPhotoDate = photoService.fetchCreationDate(for: currentIdentifier!)
 
         if !queue.isEmpty {
             nextIdentifier = queue.removeFirst()
@@ -223,7 +233,14 @@ final class SwipeViewModel {
 
     @MainActor
     private func advance() {
+        processedCount += 1
         currentIdentifier = nextIdentifier
+
+        if let current = currentIdentifier {
+            currentPhotoDate = photoService.fetchCreationDate(for: current)
+        } else {
+            currentPhotoDate = nil
+        }
 
         if identifierQueue.isEmpty {
             nextIdentifier = nil
@@ -248,12 +265,14 @@ final class SwipeViewModel {
     }
 
     private func pushBackToFront(identifier: String) {
+        processedCount = max(processedCount - 1, 0)
         // Move next → back to queue front, current → next, restored → current
         if let next = nextIdentifier {
             identifierQueue.insert(next, at: 0)
         }
         nextIdentifier = currentIdentifier
         currentIdentifier = identifier
+        currentPhotoDate = photoService.fetchCreationDate(for: identifier)
         isEmpty = false
     }
 

@@ -26,12 +26,16 @@ struct SwipeView: View {
     @State private var showGallerySelector = false
     @State private var hasInitializedSidebar = false
 
+    // Toast state
+    @State private var toastMessage: String?
+    @State private var toastTask: Task<Void, Never>?
+
     // Delete state
     @State private var isDeleting = false
     @State private var deleteMessage: DeleteFeedback?
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
 
-    private let swipeThreshold: CGFloat = 150
+    private let swipeThreshold: CGFloat = 100
     private let maxSidebarGalleries = 10
 
     /// Only galleries the user has selected, in display order.
@@ -102,11 +106,12 @@ struct SwipeView: View {
         GeometryReader { geo in
             // Card stack — receives drag, double-tap, and long-press gestures
             cardStack(viewModel: viewModel)
+                .contentShape(Rectangle())
                 .onTapGesture(count: 2) {
                     viewModel.skipCurrent()
                 }
                 .gesture(longPressGesture)
-                .gesture(dragGesture(viewModel: viewModel))
+                .highPriorityGesture(dragGesture(viewModel: viewModel))
 
                 // Sidebar overlay — visible ABOVE the photo, non-interactive
                 .overlay {
@@ -166,9 +171,45 @@ struct SwipeView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: deleteMessage != nil)
+        // Counter + toast at top
+        .overlay(alignment: .top) {
+            VStack(spacing: 6) {
+                if viewModel.totalCount > 0 {
+                    Text("\(viewModel.processedCount + 1) / \(viewModel.totalCount)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                if let toastMessage {
+                    Text(toastMessage)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                }
+            }
+            .padding(.top, 8)
+            .animation(.easeInOut(duration: 0.25), value: toastMessage)
+        }
+        // Photo date + undo at bottom
         .overlay(alignment: .bottom) {
-            undoButton(viewModel: viewModel)
-                .padding(.bottom, 32)
+            VStack(spacing: 10) {
+                if let date = viewModel.currentPhotoDate {
+                    Text(date, format: .dateTime.month(.wide).day().year())
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                undoButton(viewModel: viewModel)
+            }
+            .padding(.bottom, 32)
         }
     }
 
@@ -186,6 +227,11 @@ struct SwipeView: View {
                 .id(nextID)
                 .allowsHitTesting(false)
             }
+
+            // Opaque divider — hides next card at rest,
+            // revealed as the current card drags away
+            Color(.systemBackground)
+                .ignoresSafeArea()
 
             // Current card
             if let currentID = viewModel.currentIdentifier {
@@ -243,28 +289,33 @@ struct SwipeView: View {
     }
 
     private func handleSwipeEnd(_ value: DragGesture.Value, viewModel: SwipeViewModel) {
-        // Compute target gallery from final finger position
-        let targetGallery: Gallery? = {
-            guard value.translation.width > 30,
-                  let id = findGallery(at: value.location) else { return nil }
-            return sidebarGalleries.first { $0.id == id }
-        }()
+        let tx = value.translation.width
+        let ptx = value.predictedEndTranslation.width
 
-        if value.translation.width < -swipeThreshold {
-            // Swipe left → dismiss
+        // Left swipe: dismiss if actual OR predicted distance exceeds threshold
+        if tx < -swipeThreshold || ptx < -swipeThreshold {
             flyOff(x: -500) {
                 viewModel.dismissCurrent()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showToast("Dismissed")
             }
-        } else if value.translation.width > swipeThreshold, let gallery = targetGallery {
-            // Swipe right toward a gallery → assign + haptic
+            return
+        }
+
+        // Right swipe: use the gallery that was highlighted during drag
+        if tx > swipeThreshold || ptx > swipeThreshold,
+           let id = highlightedGalleryID,
+           let gallery = sidebarGalleries.first(where: { $0.id == id }) {
             flyOff(x: 500) {
                 viewModel.assignToGallery(gallery)
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                showToast("\u{2192} \(gallery.name)")
             }
-        } else {
-            // Below threshold or no gallery targeted → snap back
-            snapBack()
+            return
         }
+
+        // Below threshold and no gallery → snap back
+        snapBack()
     }
 
     private func flyOff(x: CGFloat, action: @escaping () -> Void) {
@@ -285,6 +336,22 @@ struct SwipeView: View {
         }
         highlightedGalleryID = nil
         isLongPressing = false
+    }
+
+    // MARK: - Toast
+
+    private func showToast(_ message: String) {
+        toastTask?.cancel()
+        toastMessage = message
+        toastTask = Task {
+            try? await Task.sleep(for: .seconds(1.2))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    toastMessage = nil
+                }
+            }
+        }
     }
 
     // MARK: - Helpers

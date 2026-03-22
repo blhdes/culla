@@ -14,12 +14,14 @@ Most photo organizer apps let you keep or delete. picsort's core experience is *
 ## How It Works
 
 1. **Pick a starting date** — choose how far back to go, optionally filter by album
-2. **Swipe through photos** — they appear one at a time, fullscreen
-3. **Swipe left** — marks the photo for deletion
-4. **Drag right toward a gallery** — sorts it into that gallery (syncs to a real iPhone album)
-5. **Double-tap** — skip without sorting or deleting (photo reappears next session)
-6. **Long-press** — preview your gallery panels at full opacity
-7. **Delete button** — batch-deletes all dismissed photos from your library in one shot
+2. **Move or copy** — when sorting from an existing album, choose whether photos stay in the source or get moved out
+3. **Swipe through photos** — they appear one at a time, fullscreen, with a progress counter and date label
+4. **Swipe left** — marks the photo for deletion (light haptic)
+5. **Drag right toward a gallery** — sorts it into that gallery with a confirmation toast (medium haptic)
+6. **Double-tap** — skip without sorting or deleting (photo reappears next session)
+7. **Long-press** — preview your gallery panels at full opacity
+8. **Delete button** — batch-deletes all dismissed photos from your library in one shot
+9. **Gallery management** — delete a gallery and choose to permanently remove its photos or keep them safe
 
 ## Requirements
 
@@ -91,11 +93,14 @@ PhotoLibraryService ──→ SwipeViewModel ──→ SwipeView
 
 ### Swipe Gesture Design
 
-- **150pt threshold** to trigger an action
-- **Rotation** follows drag offset (offset / 20 degrees)
-- **Progressive transparency** on right drag reveals gallery names
+- **100pt threshold** to trigger an action, with velocity-aware detection (`predictedEndTranslation`) so fast flicks work even with shorter drag distance
+- **Rotation** follows drag offset (offset / 40 degrees, subtle)
+- **Progressive transparency** on right drag (fades to 70%) reveals gallery names
 - **Spring animation** for snap-back, **easeIn** for fly-off
-- **Haptic feedback** on successful gallery sort
+- **Haptic feedback** — light on dismiss, medium on gallery sort
+- **Confirmation toasts** — "Dismissed" or "→ Gallery Name" after each action
+- **Photo counter** — "3 / 47" progress indicator at top
+- **Date label** — shows current photo's creation date for context
 
 ### Photo Preloading
 

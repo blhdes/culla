@@ -8,6 +8,7 @@ struct GalleriesView: View {
     @State private var newGalleryName = ""
     @State private var showCreateAlert = false
     @State private var showAlbumImport = false
+    @State private var galleryToDelete: Gallery?
 
     var body: some View {
         Group {
@@ -29,8 +30,8 @@ struct GalleriesView: View {
                             viewModel.moveGallery(from: source, to: destination)
                         }
                         .onDelete { offsets in
-                            for index in offsets {
-                                viewModel.deleteGallery(viewModel.galleries[index])
+                            if let index = offsets.first {
+                                galleryToDelete = viewModel.galleries[index]
                             }
                         }
                     }
@@ -84,6 +85,30 @@ struct GalleriesView: View {
             Button("Cancel", role: .cancel) {
                 newGalleryName = ""
             }
+        }
+        .confirmationDialog(
+            "Delete \(galleryToDelete?.name ?? "Gallery")?",
+            isPresented: Binding(
+                get: { galleryToDelete != nil },
+                set: { if !$0 { galleryToDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let gallery = galleryToDelete {
+                Button("Delete Photos from Phone", role: .destructive) {
+                    viewModel?.deleteGalleryAndPhotos(gallery)
+                    galleryToDelete = nil
+                }
+                Button("Remove from App Only") {
+                    viewModel?.deleteGallery(gallery)
+                    galleryToDelete = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    galleryToDelete = nil
+                }
+            }
+        } message: {
+            Text("\"Delete Photos\" permanently removes all photos in this gallery from your phone. \"Remove from App\" keeps them safe.")
         }
         .task {
             if viewModel == nil {

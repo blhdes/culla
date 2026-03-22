@@ -132,6 +132,23 @@ final class PhotoLibraryService {
         }
     }
 
+    /// Deletes an iPhone Photos album (does NOT delete the photos inside it).
+    func deleteAlbum(identifier: String) async {
+        guard let album = PHAssetCollection.fetchAssetCollections(
+            withLocalIdentifiers: [identifier], options: nil
+        ).firstObject else { return }
+
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                PHAssetCollectionChangeRequest.deleteAssetCollections(
+                    [album] as NSFastEnumeration
+                )
+            }
+        } catch {
+            print("picsort: Failed to delete album: \(error)")
+        }
+    }
+
     // MARK: - Album Fetching
 
     /// Fetches all user-created and smart albums that contain at least one photo.
@@ -159,6 +176,14 @@ final class PhotoLibraryService {
         }
 
         return albums
+    }
+
+    // MARK: - Metadata
+
+    /// Returns the creation date for a single photo asset.
+    func fetchCreationDate(for identifier: String) -> Date? {
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
+        return result.firstObject?.creationDate
     }
 
     // MARK: - Fetching

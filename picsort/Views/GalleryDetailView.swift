@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct GalleryDetailView: View {
     let gallery: Gallery
@@ -28,7 +29,7 @@ struct GalleryDetailView: View {
             } else if allIdentifiers.isEmpty {
                 ProgressView()
             } else {
-                ScrollView {
+                VStack(spacing: 0) {
                     HStack(spacing: 8) {
                         Circle()
                             .fill(Color.pastel(for: gallery.displayOrder))
@@ -42,16 +43,19 @@ struct GalleryDetailView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
+                    .background(Color(.systemBackground))
 
-                    LazyVGrid(columns: columns, spacing: 2) {
-                        ForEach(allIdentifiers, id: \.self) { identifier in
-                            PhotoThumbnailView(
-                                assetIdentifier: identifier,
-                                photoService: photoService,
-                                targetSize: Self.thumbnailSize
-                            )
-                            .aspectRatio(1, contentMode: .fill)
-                            .clipped()
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 2) {
+                            ForEach(allIdentifiers, id: \.self) { identifier in
+                                PhotoThumbnailView(
+                                    assetIdentifier: identifier,
+                                    photoService: photoService,
+                                    targetSize: Self.thumbnailSize
+                                )
+                                .aspectRatio(1, contentMode: .fill)
+                                .clipped()
+                            }
                         }
                     }
                 }

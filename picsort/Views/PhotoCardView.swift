@@ -7,7 +7,7 @@ struct PhotoCardView: View {
 
     @State private var loader: PhotoImageLoader
 
-    private let swipeThreshold: CGFloat = 150
+    private let swipeThreshold: CGFloat = 100
 
     init(assetIdentifier: String, photoService: PhotoLibraryService, offset: CGSize = .zero) {
         self.assetIdentifier = assetIdentifier
@@ -35,12 +35,12 @@ struct PhotoCardView: View {
 
                 swipeOverlay
             }
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipped()
             .opacity(photoOpacity)
-            .rotationEffect(.degrees(Double(offset.width / 20)))
+            .rotationEffect(.degrees(Double(offset.width / 40)))
             .offset(x: offset.width, y: offset.height * 0.4)
         }
-        .padding()
+        .ignoresSafeArea()
         .task { await loader.load() }
     }
 
@@ -48,7 +48,7 @@ struct PhotoCardView: View {
 
     private var photoOpacity: CGFloat {
         guard offset.width > 0 else { return 1.0 }
-        return 1.0 - 0.55 * min(offset.width / swipeThreshold, 1.0)
+        return 1.0 - 0.3 * min(offset.width / swipeThreshold, 1.0)
     }
 
     // MARK: - Dismiss overlay (left drag only)

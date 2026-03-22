@@ -46,11 +46,43 @@ final class GalleryViewModel {
 
     // MARK: - Delete
 
+    /// Removes the gallery from the app only. Photos stay on the phone.
     func deleteGallery(_ gallery: Gallery) {
+        let albumID = gallery.albumIdentifier
         modelContext.delete(gallery)
         save()
         fetchGalleries()
         renumberDisplayOrder()
+
+        // Also delete the iPhone album (photos remain in the library)
+        if let albumID {
+            Task {
+                await PhotoLibraryService.shared.deleteAlbum(identifier: albumID)
+            }
+        }
+    }
+
+    /// Removes the gallery AND permanently deletes all its photos from the phone.
+    func deleteGalleryAndPhotos(_ gallery: Gallery) {
+        let identifiers = gallery.sortedPhotos.map(\.assetIdentifier)
+        let albumID = gallery.albumIdentifier
+
+        modelContext.delete(gallery)
+        save()
+        fetchGalleries()
+        renumberDisplayOrder()
+
+        Task {
+            // Delete the photos from the phone library
+            let service = PhotoLibraryService.shared
+            if !identifiers.isEmpty {
+                _ = await service.deletePhotos(identifiers: identifiers)
+            }
+            // Delete the album itself
+            if let albumID {
+                await service.deleteAlbum(identifier: albumID)
+            }
+        }
     }
 
     // MARK: - Rename
