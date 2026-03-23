@@ -3,24 +3,32 @@ import SwiftData
 
 struct GalleriesView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var sortedPhotos: [SortedPhoto]
     @State private var viewModel: GalleryViewModel?
+    @State private var insightsViewModel = InsightsViewModel()
 
     @State private var newGalleryName = ""
     @State private var showCreateAlert = false
     @State private var showAlbumImport = false
+    @State private var showInsights = false
     @State private var galleryToDelete: Gallery?
 
     var body: some View {
         Group {
             if let viewModel {
-                if viewModel.galleries.isEmpty {
-                    ContentUnavailableView(
-                        "No Galleries",
-                        systemImage: "rectangle.stack",
-                        description: Text("Galleries you create will appear here.")
-                    )
-                } else {
-                    List {
+                List {
+                    // Stats header
+                    statsHeader
+
+                    if viewModel.galleries.isEmpty {
+                        ContentUnavailableView(
+                            "No Galleries",
+                            systemImage: "rectangle.stack",
+                            description: Text("Galleries you create will appear here.")
+                        )
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    } else {
                         ForEach(viewModel.galleries) { gallery in
                             NavigationLink(value: gallery) {
                                 galleryRow(gallery)
@@ -114,11 +122,57 @@ struct GalleriesView: View {
         } message: {
             Text("\"Remove from picsort\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
         }
+        .sheet(isPresented: $showInsights) {
+            InsightsView()
+        }
         .task {
             if viewModel == nil {
                 viewModel = GalleryViewModel(modelContext: modelContext)
             }
+            insightsViewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
         }
+        .onChange(of: sortedPhotos.count) {
+            insightsViewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
+        }
+    }
+
+    // MARK: - Stats Header
+
+    private var statsHeader: some View {
+        Button {
+            showInsights = true
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(sortedPhotos.count)")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Text("photos sorted")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if insightsViewModel.currentStreak > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(.orange)
+                        Text("\(insightsViewModel.currentStreak)")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .monospacedDigit()
+                    }
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+        .listRowSeparator(.hidden, edges: .top)
     }
 
     // MARK: - Row

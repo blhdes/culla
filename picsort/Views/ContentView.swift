@@ -5,8 +5,8 @@ struct ContentView: View {
     @State private var selectedAlbum: PhoneAlbum?
     @State private var sortMode: SortMode = .copy
     @State private var focusDuration: TimeInterval?
+    @State private var isOnThisDay = false
     @State private var showGalleries = false
-    @State private var showInsights = false
 
     var body: some View {
         NavigationStack {
@@ -16,9 +16,11 @@ struct ContentView: View {
                     albumIdentifier: selectedAlbum?.collectionIdentifier,
                     sortMode: sortMode,
                     focusDuration: focusDuration,
+                    isOnThisDay: isOnThisDay,
                     onSessionEnd: {
                         self.startDate = nil
                         self.focusDuration = nil
+                        self.isOnThisDay = false
                     }
                 )
                 .toolbar {
@@ -26,16 +28,9 @@ struct ContentView: View {
                         Button {
                             self.startDate = nil
                             self.focusDuration = nil
+                            self.isOnThisDay = false
                         } label: {
                             Image(systemName: "calendar")
-                        }
-                    }
-
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showInsights = true
-                        } label: {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
                         }
                     }
 
@@ -47,21 +42,20 @@ struct ContentView: View {
                         }
                     }
                 }
-                .sheet(isPresented: $showInsights) {
-                    InsightsView()
-                }
-                .sheet(isPresented: $showGalleries) {
-                    NavigationStack {
-                        GalleriesView()
-                    }
-                }
             } else {
                 DatePickerView(
                     selectedDate: $startDate,
                     selectedAlbum: $selectedAlbum,
                     sortMode: $sortMode,
-                    focusDuration: $focusDuration
+                    focusDuration: $focusDuration,
+                    isOnThisDay: $isOnThisDay,
+                    showGalleries: $showGalleries
                 )
+            }
+        }
+        .sheet(isPresented: $showGalleries) {
+            NavigationStack {
+                GalleriesView()
             }
         }
     }
