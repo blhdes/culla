@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Photos
 
 /// Lets the user pick from their iPhone photo albums and import them as app galleries.
 /// Albums already imported (matched by albumIdentifier) are hidden.
@@ -51,7 +52,13 @@ struct AlbumImportSheet: View {
                 }
             }
             .task {
-                phoneAlbums = PhotoLibraryService.shared.fetchAlbums()
+                let service = PhotoLibraryService.shared
+                let status = await service.requestAuthorization()
+                guard status == .authorized || status == .limited else {
+                    isLoading = false
+                    return
+                }
+                phoneAlbums = service.fetchAlbums()
                 isLoading = false
             }
         }
