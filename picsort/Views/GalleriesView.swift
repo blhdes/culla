@@ -3,9 +3,14 @@ import SwiftData
 
 struct GalleriesView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var sortedPhotos: [SortedPhoto]
+    @Query private var allSortedPhotos: [SortedPhoto]
     @State private var viewModel: GalleryViewModel?
     @State private var insightsViewModel = InsightsViewModel()
+
+    /// Only photos the user actually sorted — excludes imports.
+    private var sortedPhotos: [SortedPhoto] {
+        allSortedPhotos.filter { !$0.isImported }
+    }
 
     @State private var newGalleryName = ""
     @State private var showCreateAlert = false

@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct InsightsView: View {
-    @Query private var sortedPhotos: [SortedPhoto]
+    @Query private var allSortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
@@ -10,6 +10,11 @@ struct InsightsView: View {
 
     @State private var viewModel = InsightsViewModel()
     @Environment(\.dismiss) private var dismiss
+
+    /// Only photos the user actually sorted in the app — excludes imports.
+    private var sortedPhotos: [SortedPhoto] {
+        allSortedPhotos.filter { !$0.isImported }
+    }
 
     var body: some View {
         NavigationStack {
@@ -105,7 +110,7 @@ struct InsightsView: View {
     // MARK: - Computed Stats
 
     private var remainingCount: Int {
-        max(viewModel.totalLibraryCount - sortedPhotos.count, 0)
+        max(viewModel.totalLibraryCount - allSortedPhotos.count, 0)
     }
 
     private var mostActiveGalleryText: String {

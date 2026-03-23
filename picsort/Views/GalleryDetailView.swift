@@ -119,7 +119,7 @@ struct GalleryDetailView: View {
 
             for id in albumIdentifiers {
                 if !existingIDs.contains(id) {
-                    let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery)
+                    let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery, isImported: true)
                     modelContext.insert(sorted)
                     added = true
                 }

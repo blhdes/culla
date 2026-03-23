@@ -18,9 +18,8 @@ struct DatePickerView: View {
     @State private var showAlbumPicker = false
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
+        ScrollView {
+            VStack(spacing: 24) {
             Text("Pick a starting date")
                 .font(.title2)
                 .fontWeight(.semibold)
@@ -28,11 +27,13 @@ struct DatePickerView: View {
             if let earliestDate, let latestDate {
                 DatePicker(
                     "From",
-                    selection: $pickerDate,
+                    selection: noAnimationPickerDate,
                     in: earliestDate...latestDate,
                     displayedComponents: .date
                 )
                 .datePickerStyle(.graphical)
+                .frame(height: 350, alignment: .top)
+                .clipped()
                 .padding(.horizontal)
 
                 // Album filter
@@ -74,10 +75,10 @@ struct DatePickerView: View {
             } else {
                 ProgressView("Loading your library...")
             }
-
-            Spacer()
         }
         .padding()
+        .animation(nil, value: pickerDate)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -112,6 +113,22 @@ struct DatePickerView: View {
             albums = photoService.fetchAlbums()
             unsortedCount = photoService.unsortedPhotoCount()
         }
+    }
+
+    /// Wraps pickerDate in a Binding that disables UIKit animations on set.
+    /// The graphical DatePicker uses UIDatePicker internally, so SwiftUI's
+    /// .animation(nil) can't reach it — UIView.setAnimationsEnabled(false) can.
+    private var noAnimationPickerDate: Binding<Date> {
+        Binding(
+            get: { pickerDate },
+            set: { newValue in
+                UIView.setAnimationsEnabled(false)
+                pickerDate = newValue
+                DispatchQueue.main.async {
+                    UIView.setAnimationsEnabled(true)
+                }
+            }
+        )
     }
 
     // MARK: - Focus Timer Menu

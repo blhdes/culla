@@ -13,14 +13,9 @@ struct AlbumImportSheet: View {
     @State private var selectedAlbumIDs: Set<String> = []
     @State private var searchText = ""
     @State private var isLoading = true
+    @State private var sortOption: AlbumSortOption = .name
 
-    // Drag-to-select state
-    @State private var cellFrames: [String: CGRect] = [:]
-    @State private var isDragSelecting = false
-    @State private var dragSelectAdding: Bool? = nil
-    @State private var lastDraggedAlbumID: String? = nil
-
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
 
     var body: some View {
         NavigationStack {
@@ -35,16 +30,44 @@ struct AlbumImportSheet: View {
                     )
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(filteredAlbums) { album in
-                                albumCell(album)
+                        VStack(spacing: 12) {
+                            HStack {
+                                Text("\(selectedAlbumIDs.count) selected")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Menu {
+                                    ForEach(AlbumSortOption.allCases, id: \.self) { option in
+                                        Button {
+                                            sortOption = option
+                                        } label: {
+                                            HStack {
+                                                Text(option.rawValue)
+                                                if sortOption == option {
+                                                    Image(systemName: "checkmark")
+                                                }
+                                            }
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text(sortOption.rawValue)
+                                        Image(systemName: "chevron.up.chevron.down")
+                                    }
+                                    .font(.footnote)
+                                }
                             }
+                            .padding(.horizontal)
+
+                            LazyVGrid(columns: columns, spacing: 20) {
+                                ForEach(sortedAlbums) { album in
+                                    albumCell(album)
+                                }
+                            }
+                            .padding(.horizontal)
                         }
-                        .padding()
-                        .coordinateSpace(.named("albumGrid"))
-                        .simultaneousGesture(dragSelectGesture)
+                        .padding(.vertical, 8)
                     }
-                    .scrollDisabled(isDragSelecting)
                     .searchable(text: $searchText, prompt: "Search albums")
                 }
             }
@@ -55,7 +78,9 @@ struct AlbumImportSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    let label = selectedAlbumIDs.isEmpty ? "Import" : "Import (\(selectedAlbumIDs.count))"
+                    let label = selectedAlbumIDs.isEmpty
+                        ? "Import"
+                        : "Import (\(selectedAlbumIDs.count))"
                     Button(label) { importSelected() }
                         .fontWeight(.semibold)
                         .disabled(selectedAlbumIDs.isEmpty)
@@ -74,39 +99,6 @@ struct AlbumImportSheet: View {
         }
     }
 
-    // MARK: - Drag-to-Select Gesture
-
-    private var dragSelectGesture: some Gesture {
-        DragGesture(minimumDistance: 5, coordinateSpace: .named("albumGrid"))
-            .onChanged { value in
-                if dragSelectAdding == nil {
-                    guard let id = albumID(at: value.startLocation) else { return }
-                    isDragSelecting = true
-                    dragSelectAdding = !selectedAlbumIDs.contains(id)
-                    apply(dragSelectAdding!, to: id)
-                    lastDraggedAlbumID = id
-                }
-                guard let adding = dragSelectAdding,
-                      let id = albumID(at: value.location),
-                      id != lastDraggedAlbumID else { return }
-                lastDraggedAlbumID = id
-                apply(adding, to: id)
-            }
-            .onEnded { _ in
-                isDragSelecting = false
-                dragSelectAdding = nil
-                lastDraggedAlbumID = nil
-            }
-    }
-
-    private func apply(_ adding: Bool, to id: String) {
-        if adding { selectedAlbumIDs.insert(id) } else { selectedAlbumIDs.remove(id) }
-    }
-
-    private func albumID(at point: CGPoint) -> String? {
-        cellFrames.first { $0.value.contains(point) }?.key
-    }
-
     // MARK: - Grid Cell
 
     @ViewBuilder
@@ -121,11 +113,14 @@ struct AlbumImportSheet: View {
             }
         } label: {
             VStack(alignment: .leading, spacing: 6) {
-                AlbumThumbnailView(albumIdentifier: album.collectionIdentifier)
+                Color.clear
                     .aspectRatio(1, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 10)
+                        AlbumThumbnailView(albumIdentifier: album.collectionIdentifier)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12)
                             .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
                     }
                     .overlay(alignment: .topTrailing) {
@@ -138,10 +133,10 @@ struct AlbumImportSheet: View {
                     }
 
                 Text(album.name)
-                    .font(.caption)
+                    .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
 
                 Text("\(album.photoCount) photos")
                     .font(.caption2)
@@ -149,16 +144,9 @@ struct AlbumImportSheet: View {
             }
         }
         .buttonStyle(.plain)
-        .background(
-            GeometryReader { geo in
-                Color.clear.onAppear {
-                    cellFrames[album.id] = geo.frame(in: .named("albumGrid"))
-                }
-            }
-        )
     }
 
-    // MARK: - Filtering
+    // MARK: - Filtering & Sorting
 
     private var availableAlbums: [PhoneAlbum] {
         let importedIDs = Set(galleries.compactMap(\.albumIdentifier))
@@ -169,6 +157,17 @@ struct AlbumImportSheet: View {
         if searchText.isEmpty { return availableAlbums }
         return availableAlbums.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private var sortedAlbums: [PhoneAlbum] {
+        switch sortOption {
+        case .name:
+            return filteredAlbums.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        case .photoCount:
+            return filteredAlbums.sorted { $0.photoCount > $1.photoCount }
+        case .dateCreated:
+            return filteredAlbums.sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
         }
     }
 
@@ -193,7 +192,7 @@ struct AlbumImportSheet: View {
                 inAlbum: album.collectionIdentifier
             )
             for id in identifiers {
-                let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery)
+                let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery, isImported: true)
                 modelContext.insert(sorted)
             }
         }
@@ -210,25 +209,23 @@ private struct AlbumThumbnailView: View {
     @State private var thumbnail: UIImage?
 
     var body: some View {
-        Group {
+        ZStack {
+            Color(.systemGray5)
+
             if let thumbnail {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .scaledToFill()
             } else {
-                Rectangle()
-                    .fill(Color(.systemGray5))
-                    .overlay {
-                        Image(systemName: "photo")
-                            .foregroundStyle(.tertiary)
-                            .font(.title2)
-                    }
+                Image(systemName: "photo")
+                    .foregroundStyle(.tertiary)
+                    .font(.title2)
             }
         }
         .task {
             thumbnail = await PhotoLibraryService.shared.fetchAlbumThumbnail(
                 albumIdentifier: albumIdentifier,
-                targetSize: CGSize(width: 200, height: 200)
+                targetSize: CGSize(width: 300, height: 300)
             )
         }
     }

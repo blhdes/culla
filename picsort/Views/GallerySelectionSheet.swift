@@ -13,29 +13,75 @@ struct GallerySelectionSheet: View {
     @State private var newGalleryName = ""
     @State private var showCreateField = false
     @State private var showAlbumImport = false
+    @State private var sortOption: GallerySortOption = .custom
     @FocusState private var isFieldFocused: Bool
 
-    // Drag-to-select state
-    @State private var cellFrames: [UUID: CGRect] = [:]
-    @State private var isDragSelecting = false
-    @State private var dragSelectAdding: Bool? = nil
-    @State private var lastDraggedID: UUID? = nil
+    private enum GallerySortOption: String, CaseIterable {
+        case custom = "Custom"
+        case name = "Name"
+        case photoCount = "Photo Count"
+    }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    if !filteredGalleries.isEmpty {
-                        galleriesSection
-                            .padding(.bottom, 20)
+            List {
+                if !filteredGalleries.isEmpty {
+                    Section {
+                        ForEach(sortedGalleries) { gallery in
+                            galleryRow(gallery)
+                        }
+                    } header: {
+                        HStack {
+                            Text("\(selectedIDs.count) of \(maxSelection) selected")
+                            Spacer()
+                            Menu {
+                                ForEach(GallerySortOption.allCases, id: \.self) { option in
+                                    Button {
+                                        sortOption = option
+                                    } label: {
+                                        HStack {
+                                            Text(option.rawValue)
+                                            if sortOption == option {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(sortOption.rawValue)
+                                    Image(systemName: "chevron.up.chevron.down")
+                                }
+                                .font(.caption)
+                            }
+                        }
                     }
-                    actionsSection
                 }
-                .padding(.vertical)
-                .coordinateSpace(.named("galleryList"))
-                .simultaneousGesture(dragSelectGesture)
+
+                Section {
+                    if showCreateField {
+                        HStack {
+                            TextField("Gallery name", text: $newGalleryName)
+                                .focused($isFieldFocused)
+                                .onSubmit { createGallery() }
+
+                            Button("Add") { createGallery() }
+                                .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
+                        }
+                    } else {
+                        Button("Create New Gallery") {
+                            showCreateField = true
+                            isFieldFocused = true
+                        }
+                    }
+
+                    Button {
+                        showAlbumImport = true
+                    } label: {
+                        Label("Import from Phone", systemImage: "square.and.arrow.down")
+                    }
+                }
             }
-            .scrollDisabled(isDragSelecting)
             .searchable(text: $searchText, prompt: "Search galleries")
             .navigationTitle("Select Galleries")
             .navigationBarTitleDisplayMode(.inline)
@@ -49,117 +95,6 @@ struct GallerySelectionSheet: View {
         .sheet(isPresented: $showAlbumImport) {
             AlbumImportSheet()
         }
-    }
-
-    // MARK: - Sections
-
-    private var galleriesSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("\(selectedIDs.count) of \(maxSelection) selected")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 6)
-
-            VStack(spacing: 0) {
-                ForEach(filteredGalleries) { gallery in
-                    galleryRow(gallery)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear.onAppear {
-                                    cellFrames[gallery.id] = geo.frame(in: .named("galleryList"))
-                                }
-                            }
-                        )
-
-                    if gallery.id != filteredGalleries.last?.id {
-                        Divider().padding(.leading, 38)
-                    }
-                }
-            }
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal)
-        }
-    }
-
-    private var actionsSection: some View {
-        VStack(spacing: 0) {
-            if showCreateField {
-                HStack {
-                    TextField("Gallery name", text: $newGalleryName)
-                        .focused($isFieldFocused)
-                        .onSubmit { createGallery() }
-
-                    Button("Add") { createGallery() }
-                        .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            } else {
-                Button("Create New Gallery") {
-                    showCreateField = true
-                    isFieldFocused = true
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
-                Divider().padding(.leading, 16)
-            }
-
-            Button {
-                showAlbumImport = true
-            } label: {
-                Label("Import from Phone", systemImage: "square.and.arrow.down")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal)
-    }
-
-    // MARK: - Drag-to-Select Gesture
-
-    private var dragSelectGesture: some Gesture {
-        DragGesture(minimumDistance: 5, coordinateSpace: .named("galleryList"))
-            .onChanged { value in
-                if dragSelectAdding == nil {
-                    guard let id = galleryID(at: value.startLocation) else { return }
-                    isDragSelecting = true
-                    dragSelectAdding = !selectedIDs.contains(id)
-                    apply(dragSelectAdding!, to: id)
-                    lastDraggedID = id
-                }
-                guard let adding = dragSelectAdding,
-                      let id = galleryID(at: value.location),
-                      id != lastDraggedID else { return }
-                lastDraggedID = id
-                apply(adding, to: id)
-            }
-            .onEnded { _ in
-                isDragSelecting = false
-                dragSelectAdding = nil
-                lastDraggedID = nil
-            }
-    }
-
-    private func apply(_ adding: Bool, to id: UUID) {
-        if adding {
-            guard selectedIDs.count < maxSelection else { return }
-            selectedIDs.insert(id)
-        } else {
-            selectedIDs.remove(id)
-        }
-    }
-
-    private func galleryID(at point: CGPoint) -> UUID? {
-        cellFrames.first { $0.value.contains(point) }?.key
     }
 
     // MARK: - Row
@@ -207,6 +142,19 @@ struct GallerySelectionSheet: View {
         if searchText.isEmpty { return Array(galleries) }
         return galleries.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private var sortedGalleries: [Gallery] {
+        switch sortOption {
+        case .custom:
+            return filteredGalleries
+        case .name:
+            return filteredGalleries.sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+        case .photoCount:
+            return filteredGalleries.sorted { $0.sortedPhotos.count > $1.sortedPhotos.count }
         }
     }
 
