@@ -14,6 +14,14 @@ struct AlbumImportSheet: View {
     @State private var searchText = ""
     @State private var isLoading = true
 
+    // Drag-to-select state
+    @State private var cellFrames: [String: CGRect] = [:]
+    @State private var isDragSelecting = false
+    @State private var dragSelectAdding: Bool? = nil
+    @State private var lastDraggedAlbumID: String? = nil
+
+    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+
     var body: some View {
         NavigationStack {
             Group {
@@ -26,16 +34,17 @@ struct AlbumImportSheet: View {
                         description: Text("All phone albums have already been imported.")
                     )
                 } else {
-                    List {
-                        Section {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 16) {
                             ForEach(filteredAlbums) { album in
-                                albumRow(album)
+                                albumCell(album)
                             }
-                        } header: {
-                            Text("\(selectedAlbumIDs.count) selected")
                         }
+                        .padding()
+                        .coordinateSpace(.named("albumGrid"))
+                        .simultaneousGesture(dragSelectGesture)
                     }
-                    .listStyle(.plain)
+                    .scrollDisabled(isDragSelecting)
                     .searchable(text: $searchText, prompt: "Search albums")
                 }
             }
@@ -46,7 +55,8 @@ struct AlbumImportSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Import") { importSelected() }
+                    let label = selectedAlbumIDs.isEmpty ? "Import" : "Import (\(selectedAlbumIDs.count))"
+                    Button(label) { importSelected() }
                         .fontWeight(.semibold)
                         .disabled(selectedAlbumIDs.isEmpty)
                 }
@@ -64,25 +74,43 @@ struct AlbumImportSheet: View {
         }
     }
 
-    // MARK: - Filtering
+    // MARK: - Drag-to-Select Gesture
 
-    /// Albums not yet imported — no existing Gallery has a matching albumIdentifier.
-    private var availableAlbums: [PhoneAlbum] {
-        let importedIDs = Set(galleries.compactMap(\.albumIdentifier))
-        return phoneAlbums.filter { !importedIDs.contains($0.collectionIdentifier) }
+    private var dragSelectGesture: some Gesture {
+        DragGesture(minimumDistance: 5, coordinateSpace: .named("albumGrid"))
+            .onChanged { value in
+                if dragSelectAdding == nil {
+                    guard let id = albumID(at: value.startLocation) else { return }
+                    isDragSelecting = true
+                    dragSelectAdding = !selectedAlbumIDs.contains(id)
+                    apply(dragSelectAdding!, to: id)
+                    lastDraggedAlbumID = id
+                }
+                guard let adding = dragSelectAdding,
+                      let id = albumID(at: value.location),
+                      id != lastDraggedAlbumID else { return }
+                lastDraggedAlbumID = id
+                apply(adding, to: id)
+            }
+            .onEnded { _ in
+                isDragSelecting = false
+                dragSelectAdding = nil
+                lastDraggedAlbumID = nil
+            }
     }
 
-    private var filteredAlbums: [PhoneAlbum] {
-        if searchText.isEmpty { return availableAlbums }
-        return availableAlbums.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
-        }
+    private func apply(_ adding: Bool, to id: String) {
+        if adding { selectedAlbumIDs.insert(id) } else { selectedAlbumIDs.remove(id) }
     }
 
-    // MARK: - Row
+    private func albumID(at point: CGPoint) -> String? {
+        cellFrames.first { $0.value.contains(point) }?.key
+    }
+
+    // MARK: - Grid Cell
 
     @ViewBuilder
-    private func albumRow(_ album: PhoneAlbum) -> some View {
+    private func albumCell(_ album: PhoneAlbum) -> some View {
         let isSelected = selectedAlbumIDs.contains(album.id)
 
         Button {
@@ -92,24 +120,55 @@ struct AlbumImportSheet: View {
                 selectedAlbumIDs.insert(album.id)
             }
         } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(album.name)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 6) {
+                AlbumThumbnailView(albumIdentifier: album.collectionIdentifier)
+                    .aspectRatio(1, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if isSelected {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.white, Color.accentColor)
+                                .padding(6)
+                        }
+                    }
 
-                    Text("\(album.photoCount) photos")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
+                Text(album.name)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
-                Spacer()
-
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .primary : .quaternary)
-                    .font(.title3)
+                Text("\(album.photoCount) photos")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 2)
+        }
+        .buttonStyle(.plain)
+        .background(
+            GeometryReader { geo in
+                Color.clear.onAppear {
+                    cellFrames[album.id] = geo.frame(in: .named("albumGrid"))
+                }
+            }
+        )
+    }
+
+    // MARK: - Filtering
+
+    private var availableAlbums: [PhoneAlbum] {
+        let importedIDs = Set(galleries.compactMap(\.albumIdentifier))
+        return phoneAlbums.filter { !importedIDs.contains($0.collectionIdentifier) }
+    }
+
+    private var filteredAlbums: [PhoneAlbum] {
+        if searchText.isEmpty { return availableAlbums }
+        return availableAlbums.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText)
         }
     }
 
@@ -128,7 +187,6 @@ struct AlbumImportSheet: View {
             )
             modelContext.insert(gallery)
 
-            // Link existing photos in this album as SortedPhoto records
             let identifiers = service.fetchAssetIdentifiers(
                 from: .distantPast,
                 excluding: [],
@@ -142,5 +200,36 @@ struct AlbumImportSheet: View {
 
         try? modelContext.save()
         dismiss()
+    }
+}
+
+// MARK: - Thumbnail View
+
+private struct AlbumThumbnailView: View {
+    let albumIdentifier: String
+    @State private var thumbnail: UIImage?
+
+    var body: some View {
+        Group {
+            if let thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Rectangle()
+                    .fill(Color(.systemGray5))
+                    .overlay {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.tertiary)
+                            .font(.title2)
+                    }
+            }
+        }
+        .task {
+            thumbnail = await PhotoLibraryService.shared.fetchAlbumThumbnail(
+                albumIdentifier: albumIdentifier,
+                targetSize: CGSize(width: 200, height: 200)
+            )
+        }
     }
 }

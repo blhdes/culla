@@ -368,6 +368,22 @@ final class PhotoLibraryService {
 
     // MARK: - Image Loading
 
+    /// Returns a thumbnail UIImage for the most recent photo in an album.
+    func fetchAlbumThumbnail(albumIdentifier: String, targetSize: CGSize) async -> UIImage? {
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.fetchLimit = 1
+
+        guard let collection = PHAssetCollection.fetchAssetCollections(
+            withLocalIdentifiers: [albumIdentifier], options: nil
+        ).firstObject else { return nil }
+
+        let assets = PHAsset.fetchAssets(in: collection, options: fetchOptions)
+        guard let asset = assets.firstObject else { return nil }
+
+        return await loadImage(for: asset.localIdentifier, targetSize: targetSize)
+    }
+
     /// Loads a display-quality UIImage for the given asset identifier.
     func loadImage(
         for assetIdentifier: String,

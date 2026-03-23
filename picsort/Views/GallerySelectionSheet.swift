@@ -15,43 +15,27 @@ struct GallerySelectionSheet: View {
     @State private var showAlbumImport = false
     @FocusState private var isFieldFocused: Bool
 
+    // Drag-to-select state
+    @State private var cellFrames: [UUID: CGRect] = [:]
+    @State private var isDragSelecting = false
+    @State private var dragSelectAdding: Bool? = nil
+    @State private var lastDraggedID: UUID? = nil
+
     var body: some View {
         NavigationStack {
-            List {
-                if !filteredGalleries.isEmpty {
-                    Section {
-                        ForEach(filteredGalleries) { gallery in
-                            galleryRow(gallery)
-                        }
-                    } header: {
-                        Text("\(selectedIDs.count) of \(maxSelection) selected")
+            ScrollView {
+                VStack(spacing: 0) {
+                    if !filteredGalleries.isEmpty {
+                        galleriesSection
+                            .padding(.bottom, 20)
                     }
+                    actionsSection
                 }
-
-                Section {
-                    if showCreateField {
-                        HStack {
-                            TextField("Gallery name", text: $newGalleryName)
-                                .focused($isFieldFocused)
-                                .onSubmit { createGallery() }
-
-                            Button("Add") { createGallery() }
-                                .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
-                        }
-                    } else {
-                        Button("Create New Gallery") {
-                            showCreateField = true
-                            isFieldFocused = true
-                        }
-                    }
-
-                    Button {
-                        showAlbumImport = true
-                    } label: {
-                        Label("Import from Phone", systemImage: "square.and.arrow.down")
-                    }
-                }
+                .padding(.vertical)
+                .coordinateSpace(.named("galleryList"))
+                .simultaneousGesture(dragSelectGesture)
             }
+            .scrollDisabled(isDragSelecting)
             .searchable(text: $searchText, prompt: "Search galleries")
             .navigationTitle("Select Galleries")
             .navigationBarTitleDisplayMode(.inline)
@@ -65,6 +49,117 @@ struct GallerySelectionSheet: View {
         .sheet(isPresented: $showAlbumImport) {
             AlbumImportSheet()
         }
+    }
+
+    // MARK: - Sections
+
+    private var galleriesSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(selectedIDs.count) of \(maxSelection) selected")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 6)
+
+            VStack(spacing: 0) {
+                ForEach(filteredGalleries) { gallery in
+                    galleryRow(gallery)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear.onAppear {
+                                    cellFrames[gallery.id] = geo.frame(in: .named("galleryList"))
+                                }
+                            }
+                        )
+
+                    if gallery.id != filteredGalleries.last?.id {
+                        Divider().padding(.leading, 38)
+                    }
+                }
+            }
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal)
+        }
+    }
+
+    private var actionsSection: some View {
+        VStack(spacing: 0) {
+            if showCreateField {
+                HStack {
+                    TextField("Gallery name", text: $newGalleryName)
+                        .focused($isFieldFocused)
+                        .onSubmit { createGallery() }
+
+                    Button("Add") { createGallery() }
+                        .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            } else {
+                Button("Create New Gallery") {
+                    showCreateField = true
+                    isFieldFocused = true
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                Divider().padding(.leading, 16)
+            }
+
+            Button {
+                showAlbumImport = true
+            } label: {
+                Label("Import from Phone", systemImage: "square.and.arrow.down")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal)
+    }
+
+    // MARK: - Drag-to-Select Gesture
+
+    private var dragSelectGesture: some Gesture {
+        DragGesture(minimumDistance: 5, coordinateSpace: .named("galleryList"))
+            .onChanged { value in
+                if dragSelectAdding == nil {
+                    guard let id = galleryID(at: value.startLocation) else { return }
+                    isDragSelecting = true
+                    dragSelectAdding = !selectedIDs.contains(id)
+                    apply(dragSelectAdding!, to: id)
+                    lastDraggedID = id
+                }
+                guard let adding = dragSelectAdding,
+                      let id = galleryID(at: value.location),
+                      id != lastDraggedID else { return }
+                lastDraggedID = id
+                apply(adding, to: id)
+            }
+            .onEnded { _ in
+                isDragSelecting = false
+                dragSelectAdding = nil
+                lastDraggedID = nil
+            }
+    }
+
+    private func apply(_ adding: Bool, to id: UUID) {
+        if adding {
+            guard selectedIDs.count < maxSelection else { return }
+            selectedIDs.insert(id)
+        } else {
+            selectedIDs.remove(id)
+        }
+    }
+
+    private func galleryID(at point: CGPoint) -> UUID? {
+        cellFrames.first { $0.value.contains(point) }?.key
     }
 
     // MARK: - Row
