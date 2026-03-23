@@ -6,6 +6,8 @@ struct DatePickerView: View {
     @Binding var selectedAlbum: PhoneAlbum?
     @Binding var sortMode: SortMode
     @Binding var focusDuration: TimeInterval?
+    @Binding var isOnThisDay: Bool
+    @Binding var showGalleries: Bool
 
     @State private var pickerDate = Date()
     private let photoService = PhotoLibraryService.shared
@@ -14,7 +16,6 @@ struct DatePickerView: View {
     @State private var albums: [PhoneAlbum] = []
     @State private var unsortedCount: Int = 0
     @State private var showAlbumPicker = false
-    @State private var showInsights = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -43,33 +44,31 @@ struct DatePickerView: View {
                 }
 
                 VStack(spacing: 12) {
-                    Button("Start Sorting") {
-                        selectedDate = pickerDate
+                    HStack(spacing: 12) {
+                        timerMenu
+
+                        Button {
+                            selectedDate = pickerDate
+                        } label: {
+                            Text(startButtonLabel)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .padding(.horizontal)
 
                     Button("From the very first photo") {
                         selectedDate = earliestDate
                     }
                     .font(.subheadline)
-                }
 
-                // Focus Session
-                VStack(spacing: 10) {
-                    Text("Focus Session")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 12) {
-                        ForEach([2, 5, 10], id: \.self) { minutes in
-                            Button("\(minutes) min") {
-                                focusDuration = TimeInterval(minutes * 60)
-                                selectedDate = pickerDate
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.regular)
-                        }
+                    Button {
+                        isOnThisDay = true
+                        selectedDate = .now
+                    } label: {
+                        Label("On This Day", systemImage: "clock.arrow.circlepath")
+                            .font(.subheadline)
                     }
                 }
             } else {
@@ -82,14 +81,11 @@ struct DatePickerView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    showInsights = true
+                    showGalleries = true
                 } label: {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
+                    Image(systemName: "rectangle.stack")
                 }
             }
-        }
-        .sheet(isPresented: $showInsights) {
-            InsightsView()
         }
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {
@@ -115,6 +111,42 @@ struct DatePickerView: View {
 
             albums = photoService.fetchAlbums()
             unsortedCount = photoService.unsortedPhotoCount()
+        }
+    }
+
+    // MARK: - Focus Timer Menu
+
+    private var startButtonLabel: String {
+        guard let focusDuration else { return "Start Sorting" }
+        let minutes = Int(focusDuration) / 60
+        return "Sort for \(minutes) min"
+    }
+
+    private var timerMenu: some View {
+        Menu {
+            ForEach([2, 5, 10], id: \.self) { minutes in
+                Button {
+                    focusDuration = TimeInterval(minutes * 60)
+                } label: {
+                    HStack {
+                        Text("\(minutes) min")
+                        if focusDuration == TimeInterval(minutes * 60) {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+
+            if focusDuration != nil {
+                Divider()
+                Button("No Timer", role: .destructive) {
+                    focusDuration = nil
+                }
+            }
+        } label: {
+            Image(systemName: focusDuration != nil ? "timer.circle.fill" : "timer")
+                .font(.title2)
+                .foregroundStyle(focusDuration != nil ? Color.accentColor : .secondary)
         }
     }
 

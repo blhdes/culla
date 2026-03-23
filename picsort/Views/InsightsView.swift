@@ -13,27 +13,12 @@ struct InsightsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    insightSection("Your Progress") {
-                        insightRow("Photos sorted", value: "\(sortedPhotos.count)")
-                        insightRow("Photos deleted", value: "\(totalDeletedPhotos)")
-                        insightRow("Library remaining", value: "\(remainingCount)")
-                    }
-
-                    insightSection("Consistency") {
-                        insightRow("Current streak", value: streakText(viewModel.currentStreak))
-                        insightRow("Longest streak", value: streakText(viewModel.longestStreak))
-                    }
-
-                    insightSection("Galleries") {
-                        insightRow("Most active this week", value: mostActiveGalleryText)
-                        insightRow("Total galleries", value: "\(galleries.count)")
-                    }
+            Group {
+                if sortedPhotos.isEmpty && totalDeletedPhotos == 0 {
+                    emptyState
+                } else {
+                    statsContent
                 }
-                .padding(.horizontal)
-                .padding(.top, 20)
-                .padding(.bottom, 40)
             }
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.inline)
@@ -50,6 +35,70 @@ struct InsightsView: View {
             .onChange(of: sortedPhotos.count) {
                 viewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
             }
+        }
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("Start sorting to see\nyour progress here")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Spacer()
+        }
+    }
+
+    // MARK: - Stats Content
+
+    private var statsContent: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Hero stat
+                VStack(spacing: 4) {
+                    Text("\(sortedPhotos.count)")
+                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Text("photos sorted")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 24)
+                .padding(.bottom, 8)
+
+                // Streak row
+                HStack(spacing: 24) {
+                    streakBadge(
+                        icon: "flame.fill",
+                        value: viewModel.currentStreak,
+                        label: "Current"
+                    )
+                    streakBadge(
+                        icon: "trophy.fill",
+                        value: viewModel.longestStreak,
+                        label: "Best"
+                    )
+                }
+                .padding(.horizontal)
+
+                // Details card
+                VStack(spacing: 0) {
+                    detailRow("Deleted", value: "\(totalDeletedPhotos)")
+                    detailRow("Remaining", value: "\(remainingCount)")
+                    detailRow("Galleries", value: "\(galleries.count)")
+                    detailRow("Top this week", value: mostActiveGalleryText)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .padding(.horizontal)
+            }
+            .padding(.bottom, 40)
         }
     }
 
@@ -76,36 +125,28 @@ struct InsightsView: View {
         return "\(top.name) (\(top.count))"
     }
 
-    // MARK: - Helpers
+    // MARK: - Components
 
-    private func streakText(_ days: Int) -> String {
-        days == 0 ? "—" : "\(days) \(days == 1 ? "day" : "days")"
-    }
-
-    // MARK: - Section Layout
-
-    private func insightSection<Content: View>(
-        _ title: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-
-            VStack(spacing: 0) {
-                content()
+    private func streakBadge(icon: String, value: Int, label: String) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .foregroundStyle(value > 0 ? .orange : .secondary)
+                Text(value > 0 ? "\(value)" : "—")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .monospacedDigit()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func insightRow(_ label: String, value: String) -> some View {
+    private func detailRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
                 .foregroundStyle(.secondary)
@@ -115,6 +156,6 @@ struct InsightsView: View {
                 .monospacedDigit()
         }
         .font(.body)
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 }
