@@ -5,8 +5,39 @@ import SwiftData
 struct picsortApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashGate()
         }
         .modelContainer(for: [Gallery.self, SortedPhoto.self, DismissedPhoto.self])
+    }
+}
+
+/// Shows the app icon until the content is ready, then fades in.
+private struct SplashGate: View {
+    @State private var isReady = false
+
+    var body: some View {
+        ZStack {
+            ContentView(isReady: $isReady)
+                .opacity(isReady ? 1 : 0)
+
+            if !isReady {
+                splashView
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.4), value: isReady)
+    }
+
+    private var splashView: some View {
+        ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea()
+
+            Image("LaunchIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+        }
     }
 }

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Binding var isReady: Bool
+
     @State private var startDate: Date?
     @State private var selectedAlbum: PhoneAlbum?
     @State private var sortMode: SortMode = .copy
@@ -45,7 +47,8 @@ struct ContentView: View {
                     focusDuration: $focusDuration,
                     isOnThisDay: $isOnThisDay,
                     showGalleries: $showGalleries,
-                    showDuplicateSweep: $showDuplicateSweep
+                    showDuplicateSweep: $showDuplicateSweep,
+                    isReady: $isReady
                 )
             }
         }

@@ -9,6 +9,7 @@ struct DatePickerView: View {
     @Binding var isOnThisDay: Bool
     @Binding var showGalleries: Bool
     @Binding var showDuplicateSweep: Bool
+    @Binding var isReady: Bool
 
     @State private var pickerDate = Date()
     private let photoService = PhotoLibraryService.shared
@@ -120,7 +121,10 @@ struct DatePickerView: View {
         }
         .task {
             let status = await photoService.requestAuthorization()
-            guard status == .authorized || status == .limited else { return }
+            guard status == .authorized || status == .limited else {
+                isReady = true
+                return
+            }
 
             if let range = photoService.photoDateRange() {
                 earliestDate = range.earliest
@@ -130,6 +134,7 @@ struct DatePickerView: View {
 
             albums = photoService.fetchAlbums()
             unsortedCount = photoService.unsortedPhotoCount()
+            isReady = true
         }
     }
 
