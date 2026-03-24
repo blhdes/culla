@@ -27,7 +27,7 @@ struct GallerySidebarView: View {
                 ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
                     GallerySidebarItem(
                         gallery: gallery,
-                        pastelColor: .pastel(for: gallery.colorIndex),
+                        pastelColor: gallery.color,
                         isHighlighted: gallery.id == highlightedID,
                         isDragging: isDragging,
                         dragProgress: dragProgress
@@ -48,7 +48,7 @@ struct GallerySidebarView: View {
 
 }
 
-// MARK: - Shared Pastel Palette
+// MARK: - Shared Pastel Palette & Hex Support
 
 extension Color {
     static let pastels: [Color] = [
@@ -64,8 +64,33 @@ extension Color {
         Color(red: 0.8, green: 0.7, blue: 0.95),    // soft violet
     ]
 
+    static let pastelHexes: [String] = [
+        "#F29999", "#99CCEE", "#B3E6B3", "#E6BFF2",
+        "#F2D98C", "#F2B380", "#99D9D9", "#D9A6D9",
+        "#BFD999", "#CCB3F2",
+    ]
+
     static func pastel(for index: Int) -> Color {
         pastels[index % pastels.count]
+    }
+
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        var rgb: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&rgb)
+        self.init(
+            red: Double((rgb >> 16) & 0xFF) / 255,
+            green: Double((rgb >> 8) & 0xFF) / 255,
+            blue: Double(rgb & 0xFF) / 255
+        )
+    }
+
+    var hexString: String {
+        let uiColor = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "#%02X%02X%02X",
+                      Int(r * 255), Int(g * 255), Int(b * 255))
     }
 }
 

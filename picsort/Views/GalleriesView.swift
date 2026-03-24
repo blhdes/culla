@@ -186,7 +186,7 @@ struct GalleriesView: View {
     private func galleryRow(_ gallery: Gallery) -> some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(Color.pastel(for: gallery.colorIndex))
+                .fill(gallery.color)
                 .frame(width: 10, height: 10)
 
             Text(gallery.name)

@@ -39,7 +39,7 @@ struct GalleryDetailView: View {
                                 }
                             } label: {
                                 Circle()
-                                    .fill(Color.pastel(for: gallery.colorIndex))
+                                    .fill(gallery.color)
                                     .frame(width: 12, height: 12)
                             }
 
@@ -51,26 +51,40 @@ struct GalleryDetailView: View {
                         }
 
                         if showColorPicker {
-                            HStack(spacing: 10) {
-                                ForEach(0..<Color.pastels.count, id: \.self) { index in
-                                    Button {
-                                        gallery.colorIndex = index
-                                        try? modelContext.save()
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            showColorPicker = false
-                                        }
-                                    } label: {
-                                        Circle()
-                                            .fill(Color.pastel(for: index))
-                                            .frame(width: 24, height: 24)
-                                            .overlay {
-                                                if gallery.colorIndex == index {
-                                                    Circle()
-                                                        .strokeBorder(.primary, lineWidth: 2)
+                            VStack(spacing: 12) {
+                                // Quick-pick pastel presets
+                                HStack(spacing: 10) {
+                                    ForEach(Array(Color.pastelHexes.enumerated()), id: \.offset) { _, hex in
+                                        Button {
+                                            gallery.colorHex = hex
+                                            try? modelContext.save()
+                                        } label: {
+                                            Circle()
+                                                .fill(Color(hex: hex))
+                                                .frame(width: 24, height: 24)
+                                                .overlay {
+                                                    if gallery.colorHex == hex {
+                                                        Circle()
+                                                            .strokeBorder(.primary, lineWidth: 2)
+                                                    }
                                                 }
-                                            }
+                                        }
                                     }
                                 }
+
+                                // Full color picker for custom colors
+                                ColorPicker(
+                                    "Custom color",
+                                    selection: Binding(
+                                        get: { gallery.color },
+                                        set: { newColor in
+                                            gallery.colorHex = newColor.hexString
+                                            try? modelContext.save()
+                                        }
+                                    ),
+                                    supportsOpacity: false
+                                )
+                                .font(.subheadline)
                             }
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }

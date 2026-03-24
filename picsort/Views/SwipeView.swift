@@ -327,8 +327,10 @@ struct SwipeView: View {
     // MARK: - Gesture Handling
 
     private func updateHighlight(translation: CGSize, location: CGPoint) {
-        // Only highlight galleries when horizontal is the dominant axis
-        if translation.width > 30 && abs(translation.width) > abs(translation.height) {
+        // Highlight galleries whenever there's meaningful rightward movement.
+        // No axis dominance check — top/bottom galleries naturally require
+        // steep angles, and the highlight should still work.
+        if translation.width > 30 {
             highlightedGalleryID = findGallery(at: location)
         } else {
             highlightedGalleryID = nil
@@ -340,6 +342,21 @@ struct SwipeView: View {
         let ty = value.translation.height
         let ptx = value.predictedEndTranslation.width
         let pty = value.predictedEndTranslation.height
+
+        // Right swipe with a highlighted gallery always wins —
+        // even if the angle is steep (top/bottom galleries).
+        // The highlight means the finger is over a sidebar panel,
+        // so the user's intent is clear.
+        if tx > swipeThreshold || ptx > swipeThreshold,
+           let id = highlightedGalleryID,
+           let gallery = sidebarGalleries.first(where: { $0.id == id }) {
+            flyOff(x: 500) {
+                viewModel.assignToGallery(gallery)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                showToast("\u{2192} \(gallery.name)")
+            }
+            return
+        }
 
         // Vertical swipe: primary axis is vertical
         if abs(ty) > abs(tx) {
@@ -376,18 +393,6 @@ struct SwipeView: View {
                 viewModel.dismissCurrent()
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 showToast("Dismissed")
-            }
-            return
-        }
-
-        // Right swipe: use the gallery that was highlighted during drag
-        if tx > swipeThreshold || ptx > swipeThreshold,
-           let id = highlightedGalleryID,
-           let gallery = sidebarGalleries.first(where: { $0.id == id }) {
-            flyOff(x: 500) {
-                viewModel.assignToGallery(gallery)
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                showToast("\u{2192} \(gallery.name)")
             }
             return
         }

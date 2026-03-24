@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class Gallery {
@@ -17,17 +18,24 @@ final class Gallery {
     @Relationship(deleteRule: .cascade, inverse: \SortedPhoto.gallery)
     var sortedPhotos: [SortedPhoto]
 
+    /// The gallery's display color, derived from colorHex.
+    var color: Color {
+        Color(hex: colorHex)
+    }
+
     init(
         name: String,
         iconName: String = "folder.fill",
-        colorHex: String = "#007AFF",
+        colorHex: String? = nil,
         displayOrder: Int = 0,
         albumIdentifier: String? = nil
     ) {
         self.id = UUID()
         self.name = name
         self.iconName = iconName
-        self.colorHex = colorHex
+        // Pick a pastel default based on position if no color was provided
+        let pastelHexes = Color.pastelHexes
+        self.colorHex = colorHex ?? pastelHexes[displayOrder % pastelHexes.count]
         self.displayOrder = displayOrder
         self.colorIndex = displayOrder
         self.createdAt = .now

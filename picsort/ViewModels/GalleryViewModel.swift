@@ -21,7 +21,7 @@ final class GalleryViewModel {
 
     // MARK: - Create
 
-    func createGallery(name: String, iconName: String = "folder.fill", colorHex: String = "#007AFF") {
+    func createGallery(name: String, iconName: String = "folder.fill", colorHex: String? = nil) {
         let gallery = Gallery(
             name: name,
             iconName: iconName,
