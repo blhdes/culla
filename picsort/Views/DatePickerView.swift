@@ -19,6 +19,7 @@ struct DatePickerView: View {
     @State private var unsortedCount: Int = 0
     @State private var showAlbumPicker = false
     @State private var showFullCalendar = false
+    @State private var permissionDenied = false
 
     var body: some View {
         VStack(spacing: 28) {
@@ -88,6 +89,29 @@ struct DatePickerView: View {
                             .font(.subheadline)
                     }
                 }
+            } else if permissionDenied {
+                Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "photo.badge.exclamationmark")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                    Text("Photo access required")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    Text("picsort needs access to your photo library to organize your photos.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
+                Spacer()
             } else {
                 Spacer()
                 ProgressView("Loading your library...")
@@ -122,6 +146,7 @@ struct DatePickerView: View {
         .task {
             let status = await photoService.requestAuthorization()
             guard status == .authorized || status == .limited else {
+                permissionDenied = true
                 isReady = true
                 return
             }
