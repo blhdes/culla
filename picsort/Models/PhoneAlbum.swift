@@ -13,10 +13,10 @@ struct PhoneAlbum: Identifiable, Hashable {
     let collectionIdentifier: String
 
     /// Sentinel identifier for the "Unsorted Photos" virtual album.
-    static let unsortedIdentifier = "__picsort_unsorted__"
+    static let unsortedIdentifier = "__culla_unsorted__"
 
     /// Sentinel identifier for the "Favorites" virtual album.
-    static let favoritesIdentifier = "__picsort_favorites__"
+    static let favoritesIdentifier = "__culla_favorites__"
 
     /// Whether this represents the virtual "Unsorted Photos" filter.
     var isUnsorted: Bool { collectionIdentifier == Self.unsortedIdentifier }

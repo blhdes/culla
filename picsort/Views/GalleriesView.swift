@@ -116,7 +116,7 @@ struct GalleriesView: View {
                     viewModel?.deleteGallery(gallery)
                     galleryToDelete = nil
                 }
-                Button("Remove from picsort") {
+                Button("Remove from Culla") {
                     viewModel?.unlinkGallery(gallery)
                     galleryToDelete = nil
                 }
@@ -125,7 +125,7 @@ struct GalleriesView: View {
                 }
             }
         } message: {
-            Text("\"Remove from picsort\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
+            Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
         }
         .sheet(isPresented: $showInsights) {
             InsightsView()

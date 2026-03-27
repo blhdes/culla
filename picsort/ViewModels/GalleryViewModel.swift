@@ -46,7 +46,7 @@ final class GalleryViewModel {
 
     // MARK: - Delete
 
-    /// Unlinks the gallery from picsort only. iPhone album and photos stay untouched.
+    /// Unlinks the gallery from Culla only. iPhone album and photos stay untouched.
     /// The gallery can be re-imported later via "Import from Phone."
     func unlinkGallery(_ gallery: Gallery) {
         modelContext.delete(gallery)
@@ -55,7 +55,7 @@ final class GalleryViewModel {
         renumberDisplayOrder()
     }
 
-    /// Removes the gallery from picsort AND deletes the iPhone album.
+    /// Removes the gallery from Culla AND deletes the iPhone album.
     /// Photos stay in the library but lose their album grouping.
     func deleteGallery(_ gallery: Gallery) {
         let albumID = gallery.albumIdentifier

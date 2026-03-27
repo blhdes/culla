@@ -112,7 +112,7 @@ struct DatePickerView: View {
                     Text("Photo access required")
                         .font(.title3)
                         .fontWeight(.semibold)
-                    Text("picsort needs access to your photo library to organize your photos.")
+                    Text("Culla needs access to your photo library to organize your photos.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

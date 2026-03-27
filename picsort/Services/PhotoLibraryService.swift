@@ -59,7 +59,7 @@ final class PhotoLibraryService {
             }
             return newValue
         } catch {
-            print("picsort: Failed to toggle favorite: \(error)")
+            print("culla: Failed to toggle favorite: \(error)")
             return asset.isFavorite
         }
     }
@@ -90,7 +90,7 @@ final class PhotoLibraryService {
             )
             return result.firstObject?.localIdentifier
         } catch {
-            print("picsort: Failed to create album '\(name)': \(error)")
+            print("culla: Failed to create album '\(name)': \(error)")
             return nil
         }
     }
@@ -110,7 +110,7 @@ final class PhotoLibraryService {
                 request.addAssets([asset] as NSFastEnumeration)
             }
         } catch {
-            print("picsort: Failed to add photo to album: \(error)")
+            print("culla: Failed to add photo to album: \(error)")
         }
     }
 
@@ -129,7 +129,7 @@ final class PhotoLibraryService {
             }
             return count
         } catch {
-            print("picsort: Failed to delete photos: \(error)")
+            print("culla: Failed to delete photos: \(error)")
             return 0
         }
     }
@@ -149,7 +149,7 @@ final class PhotoLibraryService {
                 request.removeAssets([asset] as NSFastEnumeration)
             }
         } catch {
-            print("picsort: Failed to remove photo from album: \(error)")
+            print("culla: Failed to remove photo from album: \(error)")
         }
     }
 
@@ -166,7 +166,7 @@ final class PhotoLibraryService {
                 )
             }
         } catch {
-            print("picsort: Failed to delete album: \(error)")
+            print("culla: Failed to delete album: \(error)")
         }
     }
 

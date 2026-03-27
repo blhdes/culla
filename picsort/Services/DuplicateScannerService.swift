@@ -80,7 +80,7 @@ final class DuplicateScannerService {
             try handler.perform([request])
             return request.results?.first as? VNFeaturePrintObservation
         } catch {
-            print("picsort: Failed to generate fingerprint: \(error)")
+            print("culla: Failed to generate fingerprint: \(error)")
             return nil
         }
     }

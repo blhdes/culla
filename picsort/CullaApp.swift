@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct picsortApp: App {
+struct CullaApp: App {
     /// Random neon accent picked fresh each launch.
     private let sessionAccent = Color(hex: Color.neonHexes.randomElement()!)
 
