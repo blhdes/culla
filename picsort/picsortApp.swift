@@ -3,9 +3,13 @@ import SwiftData
 
 @main
 struct picsortApp: App {
+    /// Random neon accent picked fresh each launch.
+    private let sessionAccent = Color(hex: Color.neonHexes.randomElement()!)
+
     var body: some Scene {
         WindowGroup {
             SplashGate()
+                .tint(sessionAccent)
         }
         .modelContainer(for: [Gallery.self, SortedPhoto.self, DismissedPhoto.self])
     }
