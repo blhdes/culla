@@ -3,6 +3,7 @@ import SwiftUI
 struct AlbumPickerView: View {
     let albums: [PhoneAlbum]
     let unsortedCount: Int
+    let favoritesCount: Int
     let onSelect: (PhoneAlbum) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -12,31 +13,59 @@ struct AlbumPickerView: View {
 
     var body: some View {
         List {
-            // "Unsorted Photos" — pinned at the top
-            if searchText.isEmpty, unsortedCount > 0 {
+            // Virtual collections — pinned at the top
+            if searchText.isEmpty, unsortedCount > 0 || favoritesCount > 0 {
                 Section {
-                    Button {
-                        onSelect(.unsorted(photoCount: unsortedCount))
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 14) {
-                            Circle()
-                                .fill(.tertiary)
-                                .frame(width: 10, height: 10)
+                    if unsortedCount > 0 {
+                        Button {
+                            onSelect(.unsorted(photoCount: unsortedCount))
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 14) {
+                                Circle()
+                                    .fill(.tertiary)
+                                    .frame(width: 10, height: 10)
 
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Unsorted Photos")
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.primary)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Unsorted Photos")
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.primary)
 
-                                Text("\(unsortedCount) photos not in any album")
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
+                                    Text("\(unsortedCount) photos not in any album")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+
+                                Spacer()
                             }
-
-                            Spacer()
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
+                    }
+
+                    if favoritesCount > 0 {
+                        Button {
+                            onSelect(.favorites(photoCount: favoritesCount))
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "heart.fill")
+                                    .foregroundStyle(.red)
+                                    .frame(width: 10)
+
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Favorites")
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.primary)
+
+                                    Text("\(favoritesCount) favorited photos")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+
+                                Spacer()
+                            }
+                            .padding(.vertical, 4)
+                        }
                     }
                 }
             }

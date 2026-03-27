@@ -87,16 +87,6 @@ struct DatePickerView: View {
                             .font(.subheadline)
                     }
 
-                    if favoritesCount > 0 {
-                        Button {
-                            selectedAlbum = PhoneAlbum.favorites(photoCount: favoritesCount)
-                            selectedDate = earliestDate ?? .distantPast
-                        } label: {
-                            Label("Favorites (\(favoritesCount))", systemImage: "heart")
-                                .font(.subheadline)
-                        }
-                    }
-
                     Button {
                         showDuplicateSweep = true
                     } label: {
@@ -157,7 +147,7 @@ struct DatePickerView: View {
         }
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {
-                AlbumPickerView(albums: albums, unsortedCount: unsortedCount) { album in
+                AlbumPickerView(albums: albums, unsortedCount: unsortedCount, favoritesCount: favoritesCount) { album in
                     selectedAlbum = album
                 }
                 .toolbar {
