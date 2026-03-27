@@ -42,7 +42,8 @@ final class SwipeViewModel {
 
     // MARK: - Undo
 
-    private(set) var lastAction: SwipeAction?
+    private(set) var actionHistory: [SwipeAction] = []
+    var canUndo: Bool { !actionHistory.isEmpty }
 
     // MARK: - Cached Counts
 
@@ -79,7 +80,7 @@ final class SwipeViewModel {
     func loadInitialBatch() async {
         guard identifierQueue.isEmpty, currentIdentifier == nil else { return }
         isLoading = true
-        lastAction = nil
+        actionHistory.removeAll()
 
         let excludedIDs = fetchExcludedIdentifiers()
         let fetched: [String]
@@ -139,7 +140,7 @@ final class SwipeViewModel {
         modelContext.insert(dismissed)
         try? modelContext.save()
 
-        lastAction = .dismissed(assetIdentifier: identifier)
+        actionHistory.append(.dismissed(assetIdentifier: identifier))
         dismissedCount += 1
         sessionDismissedCount += 1
         advance()
@@ -148,8 +149,8 @@ final class SwipeViewModel {
     /// Double-tap: skip photo without dismissing — it will reappear next session.
     @MainActor
     func skipCurrent() {
-        guard currentIdentifier != nil else { return }
-        lastAction = nil
+        guard let identifier = currentIdentifier else { return }
+        actionHistory.append(.skipped(assetIdentifier: identifier))
         advance()
     }
 
@@ -169,7 +170,7 @@ final class SwipeViewModel {
         modelContext.insert(sorted)
         try? modelContext.save()
 
-        lastAction = .sorted(assetIdentifier: identifier, gallery: gallery)
+        actionHistory.append(.sorted(assetIdentifier: identifier, gallery: gallery))
         sessionSortedCount += 1
         sessionGalleries.insert(gallery.id)
         showGalleryPicker = false
@@ -200,7 +201,8 @@ final class SwipeViewModel {
 
     @MainActor
     func undo() {
-        guard let action = lastAction else { return }
+        guard let action = actionHistory.last else { return }
+        actionHistory.removeLast()
 
         switch action {
         case .dismissed(let identifier):
@@ -213,17 +215,15 @@ final class SwipeViewModel {
             deleteSortedPhoto(identifier: identifier)
             sessionSortedCount = max(sessionSortedCount - 1, 0)
             pushBackToFront(identifier: identifier)
-
-            // Also remove from iPhone Photos album
             if let albumID = gallery.albumIdentifier {
                 Task {
                     await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: albumID)
                 }
             }
 
+        case .skipped(let identifier):
+            pushBackToFront(identifier: identifier)
         }
-
-        lastAction = nil
     }
 
     // MARK: - Batch Delete
@@ -365,6 +365,7 @@ final class SwipeViewModel {
 enum SwipeAction {
     case dismissed(assetIdentifier: String)
     case sorted(assetIdentifier: String, gallery: Gallery)
+    case skipped(assetIdentifier: String)
 }
 
 /// When sorting from an existing album, determines whether photos

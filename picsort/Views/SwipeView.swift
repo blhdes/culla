@@ -508,19 +508,25 @@ struct SwipeView: View {
 
     @ViewBuilder
     private func undoButton(viewModel: SwipeViewModel) -> some View {
-        if viewModel.lastAction != nil {
+        if viewModel.canUndo {
             Button {
-                viewModel.undo()
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    viewModel.undo()
+                }
             } label: {
-                Label("Undo", systemImage: "arrow.uturn.backward")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.ultraThinMaterial, in: Capsule())
+                let count = viewModel.actionHistory.count
+                Label(
+                    count > 1 ? "Undo (\(count))" : "Undo",
+                    systemImage: "arrow.uturn.backward"
+                )
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial, in: Capsule())
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
-            .animation(.spring, value: viewModel.lastAction != nil)
+            .animation(.spring, value: viewModel.canUndo)
         }
     }
 
