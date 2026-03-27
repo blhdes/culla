@@ -18,9 +18,9 @@ final class Gallery {
     @Relationship(deleteRule: .cascade, inverse: \SortedPhoto.gallery)
     var sortedPhotos: [SortedPhoto]
 
-    /// The gallery's display color, derived from colorHex.
+    /// The gallery's display color — adapts automatically for light/dark mode.
     var color: Color {
-        Color(hex: colorHex)
+        Color.adaptiveNeon(hex: colorHex)
     }
 
     init(

@@ -55,7 +55,7 @@ struct GalleryDetailView: View {
                                             try? modelContext.save()
                                         } label: {
                                             Circle()
-                                                .fill(Color(hex: hex))
+                                                .fill(Color.adaptiveNeon(hex: hex))
                                                 .frame(width: 24, height: 24)
                                                 .overlay {
                                                     if gallery.colorHex == hex {

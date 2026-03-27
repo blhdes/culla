@@ -3,8 +3,8 @@ import SwiftData
 
 @main
 struct CullaApp: App {
-    /// Random neon accent picked fresh each launch.
-    private let sessionAccent = Color(hex: Color.neonHexes.randomElement()!)
+    /// Random neon accent picked fresh each launch — adapts to light/dark.
+    private let sessionAccent = Color.adaptiveNeon(hex: Color.neonHexes.randomElement()!)
 
     var body: some Scene {
         WindowGroup {

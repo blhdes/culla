@@ -51,24 +51,50 @@ struct GallerySidebarView: View {
 // MARK: - Shared Neon Palette & Hex Support
 
 extension Color {
-    static let neons: [Color] = [
-        Color(red: 1.0, green: 0.18, blue: 0.47),   // neon pink
-        Color(red: 0.0, green: 0.71, blue: 1.0),    // neon blue
-        Color(red: 0.22, green: 1.0, blue: 0.08),   // neon green
-        Color(red: 0.75, green: 0.0, blue: 1.0),    // neon purple
-        Color(red: 1.0, green: 0.90, blue: 0.0),    // neon yellow
-        Color(red: 1.0, green: 0.40, blue: 0.0),    // neon orange
-        Color(red: 0.0, green: 1.0, blue: 0.93),    // neon cyan
-        Color(red: 1.0, green: 0.0, blue: 0.25),    // neon red
-        Color(red: 0.80, green: 1.0, blue: 0.0),    // neon lime
-        Color(red: 1.0, green: 0.0, blue: 1.0),     // neon magenta
-    ]
 
+    /// Canonical palette — stored in SwiftData and used as identity keys.
     static let neonHexes: [String] = [
         "#FF2D78", "#00B4FF", "#39FF14", "#BF00FF",
         "#FFE600", "#FF6600", "#00FFEE", "#FF0040",
         "#CCFF00", "#FF00FF",
     ]
+
+    /// Dark mode display — slightly toned down where raw neons are too harsh.
+    private static let neonHexesDark: [String] = [
+        "#FF2D78", "#00B4FF", "#30E612", "#BF00FF",
+        "#FFCC00", "#FF6600", "#00E6D6", "#FF0040",
+        "#B8E600", "#FF00FF",
+    ]
+
+    /// Light mode display — deeper, richer versions readable on white.
+    private static let neonHexesLight: [String] = [
+        "#D42560", "#0088CC", "#1DAF00", "#9500CC",
+        "#B88700", "#D45500", "#008877", "#CC0033",
+        "#6E9E00", "#CC00CC",
+    ]
+
+    /// Returns a Color that automatically adapts between light and dark mode.
+    /// If the hex matches a known neon, it maps to the curated variant.
+    /// Custom colors pass through unchanged.
+    static func adaptiveNeon(hex: String) -> Color {
+        let darkHex: String
+        let lightHex: String
+        if let index = neonHexes.firstIndex(of: hex) {
+            darkHex = neonHexesDark[index]
+            lightHex = neonHexesLight[index]
+        } else {
+            darkHex = hex
+            lightHex = hex
+        }
+        return Color(UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: darkHex))
+                : UIColor(Color(hex: lightHex))
+        })
+    }
+
+    /// Adaptive neon palette — ready to render in any color scheme.
+    static let neons: [Color] = neonHexes.map { adaptiveNeon(hex: $0) }
 
     static func neon(for index: Int) -> Color {
         neons[index % neons.count]
