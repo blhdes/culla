@@ -48,6 +48,10 @@ struct SwipeView: View {
     // Pinch-to-zoom full screen
     @State private var isPhotoZoomed = false
 
+    // Undo auto-hide
+    @State private var showUndo = false
+    @State private var undoHideTask: Task<Void, Never>?
+
     // Delete state
     @State private var isDeleting = false
     @State private var deleteMessage: DeleteFeedback?
@@ -121,6 +125,9 @@ struct SwipeView: View {
                 timerActive = false
                 showSessionSummary = true
             }
+        }
+        .onChange(of: viewModel?.actionHistory.count) { _, _ in
+            flashUndo()
         }
         .onChange(of: galleries.count) {
             // On first gallery creation, auto-add to sidebar
@@ -508,11 +515,12 @@ struct SwipeView: View {
 
     @ViewBuilder
     private func undoButton(viewModel: SwipeViewModel) -> some View {
-        if viewModel.canUndo {
+        if viewModel.canUndo, showUndo {
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     viewModel.undo()
                 }
+                flashUndo()
             } label: {
                 let count = viewModel.actionHistory.count
                 Label(
@@ -526,7 +534,19 @@ struct SwipeView: View {
                 .background(.ultraThinMaterial, in: Capsule())
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
-            .animation(.spring, value: viewModel.canUndo)
+        }
+    }
+
+    /// Shows the undo button briefly, then auto-hides after 2 seconds.
+    private func flashUndo() {
+        undoHideTask?.cancel()
+        withAnimation(.spring) { showUndo = true }
+        undoHideTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.3)) { showUndo = false }
+            }
         }
     }
 
