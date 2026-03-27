@@ -18,6 +18,7 @@ struct DatePickerView: View {
     @State private var latestDate: Date?
     @State private var albums: [PhoneAlbum] = []
     @State private var unsortedCount: Int = 0
+    @State private var favoritesCount: Int = 0
     @State private var showAlbumPicker = false
     @State private var showFullCalendar = false
     @State private var showDismissedPhotos = false
@@ -54,7 +55,7 @@ struct DatePickerView: View {
                 albumFilterButton
 
                 // Move vs. copy — only when sorting from a real album
-                if let album = selectedAlbum, !album.isUnsorted {
+                if let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
                     sortModePicker
                 }
 
@@ -84,6 +85,16 @@ struct DatePickerView: View {
                     } label: {
                         Label("On This Day", systemImage: "clock.arrow.circlepath")
                             .font(.subheadline)
+                    }
+
+                    if favoritesCount > 0 {
+                        Button {
+                            selectedAlbum = PhoneAlbum.favorites(photoCount: favoritesCount)
+                            selectedDate = earliestDate ?? .distantPast
+                        } label: {
+                            Label("Favorites (\(favoritesCount))", systemImage: "heart")
+                                .font(.subheadline)
+                        }
                     }
 
                     Button {
@@ -177,6 +188,7 @@ struct DatePickerView: View {
 
             albums = photoService.fetchAlbums()
             unsortedCount = photoService.unsortedPhotoCount()
+            favoritesCount = photoService.favoritesPhotoCount()
             isReady = true
         }
     }

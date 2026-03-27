@@ -218,9 +218,12 @@ final class PhotoLibraryService {
         excluding excludedIDs: Set<String>,
         inAlbum albumIdentifier: String? = nil
     ) -> [String] {
-        // Handle the "Unsorted Photos" virtual album
+        // Handle virtual albums
         if albumIdentifier == PhoneAlbum.unsortedIdentifier {
             return fetchUnsortedAssetIdentifiers(from: startDate, excluding: excludedIDs)
+        }
+        if albumIdentifier == PhoneAlbum.favoritesIdentifier {
+            return fetchFavoritesAssetIdentifiers(from: startDate, excluding: excludedIDs)
         }
 
         let fetchOptions = PHFetchOptions()
@@ -299,6 +302,16 @@ final class PhotoLibraryService {
         return identifiers
     }
 
+    /// Returns the count of favorited photos.
+    func favoritesPhotoCount() -> Int {
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(
+            format: "mediaType == %d AND isFavorite == YES",
+            PHAssetMediaType.image.rawValue
+        )
+        return PHAsset.fetchAssets(with: options).count
+    }
+
     /// Returns the count of photos not in any user-created album.
     func unsortedPhotoCount() -> Int {
         let albummedIDs = identifiersInAllUserAlbums()
@@ -317,6 +330,32 @@ final class PhotoLibraryService {
             }
         }
         return count
+    }
+
+    // MARK: - Favorites Fetching
+
+    /// Returns identifiers for favorited photos, filtered by start date and exclusion set.
+    private func fetchFavoritesAssetIdentifiers(
+        from startDate: Date,
+        excluding excludedIDs: Set<String>
+    ) -> [String] {
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.predicate = NSPredicate(
+            format: "creationDate >= %@ AND mediaType == %d AND isFavorite == YES",
+            startDate as NSDate,
+            PHAssetMediaType.image.rawValue
+        )
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+
+        let allAssets = PHAsset.fetchAssets(with: fetchOptions)
+
+        var identifiers: [String] = []
+        allAssets.enumerateObjects { asset, _, _ in
+            if !excludedIDs.contains(asset.localIdentifier) {
+                identifiers.append(asset.localIdentifier)
+            }
+        }
+        return identifiers
     }
 
     // MARK: - Unsorted Fetching

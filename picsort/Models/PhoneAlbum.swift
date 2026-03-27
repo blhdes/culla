@@ -15,8 +15,26 @@ struct PhoneAlbum: Identifiable, Hashable {
     /// Sentinel identifier for the "Unsorted Photos" virtual album.
     static let unsortedIdentifier = "__picsort_unsorted__"
 
+    /// Sentinel identifier for the "Favorites" virtual album.
+    static let favoritesIdentifier = "__picsort_favorites__"
+
     /// Whether this represents the virtual "Unsorted Photos" filter.
     var isUnsorted: Bool { collectionIdentifier == Self.unsortedIdentifier }
+
+    /// Whether this represents the virtual "Favorites" filter.
+    var isFavorites: Bool { collectionIdentifier == Self.favoritesIdentifier }
+
+    /// Creates a virtual album representing the user's favorited photos.
+    static func favorites(photoCount: Int) -> PhoneAlbum {
+        PhoneAlbum(
+            id: favoritesIdentifier,
+            name: "Favorites",
+            photoCount: photoCount,
+            startDate: nil,
+            endDate: nil,
+            collectionIdentifier: favoritesIdentifier
+        )
+    }
 
     /// Creates a virtual album representing photos not in any user-created album.
     static func unsorted(photoCount: Int) -> PhoneAlbum {
