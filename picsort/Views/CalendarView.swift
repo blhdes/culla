@@ -98,7 +98,7 @@ struct CalendarView: View {
     /// Returns exactly 42 slots (6 rows x 7 columns). Empty slots are nil.
     private var daysInGrid: [Date?] {
         let first = calendar.startOfMonth(for: displayedMonth)
-        let range = calendar.range(of: .day, in: .month, for: first)!
+        guard let range = calendar.range(of: .day, in: .month, for: first) else { return [] }
 
         // Weekday of the 1st, shifted so Monday = 0
         let rawWeekday = calendar.component(.weekday, from: first)
@@ -153,11 +153,11 @@ struct CalendarView: View {
 private extension Calendar {
     func startOfMonth(for date: Date) -> Date {
         let components = dateComponents([.year, .month], from: date)
-        return self.date(from: components)!
+        return self.date(from: components) ?? date
     }
 
     func endOfMonth(for date: Date) -> Date {
         let start = startOfMonth(for: date)
-        return self.date(byAdding: DateComponents(month: 1, day: -1), to: start)!
+        return self.date(byAdding: DateComponents(month: 1, day: -1), to: start) ?? start
     }
 }

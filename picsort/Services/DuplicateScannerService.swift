@@ -28,12 +28,12 @@ final class DuplicateScannerService {
             return []
         }
 
-        // 3. Fetch nearby photos within the time window
-        let neighborIDs = fetchNearbyIdentifiers(
+        // 3. Fetch nearby photos within the time window (cap at 50 to avoid long hangs)
+        let neighborIDs = Array(fetchNearbyIdentifiers(
             around: referenceDate,
             timeWindow: timeWindow,
             excluding: excluding.union([assetIdentifier])
-        )
+        ).prefix(50))
 
         guard !neighborIDs.isEmpty else { return [] }
 

@@ -71,6 +71,7 @@ final class DismissedPhotosViewModel {
     /// Permanently deletes photos from the library and removes SwiftData records.
     @MainActor
     func deleteSelected() async -> Int {
+        guard !isDeleting else { return 0 }
         isDeleting = true
         let targets = dismissedPhotos.filter { selectedIdentifiers.contains($0.assetIdentifier) }
         let identifiers = targets.map(\.assetIdentifier)
@@ -92,6 +93,7 @@ final class DismissedPhotosViewModel {
 
     @MainActor
     func deleteAll() async -> Int {
+        guard !isDeleting else { return 0 }
         isDeleting = true
         let identifiers = dismissedPhotos.map(\.assetIdentifier)
 

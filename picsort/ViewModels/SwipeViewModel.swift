@@ -79,6 +79,7 @@ final class SwipeViewModel {
     func loadInitialBatch() async {
         guard identifierQueue.isEmpty, currentIdentifier == nil else { return }
         isLoading = true
+        lastAction = nil
 
         let excludedIDs = fetchExcludedIdentifiers()
         let fetched: [String]
