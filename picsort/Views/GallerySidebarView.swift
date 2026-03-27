@@ -27,7 +27,7 @@ struct GallerySidebarView: View {
                 ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
                     GallerySidebarItem(
                         gallery: gallery,
-                        pastelColor: gallery.color,
+                        neonColor: gallery.color,
                         isHighlighted: gallery.id == highlightedID,
                         isDragging: isDragging,
                         dragProgress: dragProgress
@@ -48,10 +48,10 @@ struct GallerySidebarView: View {
 
 }
 
-// MARK: - Shared Pastel Palette & Hex Support
+// MARK: - Shared Neon Palette & Hex Support
 
 extension Color {
-    static let pastels: [Color] = [
+    static let neons: [Color] = [
         Color(red: 1.0, green: 0.18, blue: 0.47),   // neon pink
         Color(red: 0.0, green: 0.71, blue: 1.0),    // neon blue
         Color(red: 0.22, green: 1.0, blue: 0.08),   // neon green
@@ -64,14 +64,14 @@ extension Color {
         Color(red: 1.0, green: 0.0, blue: 1.0),     // neon magenta
     ]
 
-    static let pastelHexes: [String] = [
+    static let neonHexes: [String] = [
         "#FF2D78", "#00B4FF", "#39FF14", "#BF00FF",
         "#FFE600", "#FF6600", "#00FFEE", "#FF0040",
         "#CCFF00", "#FF00FF",
     ]
 
-    static func pastel(for index: Int) -> Color {
-        pastels[index % pastels.count]
+    static func neon(for index: Int) -> Color {
+        neons[index % neons.count]
     }
 
     init(hex: String) {
@@ -98,16 +98,16 @@ extension Color {
 
 struct GallerySidebarItem: View {
     let gallery: Gallery
-    let pastelColor: Color
+    let neonColor: Color
     let isHighlighted: Bool
     let isDragging: Bool
     let dragProgress: CGFloat
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Pastel background — only visible during drag, fades in with progress
+            // Neon background — only visible during drag, fades in with progress
             if isDragging {
-                pastelColor
+                neonColor
                     .opacity(isHighlighted ? 0.9 : 0.3 + 0.5 * dragProgress)
             }
 

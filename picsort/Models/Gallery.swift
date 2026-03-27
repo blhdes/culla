@@ -33,9 +33,9 @@ final class Gallery {
         self.id = UUID()
         self.name = name
         self.iconName = iconName
-        // Pick a pastel default based on position if no color was provided
-        let pastelHexes = Color.pastelHexes
-        self.colorHex = colorHex ?? pastelHexes[displayOrder % pastelHexes.count]
+        // Pick a neon default based on position if no color was provided
+        let neonHexes = Color.neonHexes
+        self.colorHex = colorHex ?? neonHexes[displayOrder % neonHexes.count]
         self.displayOrder = displayOrder
         self.colorIndex = displayOrder
         self.createdAt = .now

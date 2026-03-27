@@ -47,9 +47,9 @@ struct GalleryDetailView: View {
 
                         if showColorPicker {
                             VStack(spacing: 12) {
-                                // Quick-pick pastel presets
+                                // Quick-pick neon presets
                                 HStack(spacing: 10) {
-                                    ForEach(Array(Color.pastelHexes.enumerated()), id: \.offset) { _, hex in
+                                    ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
                                         Button {
                                             gallery.colorHex = hex
                                             try? modelContext.save()
