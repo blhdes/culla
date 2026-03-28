@@ -42,8 +42,8 @@ Once you have the Apple Developer license ($99/year), follow these steps in orde
 
 ### Step 2 — Update the signing configuration
 
-1. Open `picsort.xcodeproj` in Xcode
-2. Select the **picsort** target > **Signing & Capabilities** tab
+1. Open `culla.xcodeproj` in Xcode
+2. Select the **culla** target > **Signing & Capabilities** tab
 3. Check **"Automatically manage signing"**
 4. Select your **Team** (your developer account name)
 5. The bundle identifier `agu.culla` will be registered automatically

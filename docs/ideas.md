@@ -1,6 +1,6 @@
 # Feature Ideas
 
-Ideas for features that keep picsort minimal but make it something no other photo app does.
+Ideas for features that keep culla minimal but make it something no other photo app does.
 
 ---
 
@@ -10,7 +10,7 @@ Use Apple's Vision framework to analyze what's already been sorted into each gal
 
 All processing stays on-device. No cloud, no API, no external dependencies. The suggestion is just a subtle visual hint on one panel — never automatic, never forced. The user always makes the final call.
 
-**Why it's unique:** No swipe-to-sort app does on-device learning. This turns picsort from a tool into an assistant that gets better the more you use it.
+**Why it's unique:** No swipe-to-sort app does on-device learning. This turns culla from a tool into an assistant that gets better the more you use it.
 
 ---
 
@@ -61,7 +61,7 @@ Each direction has a subtle color hint (gold shimmer for up, soft blue for down)
 
 This keeps the screen completely clean (no buttons for favorite/share) while adding depth for power users. Two new actions, zero new UI elements.
 
-**Why it's unique:** Every competitor has buttons. A pure gesture vocabulary with no visible controls is rare outside of games. It makes picsort feel physical.
+**Why it's unique:** Every competitor has buttons. A pure gesture vocabulary with no visible controls is rare outside of games. It makes culla feel physical.
 
 ---
 
@@ -73,4 +73,4 @@ Uses Apple's Vision framework for perceptual similarity — all on-device, no ne
 
 Accessible from a simple toggle on the date picker: "Find duplicates instead."
 
-**Why it's unique:** Dedicated duplicate finder apps exist, but they're cluttered and aggressive. Integrating it into picsort's calm swipe flow makes it feel like part of the same experience, not a separate tool.
+**Why it's unique:** Dedicated duplicate finder apps exist, but they're cluttered and aggressive. Integrating it into culla's calm swipe flow makes it feel like part of the same experience, not a separate tool.

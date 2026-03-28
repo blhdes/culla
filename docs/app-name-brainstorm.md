@@ -1,6 +1,6 @@
 # App Name Brainstorm
 
-Current name: **picsort**
+Current name: **culla**
 
 ## Candidates
 

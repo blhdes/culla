@@ -40,7 +40,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 ## Project Structure
 
 ```
-picsort/
+culla/
 ├── CullaApp.swift                      # App entry point, splash screen, random accent
 │
 ├── Models/
@@ -132,7 +132,7 @@ Old images are evicted from the cache as the window slides forward.
 ## Building
 
 1. Clone the repo
-2. Open `picsort.xcodeproj` in Xcode
+2. Open `culla.xcodeproj` in Xcode
 3. Select your team under Signing & Capabilities
 4. Build and run on a device or simulator
 
