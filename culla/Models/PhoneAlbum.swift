@@ -40,7 +40,7 @@ struct PhoneAlbum: Identifiable, Hashable {
     static func unsorted(photoCount: Int) -> PhoneAlbum {
         PhoneAlbum(
             id: unsortedIdentifier,
-            name: "Unsorted Photos",
+            name: "Unculla'd",
             photoCount: photoCount,
             startDate: nil,
             endDate: nil,

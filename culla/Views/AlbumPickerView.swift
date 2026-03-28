@@ -22,12 +22,12 @@ struct AlbumPickerView: View {
                             dismiss()
                         } label: {
                             HStack(spacing: 14) {
-                                Circle()
-                                    .fill(.tertiary)
-                                    .frame(width: 10, height: 10)
+                                Image(systemName: "scissors")
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 10)
 
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("Unsorted Photos")
+                                    Text("Unculla'd")
                                         .fontWeight(.medium)
                                         .foregroundStyle(.primary)
 

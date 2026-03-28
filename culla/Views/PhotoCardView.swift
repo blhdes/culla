@@ -59,6 +59,7 @@ struct PhotoCardView: View {
     @ViewBuilder
     private var swipeOverlay: some View {
         let isVertical = abs(offset.height) > abs(offset.width)
+        let isDraggingTowardGalleries = offset.width > 30
 
         if offset.width < 0 && !isVertical {
             // Left drag — red (dismiss)
@@ -66,7 +67,7 @@ struct PhotoCardView: View {
             Color.red
                 .opacity(0.3 * progress)
                 .allowsHitTesting(false)
-        } else if offset.height < 0 && isVertical {
+        } else if offset.height < 0 && isVertical && !isDraggingTowardGalleries {
             // Up drag — gold (favorite)
             let progress = min(abs(offset.height) / swipeThreshold, 1.0)
             ZStack {
@@ -77,7 +78,7 @@ struct PhotoCardView: View {
                     .foregroundStyle(.white.opacity(0.8 * progress))
             }
             .allowsHitTesting(false)
-        } else if offset.height > 0 && isVertical {
+        } else if offset.height > 0 && isVertical && !isDraggingTowardGalleries {
             // Down drag — blue (share)
             let progress = min(abs(offset.height) / swipeThreshold, 1.0)
             ZStack {

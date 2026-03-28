@@ -186,9 +186,9 @@ struct DatePickerView: View {
     // MARK: - Focus Timer Menu
 
     private var startButtonLabel: String {
-        guard let focusDuration else { return "Start Sorting" }
+        guard let focusDuration else { return "Start Cullaing" }
         let minutes = Int(focusDuration) / 60
-        return "Sort for \(minutes) min"
+        return "Culla for \(minutes) min"
     }
 
     private var timerMenu: some View {

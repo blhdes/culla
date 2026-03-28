@@ -16,8 +16,18 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Description of what the lane does"
-  lane :custom_lane do
-    # add actions here: https://docs.fastlane.tools/actions
+
+  desc "Take App Store screenshots on all required simulators"
+  lane :screenshots do
+    # Boot simulators and seed sample photos before running tests
+    ["iPhone 17 Pro Max", "iPhone 16e"].each do |device|
+      sh "xcrun simctl boot '#{device}' 2>/dev/null; true"
+      Dir["fastlane/screenshots/assets/*.jpg"].each do |photo|
+        sh "xcrun simctl addmedia '#{device}' '#{File.expand_path(photo)}'"
+      end
+    end
+
+    snapshot
   end
+
 end

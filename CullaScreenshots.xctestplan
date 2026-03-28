@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "9F2F031A-9826-4B45-8C45-B83D2D40544C",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:culla.xcodeproj",
+      "identifier" : "89D59CC42F6F360300965721",
+      "name" : "culla"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:culla.xcodeproj",
+        "identifier" : "8975AEE02F7861CD00A3BC95",
+        "name" : "CullaScreenshots"
+      }
+    }
+  ],
+  "version" : 1
+}

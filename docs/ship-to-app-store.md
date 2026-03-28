@@ -13,8 +13,8 @@ Apple requires a privacy policy URL. Since Culla works entirely on-device, it's 
 ### 2. App Store screenshots
 
 - Minimum 3 screenshots per device size
-- Required sizes: 6.7" (iPhone 15 Pro Max) and 5.5" (iPhone 8 Plus)
-- Optional but recommended: 6.5" (iPhone 14 Plus), iPad
+- Required sizes: 6.9" iPhone (1290 × 2796) and 13" iPad (2064 × 2752)
+- Apple auto-scales these to all older device sizes — no need to upload 5.5" or other legacy sizes separately
 - Take them in both light and dark mode for best impression
 - Tip: use the Simulator (Device > Screenshot) for pixel-perfect captures
 

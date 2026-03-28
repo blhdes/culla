@@ -30,6 +30,10 @@ struct GallerySelectionSheet: View {
                         ForEach(sortedGalleries) { gallery in
                             galleryRow(gallery)
                         }
+                        .onMove { source, destination in
+                            guard sortOption == .custom else { return }
+                            reorderGalleries(from: source, to: destination)
+                        }
                     } header: {
                         HStack {
                             Text("\(selectedIDs.count) of \(maxSelection) selected")
@@ -156,6 +160,17 @@ struct GallerySelectionSheet: View {
         case .photoCount:
             return filteredGalleries.sorted { $0.sortedPhotos.count > $1.sortedPhotos.count }
         }
+    }
+
+    // MARK: - Reorder
+
+    private func reorderGalleries(from source: IndexSet, to destination: Int) {
+        var ordered = sortedGalleries
+        ordered.move(fromOffsets: source, toOffset: destination)
+        for (index, gallery) in ordered.enumerated() {
+            gallery.displayOrder = index
+        }
+        try? modelContext.save()
     }
 
     // MARK: - Create

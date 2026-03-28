@@ -12,6 +12,8 @@ struct GalleriesView: View {
         allSortedPhotos.filter { !$0.isImported }
     }
 
+    @Environment(\.editMode) private var editMode
+
     @State private var newGalleryName = ""
     @State private var showCreateAlert = false
     @State private var showAlbumImport = false
@@ -184,13 +186,25 @@ struct GalleriesView: View {
 
     @ViewBuilder
     private func galleryRow(_ gallery: Gallery) -> some View {
+        @Bindable var gallery = gallery
         HStack(spacing: 12) {
             Circle()
                 .fill(gallery.color)
                 .frame(width: 10, height: 10)
 
-            Text(gallery.name)
-                .fontWeight(.medium)
+            if editMode?.wrappedValue == .active {
+                TextField("Gallery name", text: $gallery.name)
+                    .fontWeight(.medium)
+                    .onSubmit {
+                        try? modelContext.save()
+                        if let albumID = gallery.albumIdentifier {
+                            Task { await PhotoLibraryService.shared.renameAlbum(identifier: albumID, to: gallery.name) }
+                        }
+                    }
+            } else {
+                Text(gallery.name)
+                    .fontWeight(.medium)
+            }
 
             Spacer()
 

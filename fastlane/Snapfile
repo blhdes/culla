@@ -36,3 +36,15 @@
 
 # For more information about all available options run
 # fastlane action snapshot
+#
+
+devices([
+  "iPhone 17 Pro Max",
+  "iPhone 16e"
+])
+
+languages(["en-US"])
+
+scheme("CullaScreenshots")
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)

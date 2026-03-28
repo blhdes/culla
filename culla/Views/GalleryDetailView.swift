@@ -2,9 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct GalleryDetailView: View {
-    let gallery: Gallery
+    @Bindable var gallery: Gallery
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.editMode) private var editMode
     private let photoService = PhotoLibraryService.shared
 
     @State private var allIdentifiers: [String] = []
@@ -38,9 +39,21 @@ struct GalleryDetailView: View {
                                     .frame(width: 12, height: 12)
                             }
 
-                            Text("\(allIdentifiers.count) photos")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            if editMode?.wrappedValue == .active {
+                                TextField("Gallery name", text: $gallery.name)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .onSubmit {
+                                        try? modelContext.save()
+                                        if let albumID = gallery.albumIdentifier {
+                                            Task { await photoService.renameAlbum(identifier: albumID, to: gallery.name) }
+                                        }
+                                    }
+                            } else {
+                                Text("\(allIdentifiers.count) photos")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
 
                             Spacer()
                         }
@@ -105,6 +118,11 @@ struct GalleryDetailView: View {
             }
         }
         .navigationTitle(gallery.name)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                EditButton()
+            }
+        }
         .fullScreenCover(item: Binding(
             get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
             set: { previewIdentifier = $0?.id }

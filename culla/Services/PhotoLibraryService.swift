@@ -15,6 +15,12 @@ final class PhotoLibraryService {
 
     @MainActor
     func requestAuthorization() async -> PHAuthorizationStatus {
+        // Skip photo permission check when running UI tests for screenshots
+        if CommandLine.arguments.contains("-UITestScreenshots") {
+            authorizationStatus = .authorized
+            return .authorized
+        }
+
         let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
         authorizationStatus = status
         return status
@@ -150,6 +156,22 @@ final class PhotoLibraryService {
             }
         } catch {
             print("culla: Failed to remove photo from album: \(error)")
+        }
+    }
+
+    /// Renames an iPhone Photos album.
+    func renameAlbum(identifier: String, to newName: String) async {
+        guard let album = PHAssetCollection.fetchAssetCollections(
+            withLocalIdentifiers: [identifier], options: nil
+        ).firstObject else { return }
+
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                guard let request = PHAssetCollectionChangeRequest(for: album) else { return }
+                request.title = newName
+            }
+        } catch {
+            print("culla: Failed to rename album: \(error)")
         }
     }
 
