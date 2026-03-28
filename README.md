@@ -1,27 +1,35 @@
-# picsort
+# Culla
 
-A native iOS app for organizing your photo library. Swipe through photos one by one — left to delete, right to sort into galleries. Think Tinder, but for your camera roll.
+A native iOS app for organizing your photo library. Swipe through photos one by one — left to dismiss, right to sort into galleries. Think Tinder, but for your camera roll.
 
-## Why picsort?
+## Why Culla?
 
-Most photo organizer apps let you keep or delete. picsort's core experience is **multi-gallery sorting** — drag a photo toward any of your galleries and it's instantly saved there. Your galleries sync with real iPhone Photos albums, so everything stays organized across your device.
+Most photo organizer apps let you keep or delete. Culla's core experience is **multi-gallery sorting** — drag a photo toward any of your galleries and it's instantly saved there. Your galleries sync with real iPhone Photos albums, so everything stays organized across your device.
 
 - 100% native Swift/SwiftUI — zero external dependencies
 - Open source and free — no ads, no paywalls
 - Syncs with your iPhone Photos library
 - Minimalist, HIG-compliant design
 
-## How It Works
+## Features
 
-1. **Pick a starting date** — choose how far back to go, optionally filter by album
-2. **Move or copy** — when sorting from an existing album, choose whether photos stay in the source or get moved out
-3. **Swipe through photos** — they appear one at a time, fullscreen, with a progress counter and date label
-4. **Swipe left** — marks the photo for deletion (light haptic)
-5. **Drag right toward a gallery** — sorts it into that gallery with a confirmation toast (medium haptic)
-6. **Double-tap** — skip without sorting or deleting (photo reappears next session)
-7. **Long-press** — preview your gallery panels at full opacity
-8. **Delete button** — batch-deletes all dismissed photos from your library in one shot
-9. **Gallery management** — delete a gallery and choose to permanently remove its photos or keep them safe
+- **Swipe sorting** — left to dismiss, right toward a gallery to sort, double-tap to skip
+- **Full undo history** — undo every action in a session, not just the last one
+- **Duplicate Sweep** — finds visually similar photos using Vision framework fingerprinting
+- **Favorites sorting** — sort through your favorited photos as a dedicated collection
+- **Unsorted photos** — filter to photos not in any album
+- **On This Day** — revisit photos from today's date in past years
+- **Focus Timer** — 2, 5, or 10 minute sorting sessions with a summary at the end
+- **Dismissed Photos** — review, recover, or permanently delete dismissed photos
+- **Adaptive neon palette** — gallery colors auto-adapt for readability in light and dark mode
+- **Random session accent** — a fresh neon accent color on every app launch
+- **Batch delete** — delete all dismissed photos from your library in one shot
+- **Gallery management** — create, reorder, rename, recolor, import from existing albums
+- **Move or copy** — when sorting from an album, choose whether photos stay or get moved
+- **Swipe up** — favorite/unfavorite a photo
+- **Swipe down** — share a photo
+- **Pinch to zoom** — magnify the current photo
+- **Long-press** — preview gallery panels at full opacity
 
 ## Requirements
 
@@ -33,32 +41,39 @@ Most photo organizer apps let you keep or delete. picsort's core experience is *
 
 ```
 picsort/
-├── picsortApp.swift                    # App entry point, SwiftData container
+├── CullaApp.swift                      # App entry point, splash screen, random accent
 │
 ├── Models/
 │   ├── Gallery.swift                   # User-created gallery (SwiftData @Model)
 │   ├── SortedPhoto.swift               # Links a photo to a gallery
 │   ├── DismissedPhoto.swift            # Tracks photos marked for deletion
-│   └── PhoneAlbum.swift                # Wrapper for PHAssetCollection
+│   └── PhoneAlbum.swift                # Wrapper for PHAssetCollection + virtual albums
 │
 ├── Services/
-│   └── PhotoLibraryService.swift       # PhotoKit wrapper — auth, fetch, cache, sync
+│   ├── PhotoLibraryService.swift       # PhotoKit wrapper — auth, fetch, cache, sync
+│   └── DuplicateScannerService.swift   # Vision framework fingerprint-based duplicate finder
 │
 ├── ViewModels/
-│   ├── SwipeViewModel.swift            # Swipe queue, actions, undo, batch delete
-│   └── GalleryViewModel.swift          # Gallery CRUD and reordering
+│   ├── SwipeViewModel.swift            # Swipe queue, actions, full undo history, batch delete
+│   ├── GalleryViewModel.swift          # Gallery CRUD and reordering
+│   └── DismissedPhotosViewModel.swift  # Load, select, recover, delete dismissed photos
 │
 ├── Views/
-│   ├── ContentView.swift               # Root navigation (date picker → swipe)
-│   ├── DatePickerView.swift            # Starting date + album filter selection
+│   ├── ContentView.swift               # Root navigation (date picker → swipe / duplicate sweep)
+│   ├── DatePickerView.swift            # Starting date + album filter + feature buttons
 │   ├── SwipeView.swift                 # Core swipe screen with gesture handling
 │   ├── PhotoCardView.swift             # Single photo card (drag offset, opacity)
-│   ├── GallerySidebarView.swift        # Pastel gallery panels on right side
+│   ├── GallerySidebarView.swift        # Neon gallery panels + adaptive color palette
 │   ├── GallerySelectionSheet.swift     # Pick which galleries appear in sidebar
-│   ├── AlbumPickerView.swift           # Browse phone albums + unsorted filter
+│   ├── AlbumPickerView.swift           # Browse phone albums + unsorted + favorites
 │   ├── AlbumImportSheet.swift          # Import phone albums as app galleries
 │   ├── GalleriesView.swift             # Gallery list with reorder/delete
-│   └── GalleryDetailView.swift         # Photo grid for a single gallery
+│   ├── GalleryDetailView.swift         # Photo grid for a single gallery
+│   ├── DuplicateSweepView.swift        # Side-by-side duplicate comparison
+│   ├── DismissedPhotosView.swift       # Grid of dismissed photos with batch actions
+│   ├── DeleteFeedbackOverlay.swift     # Shared delete confirmation with running total
+│   ├── PhotoPreviewOverlay.swift       # Shared full-screen photo preview (long-press)
+│   └── CalendarView.swift              # Pure SwiftUI calendar grid
 │
 └── Helpers/
     └── PhotoImageLoader.swift          # Per-card async image loader
@@ -72,6 +87,7 @@ picsort/
 - **PhotoKit** handles all interaction with the iPhone photo library: fetching, caching, album sync, and deletion.
 - **PHCachingImageManager** preloads the next 3 photos so transitions feel instant.
 - **@Observable** (iOS 17 Observation framework) drives reactive UI updates.
+- **Vision framework** powers duplicate detection via `VNGenerateImageFeaturePrintRequest`.
 
 ### Data Flow
 
@@ -94,11 +110,12 @@ PhotoLibraryService ──→ SwipeViewModel ──→ SwipeView
 ### Swipe Gesture Design
 
 - **100pt threshold** to trigger an action, with velocity-aware detection (`predictedEndTranslation`) so fast flicks work even with shorter drag distance
-- **Rotation** follows drag offset (offset / 40 degrees, subtle)
-- **Progressive transparency** on right drag (fades to 70%) reveals gallery names
+- **Progressive transparency** on right drag reveals gallery names
+- **Scale-based highlight** (1.08x) on the active gallery — no jarring font changes
 - **Spring animation** for snap-back, **easeIn** for fly-off
 - **Haptic feedback** — light on dismiss, medium on gallery sort
 - **Confirmation toasts** — "Dismissed" or "→ Gallery Name" after each action
+- **Auto-hiding undo** — appears for 2 seconds after each action, shows stack depth
 - **Photo counter** — "3 / 47" progress indicator at top
 - **Date label** — shows current photo's creation date for context
 
@@ -116,8 +133,8 @@ Old images are evicted from the cache as the window slides forward.
 
 1. Clone the repo
 2. Open `picsort.xcodeproj` in Xcode
-3. Add `NSPhotoLibraryUsageDescription` to Info.plist if not already present
-4. Build and run on a device or simulator (add sample photos to the simulator via drag-drop)
+3. Select your team under Signing & Capabilities
+4. Build and run on a device or simulator
 
 ## License
 
