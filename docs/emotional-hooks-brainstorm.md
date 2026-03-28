@@ -79,3 +79,15 @@ Two layers:
 > **"Your memories deserve better than scrolling past them."**
 
 Everyone has thousands of photos they never look at. Cull doesn't guilt you about it — it gives you a calm, private, five-minute ritual to actually *see* them again, one at a time, and decide what matters.
+
+---
+
+## Pricing
+
+**$2.99 USD, one-time purchase. No in-app purchases, no subscriptions, no tip jars.**
+
+- Competitors charge $3.99/month (Slidebox, Swipewipe). A one-time $2.99 is a statement: "Pay once, own everything, forever." Consistent with "no upgrade to unlock."
+- Free signals "hobby project" or "you're the product." A small price signals someone cared. It builds the same trust that the no-analytics architecture does.
+- $2.99 is impulse-buy territory — below the psychological $5 threshold.
+- The receipt is the last time the app asks anything of you. That's consistent with "complete from zero moment" — the zero moment shifts to after purchase instead of after download.
+- Still open source. Code on GitHub, paid on the App Store. People pay for the convenience and the polish, not the source code.
