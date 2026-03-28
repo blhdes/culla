@@ -7,7 +7,7 @@ A native iOS app for organizing your photo library. Swipe through photos one by 
 Most photo organizer apps let you keep or delete. Culla's core experience is **multi-gallery sorting** — drag a photo toward any of your galleries and it's instantly saved there. Your galleries sync with real iPhone Photos albums, so everything stays organized across your device.
 
 - 100% native Swift/SwiftUI — zero external dependencies
-- Open source and free — no ads, no paywalls
+- Open source — $2.99 one-time on the App Store, no ads, no subscriptions
 - Syncs with your iPhone Photos library
 - Minimalist, HIG-compliant design
 
@@ -23,6 +23,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Dismissed Photos** — review, recover, or permanently delete dismissed photos
 - **Adaptive neon palette** — gallery colors auto-adapt for readability in light and dark mode
 - **Random session accent** — a fresh neon accent color on every app launch
+- **Sorting Insights** — stats dashboard showing total sorted, streaks, most active gallery
 - **Batch delete** — delete all dismissed photos from your library in one shot
 - **Gallery management** — create, reorder, rename, recolor, import from existing albums
 - **Move or copy** — when sorting from an album, choose whether photos stay or get moved
@@ -56,7 +57,9 @@ culla/
 ├── ViewModels/
 │   ├── SwipeViewModel.swift            # Swipe queue, actions, full undo history, batch delete
 │   ├── GalleryViewModel.swift          # Gallery CRUD and reordering
-│   └── DismissedPhotosViewModel.swift  # Load, select, recover, delete dismissed photos
+│   ├── DismissedPhotosViewModel.swift  # Load, select, recover, delete dismissed photos
+│   ├── DuplicateSweepViewModel.swift   # Duplicate scanning state machine with undo
+│   └── InsightsViewModel.swift         # Sorting statistics and streak calculation
 │
 ├── Views/
 │   ├── ContentView.swift               # Root navigation (date picker → swipe / duplicate sweep)
@@ -73,6 +76,8 @@ culla/
 │   ├── DismissedPhotosView.swift       # Grid of dismissed photos with batch actions
 │   ├── DeleteFeedbackOverlay.swift     # Shared delete confirmation with running total
 │   ├── PhotoPreviewOverlay.swift       # Shared full-screen photo preview (long-press)
+│   ├── FocusTimerArcView.swift         # Circular progress timer for focus sessions
+│   ├── InsightsView.swift              # Stats dashboard (sorted count, streaks, top gallery)
 │   └── CalendarView.swift              # Pure SwiftUI calendar grid
 │
 └── Helpers/
@@ -95,13 +100,23 @@ culla/
 Photo Library (PhotoKit)
        │
        ▼
-PhotoLibraryService ──→ SwipeViewModel ──→ SwipeView
-       │                      │                │
-       │                      ▼                ▼
-       │               SwiftData Models   PhotoCardView
-       │               (Gallery,          GallerySidebarView
-       │                SortedPhoto,
+PhotoLibraryService ──→ SwipeViewModel ────────→ SwipeView
+       │                      │                      │
+       │                      ▼                      ▼
+       │               SwiftData Models          PhotoCardView
+       │               (Gallery,                 GallerySidebarView
+       │                SortedPhoto,             FocusTimerArcView
        │                DismissedPhoto)
+       │                      │
+       │          ┌───────────┼───────────┐
+       │          ▼           ▼           ▼
+       │   GalleryViewModel  DismissedPhotosVM  InsightsViewModel
+       │          │           │                    │
+       │          ▼           ▼                    ▼
+       │   GalleriesView  DismissedPhotosView  InsightsView
+       │
+       ▼
+DuplicateScannerService ──→ DuplicateSweepVM ──→ DuplicateSweepView
        │
        ▼
   iPhone Albums (sync)
@@ -138,4 +153,4 @@ Old images are evicted from the cache as the window slides forward.
 
 ## License
 
-Open source. Free forever.
+Open source. $2.99 one-time on the App Store — no subscriptions, no in-app purchases.
