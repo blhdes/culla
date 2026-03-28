@@ -22,7 +22,7 @@ struct SwipeView: View {
     // Drag state
     @State private var cardOffset: CGSize = .zero
     @State private var highlightedGalleryID: UUID?
-    @State private var sidebarFrame: CGRect = .zero
+    @State private var galleryFrames: [UUID: CGRect] = [:]
 
     // Long-press preview
     @State private var isLongPressing = false
@@ -169,8 +169,8 @@ struct SwipeView: View {
                     }
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
-                    .onPreferenceChange(SidebarFramePreferenceKey.self) { frame in
-                        sidebarFrame = frame
+                    .onPreferenceChange(GalleryFramePreferenceKey.self) { frames in
+                        galleryFrames = frames
                     }
                 }
 
@@ -503,14 +503,12 @@ struct SwipeView: View {
     }
 
     private func findGallery(at point: CGPoint) -> UUID? {
-        let galleries = sidebarGalleries
-        guard !galleries.isEmpty, sidebarFrame.height > 0 else { return nil }
-        guard point.y >= sidebarFrame.minY, point.y <= sidebarFrame.maxY else { return nil }
-
-        let relativeY = point.y - sidebarFrame.minY
-        let sliceHeight = sidebarFrame.height / CGFloat(galleries.count)
-        let index = min(Int(relativeY / sliceHeight), galleries.count - 1)
-        return galleries[index].id
+        for (id, frame) in galleryFrames {
+            if point.y >= frame.minY && point.y <= frame.maxY {
+                return id
+            }
+        }
+        return nil
     }
 
     // MARK: - Undo Button
