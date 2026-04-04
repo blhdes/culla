@@ -9,6 +9,7 @@ struct SwipeView: View {
     let sortMode: SortMode
     let focusDuration: TimeInterval?
     let isOnThisDay: Bool
+    @Binding var sidebarGalleryIDs: Set<UUID>
     var onBack: (() -> Void)?
     var onShowGalleries: (() -> Void)?
     var onSessionEnd: (() -> Void)?
@@ -28,7 +29,6 @@ struct SwipeView: View {
     @State private var isLongPressing = false
 
     // Sidebar gallery selection (up to 10)
-    @State private var sidebarGalleryIDs: Set<UUID> = []
     @State private var showGallerySelector = false
     @State private var hasInitializedSidebar = false
 
@@ -127,15 +127,19 @@ struct SwipeView: View {
             flashUndo()
         }
         .onChange(of: galleries.count) {
-            // On first gallery creation, auto-add to sidebar
+            // On first gallery creation, auto-add to sidebar (skip if already populated)
             if !hasInitializedSidebar, !galleries.isEmpty {
-                sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
+                if sidebarGalleryIDs.isEmpty {
+                    sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
+                }
                 hasInitializedSidebar = true
             }
         }
         .onAppear {
             if !hasInitializedSidebar, !galleries.isEmpty {
-                sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
+                if sidebarGalleryIDs.isEmpty {
+                    sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
+                }
                 hasInitializedSidebar = true
             }
         }
@@ -220,6 +224,7 @@ struct SwipeView: View {
                     } label: {
                         Image(systemName: "calendar")
                             .font(.body)
+                            .frame(width: 20, height: 20)
                             .padding(10)
                             .background(.ultraThinMaterial, in: Circle())
                     }
@@ -233,6 +238,7 @@ struct SwipeView: View {
                     } label: {
                         Image(systemName: "rectangle.stack")
                             .font(.body)
+                            .frame(width: 20, height: 20)
                             .padding(10)
                             .background(.ultraThinMaterial, in: Circle())
                     }
@@ -698,6 +704,7 @@ struct SwipeView: View {
             } label: {
                 Image(systemName: "calendar")
                     .font(.body)
+                    .frame(width: 20, height: 20)
                     .padding(10)
                     .background(.ultraThinMaterial, in: Circle())
             }
@@ -710,6 +717,7 @@ struct SwipeView: View {
             } label: {
                 Image(systemName: "rectangle.stack")
                     .font(.body)
+                    .frame(width: 20, height: 20)
                     .padding(10)
                     .background(.ultraThinMaterial, in: Circle())
             }

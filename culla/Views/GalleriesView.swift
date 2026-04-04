@@ -2,6 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct GalleriesView: View {
+    @Binding var sidebarGalleryIDs: Set<UUID>
+    let maxSidebarGalleries: Int
+
     @Environment(\.modelContext) private var modelContext
     @Query private var allSortedPhotos: [SortedPhoto]
     @State private var viewModel: GalleryViewModel?
@@ -86,7 +89,11 @@ struct GalleriesView: View {
         .sheet(isPresented: $showAlbumImport, onDismiss: {
             viewModel?.fetchGalleries()
         }) {
-            AlbumImportSheet()
+            AlbumImportSheet { newIDs in
+                for id in newIDs where sidebarGalleryIDs.count < maxSidebarGalleries {
+                    sidebarGalleryIDs.insert(id)
+                }
+            }
         }
         .alert("New Gallery", isPresented: $showCreateAlert) {
             TextField("Name", text: $newGalleryName)

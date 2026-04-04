@@ -9,6 +9,9 @@ struct AlbumImportSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var galleries: [Gallery]
 
+    /// Called after import with the UUIDs of every newly created gallery.
+    var onImport: (([UUID]) -> Void)? = nil
+
     @State private var phoneAlbums: [PhoneAlbum] = []
     @State private var selectedAlbumIDs: Set<String> = []
     @State private var searchText = ""
@@ -177,6 +180,7 @@ struct AlbumImportSheet: View {
         let existingCount = galleries.count
         let albumsToImport = availableAlbums.filter { selectedAlbumIDs.contains($0.id) }
         let service = PhotoLibraryService.shared
+        var newGalleryIDs: [UUID] = []
 
         for (index, album) in albumsToImport.enumerated() {
             let gallery = Gallery(
@@ -185,6 +189,7 @@ struct AlbumImportSheet: View {
                 albumIdentifier: album.collectionIdentifier
             )
             modelContext.insert(gallery)
+            newGalleryIDs.append(gallery.id)
 
             let identifiers = service.fetchAssetIdentifiers(
                 from: .distantPast,
@@ -198,6 +203,7 @@ struct AlbumImportSheet: View {
         }
 
         try? modelContext.save()
+        onImport?(newGalleryIDs)
         dismiss()
     }
 }

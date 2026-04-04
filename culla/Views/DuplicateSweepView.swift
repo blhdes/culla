@@ -158,21 +158,20 @@ struct DuplicateSweepView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if viewModel.lastAction != nil {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            viewModel.undo()
-                        }
-                    } label: {
-                        Label("Undo", systemImage: "arrow.uturn.backward")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(.ultraThinMaterial, in: Capsule())
+                Button {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        viewModel.undo()
                     }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                } label: {
+                    Label("Undo", systemImage: "arrow.uturn.backward")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial, in: Capsule())
                 }
+                .opacity(viewModel.lastAction != nil ? 1 : 0)
+                .disabled(viewModel.lastAction == nil)
             }
             .padding(.bottom, 32)
         }
@@ -369,9 +368,7 @@ private struct DuplicatePhotoView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             } else {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.secondarySystemBackground))
+                Color.clear
             }
         }
         .task { await loader.load() }

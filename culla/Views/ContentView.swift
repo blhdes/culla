@@ -10,6 +10,9 @@ struct ContentView: View {
     @State private var isOnThisDay = false
     @State private var showGalleries = false
     @State private var showDuplicateSweep = false
+    @State private var sidebarGalleryIDs: Set<UUID> = []
+
+    private let maxSidebarGalleries = 10
 
     var body: some View {
         NavigationStack {
@@ -24,6 +27,7 @@ struct ContentView: View {
                     sortMode: sortMode,
                     focusDuration: focusDuration,
                     isOnThisDay: isOnThisDay,
+                    sidebarGalleryIDs: $sidebarGalleryIDs,
                     onBack: {
                         self.startDate = nil
                         self.focusDuration = nil
@@ -54,7 +58,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showGalleries) {
             NavigationStack {
-                GalleriesView()
+                GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
             }
         }
     }

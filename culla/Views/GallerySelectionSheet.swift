@@ -97,7 +97,11 @@ struct GallerySelectionSheet: View {
             }
         }
         .sheet(isPresented: $showAlbumImport) {
-            AlbumImportSheet()
+            AlbumImportSheet { newIDs in
+                for id in newIDs where selectedIDs.count < maxSelection {
+                    selectedIDs.insert(id)
+                }
+            }
         }
     }
 
