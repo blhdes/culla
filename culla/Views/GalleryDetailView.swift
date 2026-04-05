@@ -5,14 +5,12 @@ struct GalleryDetailView: View {
     @Bindable var gallery: Gallery
 
     @Environment(\.modelContext) private var modelContext
-    @State private var editMode: EditMode = .inactive
     private let photoService = PhotoLibraryService.shared
 
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
     @State private var showColorPicker = false
     @State private var previewIdentifier: String?
-    @State private var nameBeforeEdit: String = ""
 
     private let columns = PhotoThumbnailView.gridColumns
 
@@ -109,25 +107,7 @@ struct GalleryDetailView: View {
                 }
             }
         }
-        .navigationTitle(gallery.name)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                if editMode == .active {
-                    TextField("Gallery name", text: $gallery.name)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
-                        .onSubmit { try? modelContext.save() }
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(editMode == .active ? "Done" : "Edit") {
-                    withAnimation {
-                        editMode = editMode == .active ? .inactive : .active
-                    }
-                }
-            }
-        }
+        .navigationTitle($gallery.name)
         .fullScreenCover(item: Binding(
             get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
             set: { previewIdentifier = $0?.id }
@@ -138,18 +118,13 @@ struct GalleryDetailView: View {
                 onDismiss: { previewIdentifier = nil }
             )
         }
-        .environment(\.editMode, $editMode)
         .task {
             await syncAndLoad()
         }
-        .onChange(of: editMode) { _, newMode in
-            if newMode == .active {
-                nameBeforeEdit = gallery.name
-            } else if newMode == .inactive {
-                try? modelContext.save()
-                if gallery.name != nameBeforeEdit, let albumID = gallery.albumIdentifier {
-                    Task { await photoService.renameAlbum(identifier: albumID, to: gallery.name) }
-                }
+        .onChange(of: gallery.name) { _, newName in
+            try? modelContext.save()
+            if let albumID = gallery.albumIdentifier {
+                Task { await photoService.renameAlbum(identifier: albumID, to: newName) }
             }
         }
     }
