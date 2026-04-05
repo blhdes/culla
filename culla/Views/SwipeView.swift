@@ -51,7 +51,6 @@ struct SwipeView: View {
     // Undo auto-hide
     @State private var showUndo = false
     @State private var undoHideTask: Task<Void, Never>?
-    @State private var lastUndoHideDate: Date?
 
     // Delete state
     @State private var isDeleting = false
@@ -294,9 +293,7 @@ struct SwipeView: View {
             VStack(spacing: 10) {
                 if let date = viewModel.currentPhotoDate {
                     Button {
-                        guard viewModel.canUndo,
-                              let last = lastUndoHideDate,
-                              Date.now.timeIntervalSince(last) <= 3 else { return }
+                        guard viewModel.canUndo else { return }
                         flashUndo()
                     } label: {
                         Text(date, format: .dateTime.month(.wide).day().year())
@@ -564,7 +561,6 @@ struct SwipeView: View {
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 withAnimation(.easeOut(duration: 0.3)) { showUndo = false }
-                lastUndoHideDate = .now
             }
         }
     }
