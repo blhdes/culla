@@ -9,7 +9,6 @@ struct GalleryDetailView: View {
 
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
-    @State private var showColorPicker = false
     @State private var previewIdentifier: String?
 
     private let columns = PhotoThumbnailView.gridColumns
@@ -26,66 +25,11 @@ struct GalleryDetailView: View {
                 ProgressView()
             } else {
                 VStack(spacing: 0) {
-                    VStack(spacing: 8) {
-                        HStack(spacing: 8) {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    showColorPicker.toggle()
-                                }
-                            } label: {
-                                Circle()
-                                    .fill(gallery.color)
-                                    .frame(width: 12, height: 12)
-                            }
-
-                            Text("\(allIdentifiers.count) photos")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-
-                            Spacer()
-                        }
-
-                        if showColorPicker {
-                            VStack(spacing: 12) {
-                                // Quick-pick neon presets
-                                LazyVGrid(
-                                    columns: Array(repeating: GridItem(.flexible()), count: 9),
-                                    spacing: 10
-                                ) {
-                                    ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
-                                        Button {
-                                            gallery.colorHex = hex
-                                            try? modelContext.save()
-                                        } label: {
-                                            Circle()
-                                                .fill(Color.adaptiveNeon(hex: hex))
-                                                .frame(width: 24, height: 24)
-                                                .overlay {
-                                                    if gallery.colorHex == hex {
-                                                        Circle()
-                                                            .strokeBorder(.primary, lineWidth: 2)
-                                                    }
-                                                }
-                                        }
-                                    }
-                                }
-
-                                // Full color picker for custom colors
-                                ColorPicker(
-                                    "Custom color",
-                                    selection: Binding(
-                                        get: { gallery.color },
-                                        set: { newColor in
-                                            gallery.colorHex = newColor.hexString
-                                            try? modelContext.save()
-                                        }
-                                    ),
-                                    supportsOpacity: false
-                                )
-                                .font(.subheadline)
-                            }
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
+                    HStack {
+                        Text("\(allIdentifiers.count) photos")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
@@ -107,7 +51,8 @@ struct GalleryDetailView: View {
                 }
             }
         }
-        .navigationTitle($gallery.name)
+        .navigationTitle(gallery.name)
+        .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(item: Binding(
             get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
             set: { previewIdentifier = $0?.id }
@@ -120,12 +65,6 @@ struct GalleryDetailView: View {
         }
         .task {
             await syncAndLoad()
-        }
-        .onChange(of: gallery.name) { _, newName in
-            try? modelContext.save()
-            if let albumID = gallery.albumIdentifier {
-                Task { await photoService.renameAlbum(identifier: albumID, to: newName) }
-            }
         }
     }
 
