@@ -67,7 +67,11 @@ struct GalleriesView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 if viewModel?.galleries.isEmpty == false {
-                    EditButton()
+                    Button(editMode == .active ? "Done" : "Edit") {
+                        withAnimation {
+                            editMode = editMode == .active ? .inactive : .active
+                        }
+                    }
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
