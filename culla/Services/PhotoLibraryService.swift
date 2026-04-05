@@ -479,9 +479,17 @@ final class PhotoLibraryService {
                 // PHImageManager can call this twice (low-quality then high-quality).
                 // Only resolve on the final delivery.
                 let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                if !isDegraded {
+                let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
+                let hasError = info?[PHImageErrorKey] != nil
+
+                if isCancelled || hasError {
+                    // Request failed or was cancelled — resolve with nil so the
+                    // continuation doesn't hang forever.
+                    continuation.resume(returning: nil)
+                } else if !isDegraded {
                     continuation.resume(returning: image)
                 }
+                // If degraded, wait for the next (high-quality) callback.
             }
         }
     }
