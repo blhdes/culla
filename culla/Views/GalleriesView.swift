@@ -15,7 +15,7 @@ struct GalleriesView: View {
         allSortedPhotos.filter { !$0.isImported }
     }
 
-    @Environment(\.editMode) private var editMode
+    @State private var editMode: EditMode = .inactive
 
     @State private var newGalleryName = ""
     @State private var showCreateAlert = false
@@ -59,6 +59,7 @@ struct GalleriesView: View {
                 ProgressView()
             }
         }
+        .environment(\.editMode, $editMode)
         .navigationTitle("Galleries")
         .navigationDestination(for: Gallery.self) { gallery in
             GalleryDetailView(gallery: gallery)
@@ -149,7 +150,7 @@ struct GalleriesView: View {
         .onChange(of: sortedPhotos.count) {
             insightsViewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
         }
-        .onChange(of: editMode?.wrappedValue) { _, newMode in
+        .onChange(of: editMode) { _, newMode in
             guard let viewModel else { return }
             if newMode == .active {
                 namesBeforeEdit = Dictionary(uniqueKeysWithValues: viewModel.galleries.map { ($0.id, $0.name) })
@@ -216,7 +217,7 @@ struct GalleriesView: View {
                 .fill(gallery.color)
                 .frame(width: 10, height: 10)
 
-            if editMode?.wrappedValue == .active {
+            if editMode == .active {
                 TextField("Gallery name", text: $gallery.name)
                     .fontWeight(.medium)
                     .onSubmit {

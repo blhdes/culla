@@ -5,7 +5,7 @@ struct GalleryDetailView: View {
     @Bindable var gallery: Gallery
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.editMode) private var editMode
+    @State private var editMode: EditMode = .inactive
     private let photoService = PhotoLibraryService.shared
 
     @State private var allIdentifiers: [String] = []
@@ -40,7 +40,7 @@ struct GalleryDetailView: View {
                                     .frame(width: 12, height: 12)
                             }
 
-                            if editMode?.wrappedValue == .active {
+                            if editMode == .active {
                                 TextField("Gallery name", text: $gallery.name)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
@@ -134,10 +134,11 @@ struct GalleryDetailView: View {
                 onDismiss: { previewIdentifier = nil }
             )
         }
+        .environment(\.editMode, $editMode)
         .task {
             await syncAndLoad()
         }
-        .onChange(of: editMode?.wrappedValue) { _, newMode in
+        .onChange(of: editMode) { _, newMode in
             if newMode == .active {
                 nameBeforeEdit = gallery.name
             } else if newMode == .inactive {
