@@ -29,11 +29,18 @@ final class PhotoLibraryService {
     // MARK: - Date Range
 
     /// Returns the creation dates of the earliest and latest photos in the library.
+    /// Ignores photos with creation dates before 2000-01-01 to filter out corrupted
+    /// EXIF dates (e.g. images saved from the web that inherit old embedded metadata).
     func photoDateRange() -> (earliest: Date, latest: Date)? {
         let imageType = PHAssetMediaType.image.rawValue
+        let floorDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!
 
         let earliestOptions = PHFetchOptions()
-        earliestOptions.predicate = NSPredicate(format: "mediaType == %d", imageType)
+        earliestOptions.predicate = NSPredicate(
+            format: "mediaType == %d AND creationDate >= %@",
+            imageType,
+            floorDate as NSDate
+        )
         earliestOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
         earliestOptions.fetchLimit = 1
 

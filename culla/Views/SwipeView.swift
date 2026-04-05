@@ -51,6 +51,7 @@ struct SwipeView: View {
     // Undo auto-hide
     @State private var showUndo = false
     @State private var undoHideTask: Task<Void, Never>?
+    @State private var lastActionDate: Date?
 
     // Delete state
     @State private var isDeleting = false
@@ -124,6 +125,7 @@ struct SwipeView: View {
             }
         }
         .onChange(of: viewModel?.actionHistory.count) { _, _ in
+            lastActionDate = .now
             flashUndo()
         }
         .onChange(of: galleries.count) {
@@ -292,12 +294,20 @@ struct SwipeView: View {
         .overlay(alignment: .bottom) {
             VStack(spacing: 10) {
                 if let date = viewModel.currentPhotoDate {
-                    Text(date, format: .dateTime.month(.wide).day().year())
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial, in: Capsule())
+                    Button {
+                        guard viewModel.canUndo,
+                              let last = lastActionDate,
+                              Date.now.timeIntervalSince(last) <= 3 else { return }
+                        flashUndo()
+                    } label: {
+                        Text(date, format: .dateTime.month(.wide).day().year())
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(.ultraThinMaterial, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
                 undoButton(viewModel: viewModel)
             }
