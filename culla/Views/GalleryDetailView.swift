@@ -40,18 +40,9 @@ struct GalleryDetailView: View {
                                     .frame(width: 12, height: 12)
                             }
 
-                            if editMode == .active {
-                                TextField("Gallery name", text: $gallery.name)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .onSubmit {
-                                        try? modelContext.save()
-                                    }
-                            } else {
-                                Text("\(allIdentifiers.count) photos")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
+                            Text("\(allIdentifiers.count) photos")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
 
                             Spacer()
                         }
@@ -120,8 +111,21 @@ struct GalleryDetailView: View {
         }
         .navigationTitle(gallery.name)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                if editMode == .active {
+                    TextField("Gallery name", text: $gallery.name)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .onSubmit { try? modelContext.save() }
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
-                EditButton()
+                Button(editMode == .active ? "Done" : "Edit") {
+                    withAnimation {
+                        editMode = editMode == .active ? .inactive : .active
+                    }
+                }
             }
         }
         .fullScreenCover(item: Binding(
