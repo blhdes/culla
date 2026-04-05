@@ -51,7 +51,7 @@ struct SwipeView: View {
     // Undo auto-hide
     @State private var showUndo = false
     @State private var undoHideTask: Task<Void, Never>?
-    @State private var lastActionDate: Date?
+    @State private var lastUndoHideDate: Date?
 
     // Delete state
     @State private var isDeleting = false
@@ -125,7 +125,6 @@ struct SwipeView: View {
             }
         }
         .onChange(of: viewModel?.actionHistory.count) { _, _ in
-            lastActionDate = .now
             flashUndo()
         }
         .onChange(of: galleries.count) {
@@ -296,7 +295,7 @@ struct SwipeView: View {
                 if let date = viewModel.currentPhotoDate {
                     Button {
                         guard viewModel.canUndo,
-                              let last = lastActionDate,
+                              let last = lastUndoHideDate,
                               Date.now.timeIntervalSince(last) <= 3 else { return }
                         flashUndo()
                     } label: {
@@ -565,6 +564,7 @@ struct SwipeView: View {
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 withAnimation(.easeOut(duration: 0.3)) { showUndo = false }
+                lastUndoHideDate = .now
             }
         }
     }
