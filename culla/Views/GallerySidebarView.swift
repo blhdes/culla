@@ -154,7 +154,7 @@ struct GallerySidebarItem: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
-        .animation(.snappy(duration: 0.25), value: isHighlighted)
+        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isHighlighted)
         .animation(.easeInOut(duration: 0.2), value: isDragging)
     }
 

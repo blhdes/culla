@@ -522,7 +522,8 @@ struct SwipeView: View {
 
     private func findGallery(at point: CGPoint) -> UUID? {
         for (id, frame) in galleryFrames {
-            if point.y >= frame.minY && point.y <= frame.maxY {
+            if point.x >= frame.minX && point.x <= frame.maxX &&
+               point.y >= frame.minY && point.y <= frame.maxY {
                 return id
             }
         }
