@@ -11,6 +11,7 @@ struct GalleryDetailView: View {
     @State private var hasSynced = false
     @State private var showColorPicker = false
     @State private var previewIdentifier: String?
+    @Namespace private var heroNamespace
 
     private let columns = PhotoThumbnailView.gridColumns
 
@@ -96,6 +97,7 @@ struct GalleryDetailView: View {
                                     assetIdentifier: identifier,
                                     photoService: photoService
                                 )
+                                .matchedTransitionSource(id: identifier, in: heroNamespace)
                                 .onLongPressGesture {
                                     previewIdentifier = identifier
                                 }
@@ -116,6 +118,7 @@ struct GalleryDetailView: View {
                 photoService: photoService,
                 onDismiss: { previewIdentifier = nil }
             )
+            .navigationTransition(.zoom(sourceID: item.id, in: heroNamespace))
         }
         .task {
             await syncAndLoad()

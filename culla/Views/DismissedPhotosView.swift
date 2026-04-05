@@ -9,6 +9,7 @@ struct DismissedPhotosView: View {
     @State private var deleteMessage: DeleteFeedback?
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @State private var previewIdentifier: String?
+    @Namespace private var heroNamespace
 
     private let photoService = PhotoLibraryService.shared
     private let columns = PhotoThumbnailView.gridColumns
@@ -75,6 +76,7 @@ struct DismissedPhotosView: View {
                                     .onLongPressGesture {
                                         previewIdentifier = photo.assetIdentifier
                                     }
+                                    .matchedTransitionSource(id: photo.assetIdentifier, in: heroNamespace)
                                     .id(photo.assetIdentifier)
                                 }
                             }
@@ -106,6 +108,7 @@ struct DismissedPhotosView: View {
                 photoService: photoService,
                 onDismiss: { previewIdentifier = nil }
             )
+            .navigationTransition(.zoom(sourceID: item.id, in: heroNamespace))
         }
         .task {
             if viewModel == nil {
