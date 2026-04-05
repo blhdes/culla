@@ -10,7 +10,12 @@ struct ContentView: View {
     @State private var isOnThisDay = false
     @State private var showGalleries = false
     @State private var showDuplicateSweep = false
-    @State private var sidebarGalleryIDs: Set<UUID> = []
+    @State private var sidebarGalleryIDs: Set<UUID> = {
+        guard let data = UserDefaults.standard.data(forKey: "sidebarGalleryIDs"),
+              let ids = try? JSONDecoder().decode(Set<UUID>.self, from: data)
+        else { return [] }
+        return ids
+    }()
 
     private let maxSidebarGalleries = 10
 
@@ -59,6 +64,11 @@ struct ContentView: View {
         .sheet(isPresented: $showGalleries) {
             NavigationStack {
                 GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
+            }
+        }
+        .onChange(of: sidebarGalleryIDs) { _, newValue in
+            if let data = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
             }
         }
     }
