@@ -12,6 +12,7 @@ struct GalleryDetailView: View {
     @State private var hasSynced = false
     @State private var showColorPicker = false
     @State private var previewIdentifier: String?
+    @State private var nameBeforeEdit: String = ""
 
     private let columns = PhotoThumbnailView.gridColumns
 
@@ -45,9 +46,6 @@ struct GalleryDetailView: View {
                                     .fontWeight(.medium)
                                     .onSubmit {
                                         try? modelContext.save()
-                                        if let albumID = gallery.albumIdentifier {
-                                            Task { await photoService.renameAlbum(identifier: albumID, to: gallery.name) }
-                                        }
                                     }
                             } else {
                                 Text("\(allIdentifiers.count) photos")
@@ -61,7 +59,10 @@ struct GalleryDetailView: View {
                         if showColorPicker {
                             VStack(spacing: 12) {
                                 // Quick-pick neon presets
-                                HStack(spacing: 10) {
+                                LazyVGrid(
+                                    columns: Array(repeating: GridItem(.flexible()), count: 9),
+                                    spacing: 10
+                                ) {
                                     ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
                                         Button {
                                             gallery.colorHex = hex
@@ -135,6 +136,16 @@ struct GalleryDetailView: View {
         }
         .task {
             await syncAndLoad()
+        }
+        .onChange(of: editMode?.wrappedValue) { _, newMode in
+            if newMode == .active {
+                nameBeforeEdit = gallery.name
+            } else if newMode == .inactive {
+                try? modelContext.save()
+                if gallery.name != nameBeforeEdit, let albumID = gallery.albumIdentifier {
+                    Task { await photoService.renameAlbum(identifier: albumID, to: gallery.name) }
+                }
+            }
         }
     }
 

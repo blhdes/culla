@@ -22,6 +22,7 @@ struct GalleriesView: View {
     @State private var showAlbumImport = false
     @State private var showInsights = false
     @State private var galleryToDelete: Gallery?
+    @State private var namesBeforeEdit: [UUID: String] = [:]
 
     var body: some View {
         Group {
@@ -148,6 +149,22 @@ struct GalleriesView: View {
         .onChange(of: sortedPhotos.count) {
             insightsViewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
         }
+        .onChange(of: editMode?.wrappedValue) { _, newMode in
+            guard let viewModel else { return }
+            if newMode == .active {
+                namesBeforeEdit = Dictionary(uniqueKeysWithValues: viewModel.galleries.map { ($0.id, $0.name) })
+            } else if newMode == .inactive {
+                try? modelContext.save()
+                for gallery in viewModel.galleries {
+                    if let oldName = namesBeforeEdit[gallery.id],
+                       gallery.name != oldName,
+                       let albumID = gallery.albumIdentifier {
+                        Task { await PhotoLibraryService.shared.renameAlbum(identifier: albumID, to: gallery.name) }
+                    }
+                }
+                namesBeforeEdit = [:]
+            }
+        }
     }
 
     // MARK: - Stats Header
@@ -204,9 +221,6 @@ struct GalleriesView: View {
                     .fontWeight(.medium)
                     .onSubmit {
                         try? modelContext.save()
-                        if let albumID = gallery.albumIdentifier {
-                            Task { await PhotoLibraryService.shared.renameAlbum(identifier: albumID, to: gallery.name) }
-                        }
                     }
             } else {
                 Text(gallery.name)
