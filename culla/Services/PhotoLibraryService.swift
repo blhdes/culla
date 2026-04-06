@@ -470,26 +470,30 @@ final class PhotoLibraryService {
         options.resizeMode = .fast
 
         return await withCheckedContinuation { continuation in
+            // Holds a degraded preview received while waiting for the iCloud download.
+            // Used as fallback if the final high-quality delivery fails.
+            var degradedFallback: UIImage? = nil
+
             imageManager.requestImage(
                 for: asset,
                 targetSize: targetSize,
                 contentMode: .aspectFit,
                 options: options
             ) { image, info in
-                // PHImageManager can call this twice (low-quality then high-quality).
-                // Only resolve on the final delivery.
                 let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
                 let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
                 let hasError = info?[PHImageErrorKey] != nil
 
-                if isCancelled || hasError {
-                    // Request failed or was cancelled — resolve with nil so the
-                    // continuation doesn't hang forever.
-                    continuation.resume(returning: nil)
-                } else if !isDegraded {
-                    continuation.resume(returning: image)
+                if isDegraded {
+                    // Save as fallback; keep waiting for the high-quality version.
+                    degradedFallback = image
+                } else if isCancelled || hasError {
+                    // Final delivery failed — use the degraded preview if we got one.
+                    continuation.resume(returning: degradedFallback)
+                } else {
+                    // High-quality delivery (image may still be nil in rare edge cases).
+                    continuation.resume(returning: image ?? degradedFallback)
                 }
-                // If degraded, wait for the next (high-quality) callback.
             }
         }
     }

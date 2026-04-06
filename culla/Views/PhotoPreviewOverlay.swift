@@ -1,4 +1,5 @@
 import SwiftUI
+import Photos
 
 struct PhotoPreviewItem: Identifiable {
     let id: String
@@ -15,11 +16,10 @@ struct PhotoPreviewOverlay: View {
         self.identifier = identifier
         self.photoService = photoService
         self.onDismiss = onDismiss
-        let screen = UIScreen.main.bounds.size
         self._loader = State(initialValue: PhotoImageLoader(
             service: photoService,
             assetIdentifier: identifier,
-            targetSize: CGSize(width: screen.width * 2, height: screen.height * 2)
+            targetSize: PHImageManagerMaximumSize
         ))
     }
 
@@ -31,6 +31,10 @@ struct PhotoPreviewOverlay: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
+            } else if loader.loadAttempted && !loader.isLoading {
+                Image(systemName: "photo")
+                    .font(.largeTitle)
+                    .foregroundStyle(.tertiary)
             } else {
                 ProgressView()
                     .tint(.white)

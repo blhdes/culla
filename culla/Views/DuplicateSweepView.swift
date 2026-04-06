@@ -11,6 +11,8 @@ struct DuplicateSweepView: View {
     @State private var deleteMessage: DeleteFeedback?
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @State private var keptID: String?
+    @State private var previewIdentifier: String?
+    @Namespace private var heroNamespace
 
     private let photoService = PhotoLibraryService.shared
 
@@ -52,6 +54,17 @@ struct DuplicateSweepView: View {
             if viewModel == nil {
                 viewModel = DuplicateSweepViewModel(modelContext: modelContext)
             }
+        }
+        .fullScreenCover(item: Binding(
+            get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
+            set: { previewIdentifier = $0?.id }
+        )) { item in
+            PhotoPreviewOverlay(
+                identifier: item.id,
+                photoService: photoService,
+                onDismiss: { previewIdentifier = nil }
+            )
+            .navigationTransition(.zoom(sourceID: item.id, in: heroNamespace))
         }
         .sheet(isPresented: $showPicker, onDismiss: {
             // If user cancelled the picker without selecting, go back
@@ -120,7 +133,8 @@ struct DuplicateSweepView: View {
                                 viewModel.keepReference()
                                 keptID = nil
                             }
-                        }
+                        },
+                        onPreview: { previewIdentifier = refID }
                     )
                     .id(refID)
                 }
@@ -139,7 +153,8 @@ struct DuplicateSweepView: View {
                                 viewModel.keepDuplicate()
                                 keptID = nil
                             }
-                        }
+                        },
+                        onPreview: { previewIdentifier = dupID }
                     )
                     .id(dupID)
                 }
@@ -182,7 +197,8 @@ struct DuplicateSweepView: View {
         identifier: String,
         label: String,
         isKept: Bool,
-        action: @escaping () -> Void
+        action: @escaping () -> Void,
+        onPreview: @escaping () -> Void
     ) -> some View {
         let isDismissed = keptID != nil && !isKept
 
@@ -215,6 +231,8 @@ struct DuplicateSweepView: View {
                 .animation(.easeInOut(duration: 0.2), value: isDismissed)
             }
             .buttonStyle(.plain)
+            .matchedTransitionSource(id: identifier, in: heroNamespace)
+            .onLongPressGesture { onPreview() }
 
             VStack(spacing: 2) {
                 Text(label)

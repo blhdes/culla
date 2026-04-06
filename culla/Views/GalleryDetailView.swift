@@ -202,6 +202,14 @@ struct PhotoThumbnailView: View {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFill()
+                    } else if loader.loadAttempted && !loader.isLoading {
+                        // Load finished but returned nil — asset deleted or unavailable.
+                        Rectangle()
+                            .fill(Color(.systemGray5))
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .foregroundStyle(.tertiary)
+                            }
                     } else {
                         Rectangle()
                             .fill(Color(.systemGray5))

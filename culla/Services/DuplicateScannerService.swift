@@ -12,7 +12,7 @@ final class DuplicateScannerService {
     func findDuplicates(
         of assetIdentifier: String,
         timeWindow: TimeInterval = 3600,
-        distanceThreshold: Float = 0.5,
+        distanceThreshold: Float = 0.65,
         excluding: Set<String>
     ) async -> [String] {
         // 1. Get the reference asset and its creation date
