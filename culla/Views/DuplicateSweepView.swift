@@ -203,36 +203,35 @@ struct DuplicateSweepView: View {
         let isDismissed = keptID != nil && !isKept
 
         VStack(spacing: 6) {
-            Button(action: action) {
-                DuplicatePhotoView(
-                    assetIdentifier: identifier,
-                    photoService: photoService
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    if isKept {
-                        // Green checkmark on the kept photo
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.green.opacity(0.3))
-                            .overlay {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 40))
-                                    .foregroundStyle(.white)
-                            }
-                            .transition(.opacity)
-                    } else if isDismissed {
-                        // Red tint on the dismissed photo
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.red.opacity(0.3))
-                            .transition(.opacity)
-                    }
+            DuplicatePhotoView(
+                assetIdentifier: identifier,
+                photoService: photoService
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                if isKept {
+                    // Green checkmark on the kept photo
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.green.opacity(0.3))
+                        .overlay {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(.white)
+                        }
+                        .transition(.opacity)
+                } else if isDismissed {
+                    // Red tint on the dismissed photo
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.red.opacity(0.3))
+                        .transition(.opacity)
                 }
-                .animation(.easeInOut(duration: 0.2), value: isKept)
-                .animation(.easeInOut(duration: 0.2), value: isDismissed)
             }
-            .buttonStyle(.plain)
+            .animation(.easeInOut(duration: 0.2), value: isKept)
+            .animation(.easeInOut(duration: 0.2), value: isDismissed)
+            .contentShape(RoundedRectangle(cornerRadius: 12))
             .matchedTransitionSource(id: identifier, in: heroNamespace)
-            .onLongPressGesture { onPreview() }
+            .onTapGesture { action() }
+            .onLongPressGesture(minimumDuration: 0.4) { onPreview() }
 
             VStack(spacing: 2) {
                 Text(label)
