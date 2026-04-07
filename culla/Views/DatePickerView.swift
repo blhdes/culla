@@ -23,6 +23,7 @@ struct DatePickerView: View {
     @State private var showFullCalendar = false
     @State private var showDismissedPhotos = false
     @State private var permissionDenied = false
+    @State private var noPhotosAvailable = false
 
     @Query private var dismissedPhotos: [DismissedPhoto]
 
@@ -126,6 +127,29 @@ struct DatePickerView: View {
                     .controlSize(.large)
                 }
                 Spacer()
+            } else if noPhotosAvailable {
+                Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "photo.badge.exclamationmark")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                    Text("No photos selected")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    Text("You've given Culla limited access but haven't selected any photos. Open Settings to choose which photos to share.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
+                Spacer()
             } else {
                 Spacer()
                 ProgressView("Loading your library...")
@@ -170,11 +194,15 @@ struct DatePickerView: View {
                 return
             }
 
-            if let range = photoService.photoDateRange() {
-                earliestDate = range.earliest
-                latestDate = range.latest
-                pickerDate = range.latest
+            guard let range = photoService.photoDateRange() else {
+                noPhotosAvailable = true
+                isReady = true
+                return
             }
+
+            earliestDate = range.earliest
+            latestDate = range.latest
+            pickerDate = range.latest
 
             albums = photoService.fetchAlbums()
             unsortedCount = photoService.unsortedPhotoCount()
