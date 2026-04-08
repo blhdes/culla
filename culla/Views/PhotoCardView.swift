@@ -64,9 +64,14 @@ struct PhotoCardView: View {
         if offset.width < 0 && !isVertical {
             // Left drag — red (dismiss)
             let progress = min(abs(offset.width) / swipeThreshold, 1.0)
-            Color.red
-                .opacity(0.3 * progress)
-                .allowsHitTesting(false)
+            ZStack {
+                Color.red
+                    .opacity(0.25 * progress)
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white.opacity(0.8 * progress))
+            }
+            .allowsHitTesting(false)
         } else if offset.height < 0 && isVertical && !isDraggingTowardGalleries {
             // Up drag — gold (favorite)
             let progress = min(abs(offset.height) / swipeThreshold, 1.0)
