@@ -39,6 +39,7 @@ struct AlbumPickerView: View {
                                 Spacer()
                             }
                             .padding(.vertical, 4)
+                            .alignmentGuide(.listRowSeparatorLeading) { d in d[.leading] }
                         }
                     }
 
@@ -65,6 +66,7 @@ struct AlbumPickerView: View {
                                 Spacer()
                             }
                             .padding(.vertical, 4)
+                            .alignmentGuide(.listRowSeparatorLeading) { d in d[.leading] }
                         }
                     }
                 }
