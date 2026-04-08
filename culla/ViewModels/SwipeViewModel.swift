@@ -82,6 +82,14 @@ final class SwipeViewModel {
         isLoading = true
         actionHistory.removeAll()
 
+        // Dismissed photos are session-only — clear any leftovers from the previous session
+        // so those photos appear again in this new session.
+        let dismissedDescriptor = FetchDescriptor<DismissedPhoto>()
+        if let previousDismissed = try? modelContext.fetch(dismissedDescriptor) {
+            previousDismissed.forEach { modelContext.delete($0) }
+            try? modelContext.save()
+        }
+
         let excludedIDs = fetchExcludedIdentifiers()
         let fetched: [String]
         if isOnThisDay {
@@ -90,10 +98,12 @@ final class SwipeViewModel {
                 inAlbum: albumIdentifier
             )
         } else {
+            // "From the very first photo" uses no album membership filter — same as culling all photos.
+            let effectiveAlbum = albumIdentifier == PhoneAlbum.unsortedIdentifier ? nil : albumIdentifier
             fetched = photoService.fetchAssetIdentifiers(
                 from: startDate,
                 excluding: excludedIDs,
-                inAlbum: albumIdentifier
+                inAlbum: effectiveAlbum
             )
         }
 
@@ -300,28 +310,14 @@ final class SwipeViewModel {
     }
 
     private func fetchExcludedIdentifiers() -> Set<String> {
-        var excluded = Set<String>()
-
         // Only exclude photos the user actually sorted — not imports.
-        // Imported photos should still appear so the user can move/copy
-        // them to other galleries.
+        // Imported photos should still appear so the user can move/copy them to other galleries.
+        // Dismissed photos are cleared before this is called (session-only), so they are not excluded.
         let sortedDescriptor = FetchDescriptor<SortedPhoto>(
             predicate: #Predicate<SortedPhoto> { !$0.isImported }
         )
-        if let sorted = try? modelContext.fetch(sortedDescriptor) {
-            for photo in sorted {
-                excluded.insert(photo.assetIdentifier)
-            }
-        }
-
-        let dismissedDescriptor = FetchDescriptor<DismissedPhoto>()
-        if let dismissed = try? modelContext.fetch(dismissedDescriptor) {
-            for photo in dismissed {
-                excluded.insert(photo.assetIdentifier)
-            }
-        }
-
-        return excluded
+        guard let sorted = try? modelContext.fetch(sortedDescriptor) else { return [] }
+        return Set(sorted.map(\.assetIdentifier))
     }
 
     private func deleteDismissedPhoto(identifier: String) {

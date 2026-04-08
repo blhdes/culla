@@ -36,11 +36,11 @@ struct PhoneAlbum: Identifiable, Hashable {
         )
     }
 
-    /// Creates a virtual album representing photos not in any user-created album.
+    /// Creates a virtual album representing all unsorted photos, starting from the very first photo.
     static func unsorted(photoCount: Int) -> PhoneAlbum {
         PhoneAlbum(
             id: unsortedIdentifier,
-            name: "Unculla'd",
+            name: "From the very first photo",
             photoCount: photoCount,
             startDate: nil,
             endDate: nil,

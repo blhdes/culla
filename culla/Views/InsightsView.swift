@@ -110,7 +110,7 @@ struct InsightsView: View {
     // MARK: - Computed Stats
 
     private var remainingCount: Int {
-        max(viewModel.totalLibraryCount - allSortedPhotos.count, 0)
+        max(viewModel.totalLibraryCount - sortedPhotos.count, 0)
     }
 
     private var mostActiveGalleryText: String {

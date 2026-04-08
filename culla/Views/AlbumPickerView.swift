@@ -27,11 +27,11 @@ struct AlbumPickerView: View {
                                     .frame(width: 10)
 
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("Unculla'd")
+                                    Text("From the very first photo")
                                         .fontWeight(.medium)
                                         .foregroundStyle(.primary)
 
-                                    Text("\(unsortedCount) photos not in any album")
+                                    Text("\(unsortedCount) photos to sort")
                                         .font(.caption)
                                         .foregroundStyle(.tertiary)
                                 }

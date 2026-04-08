@@ -248,9 +248,6 @@ final class PhotoLibraryService {
         inAlbum albumIdentifier: String? = nil
     ) -> [String] {
         // Handle virtual albums
-        if albumIdentifier == PhoneAlbum.unsortedIdentifier {
-            return fetchUnsortedAssetIdentifiers(from: startDate, excluding: excludedIDs)
-        }
         if albumIdentifier == PhoneAlbum.favoritesIdentifier {
             return fetchFavoritesAssetIdentifiers(from: startDate, excluding: excludedIDs)
         }
@@ -341,10 +338,8 @@ final class PhotoLibraryService {
         return PHAsset.fetchAssets(with: options).count
     }
 
-    /// Returns the count of photos not in any user-created album.
-    func unsortedPhotoCount() -> Int {
-        let albummedIDs = identifiersInAllUserAlbums()
-
+    /// Returns the count of all photos not yet sorted into a gallery (excludes already-sorted identifiers).
+    func unsortedPhotoCount(excluding excludedIDs: Set<String> = []) -> Int {
         let options = PHFetchOptions()
         options.predicate = NSPredicate(
             format: "mediaType == %d",
@@ -354,7 +349,7 @@ final class PhotoLibraryService {
 
         var count = 0
         allAssets.enumerateObjects { asset, _, _ in
-            if !albummedIDs.contains(asset.localIdentifier) {
+            if !excludedIDs.contains(asset.localIdentifier) {
                 count += 1
             }
         }
@@ -385,53 +380,6 @@ final class PhotoLibraryService {
             }
         }
         return identifiers
-    }
-
-    // MARK: - Unsorted Fetching
-
-    /// Returns identifiers for photos not in any user-created album,
-    /// filtered by start date and exclusion set.
-    private func fetchUnsortedAssetIdentifiers(
-        from startDate: Date,
-        excluding excludedIDs: Set<String>
-    ) -> [String] {
-        let albummedIDs = identifiersInAllUserAlbums()
-
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.predicate = NSPredicate(
-            format: "creationDate >= %@ AND mediaType == %d",
-            startDate as NSDate,
-            PHAssetMediaType.image.rawValue
-        )
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
-
-        let allAssets = PHAsset.fetchAssets(with: fetchOptions)
-
-        var identifiers: [String] = []
-        allAssets.enumerateObjects { asset, _, _ in
-            let id = asset.localIdentifier
-            if !albummedIDs.contains(id) && !excludedIDs.contains(id) {
-                identifiers.append(id)
-            }
-        }
-        return identifiers
-    }
-
-    /// Collects all asset identifiers that belong to at least one user-created album.
-    private func identifiersInAllUserAlbums() -> Set<String> {
-        var albummedIDs = Set<String>()
-
-        let userAlbums = PHAssetCollection.fetchAssetCollections(
-            with: .album, subtype: .any, options: nil
-        )
-        userAlbums.enumerateObjects { collection, _, _ in
-            let assets = PHAsset.fetchAssets(in: collection, options: nil)
-            assets.enumerateObjects { asset, _, _ in
-                albummedIDs.insert(asset.localIdentifier)
-            }
-        }
-
-        return albummedIDs
     }
 
     // MARK: - Image Loading

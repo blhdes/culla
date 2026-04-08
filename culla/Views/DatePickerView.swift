@@ -25,6 +25,7 @@ struct DatePickerView: View {
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
 
+    @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
 
     var body: some View {
@@ -74,11 +75,6 @@ struct DatePickerView: View {
                         .controlSize(.large)
                     }
                     .padding(.horizontal)
-
-                    Button("From the very first photo") {
-                        selectedDate = earliestDate
-                    }
-                    .font(.subheadline)
 
                     Button {
                         isOnThisDay = true
@@ -173,6 +169,10 @@ struct DatePickerView: View {
             NavigationStack {
                 AlbumPickerView(albums: albums, unsortedCount: unsortedCount, favoritesCount: favoritesCount) { album in
                     selectedAlbum = album
+                    // "From the very first photo" always starts from the beginning
+                    if album.isUnsorted, let earliest = earliestDate {
+                        pickerDate = earliest
+                    }
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
@@ -205,7 +205,10 @@ struct DatePickerView: View {
             pickerDate = range.latest
 
             albums = photoService.fetchAlbums()
-            unsortedCount = photoService.unsortedPhotoCount()
+            // Only exclude already-sorted photos. Dismissed photos are cleared at session
+            // start so they'll appear again — don't subtract them from the count.
+            let excludedIDs = Set(sortedPhotos.map(\.assetIdentifier))
+            unsortedCount = photoService.unsortedPhotoCount(excluding: excludedIDs)
             favoritesCount = photoService.favoritesPhotoCount()
             isReady = true
         }
