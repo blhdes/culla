@@ -150,7 +150,7 @@ final class SwipeViewModel {
         modelContext.insert(dismissed)
         try? modelContext.save()
 
-        actionHistory.append(.dismissed(assetIdentifier: identifier))
+        actionHistory.append(.dismissed(assetIdentifier: identifier, record: dismissed))
         dismissedCount += 1
         sessionDismissedCount += 1
         advance()
@@ -180,7 +180,7 @@ final class SwipeViewModel {
         modelContext.insert(sorted)
         try? modelContext.save()
 
-        actionHistory.append(.sorted(assetIdentifier: identifier, gallery: gallery))
+        actionHistory.append(.sorted(assetIdentifier: identifier, gallery: gallery, record: sorted))
         sessionSortedCount += 1
         sessionGalleries.insert(gallery.id)
         showGalleryPicker = false
@@ -215,14 +215,16 @@ final class SwipeViewModel {
         actionHistory.removeLast()
 
         switch action {
-        case .dismissed(let identifier):
-            deleteDismissedPhoto(identifier: identifier)
+        case .dismissed(let identifier, let record):
+            modelContext.delete(record)
+            try? modelContext.save()
             dismissedCount = max(dismissedCount - 1, 0)
             sessionDismissedCount = max(sessionDismissedCount - 1, 0)
             pushBackToFront(identifier: identifier)
 
-        case .sorted(let identifier, let gallery):
-            deleteSortedPhoto(identifier: identifier)
+        case .sorted(let identifier, let gallery, let record):
+            modelContext.delete(record)
+            try? modelContext.save()
             sessionSortedCount = max(sessionSortedCount - 1, 0)
             pushBackToFront(identifier: identifier)
             if let albumID = gallery.albumIdentifier {
@@ -320,24 +322,6 @@ final class SwipeViewModel {
         return Set(sorted.map(\.assetIdentifier))
     }
 
-    private func deleteDismissedPhoto(identifier: String) {
-        let predicate = #Predicate<DismissedPhoto> { $0.assetIdentifier == identifier }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        if let match = try? modelContext.fetch(descriptor).first {
-            modelContext.delete(match)
-            try? modelContext.save()
-        }
-    }
-
-    private func deleteSortedPhoto(identifier: String) {
-        let predicate = #Predicate<SortedPhoto> { $0.assetIdentifier == identifier }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        if let match = try? modelContext.fetch(descriptor).first {
-            modelContext.delete(match)
-            try? modelContext.save()
-        }
-    }
-
     /// Creates the iPhone album for a gallery if it doesn't exist yet.
     /// Returns the album identifier.
     private func ensureAlbumExists(for gallery: Gallery) async -> String? {
@@ -359,8 +343,8 @@ final class SwipeViewModel {
 // MARK: - Supporting Types
 
 enum SwipeAction {
-    case dismissed(assetIdentifier: String)
-    case sorted(assetIdentifier: String, gallery: Gallery)
+    case dismissed(assetIdentifier: String, record: DismissedPhoto)
+    case sorted(assetIdentifier: String, gallery: Gallery, record: SortedPhoto)
     case skipped(assetIdentifier: String)
 }
 
