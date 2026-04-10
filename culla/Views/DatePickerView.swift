@@ -287,18 +287,14 @@ struct DatePickerView: View {
 
     private var calendarSheet: some View {
         NavigationStack {
-            VStack {
+            Group {
                 if let earliestDate, let latestDate {
-                    DatePicker(
-                        "Date",
-                        selection: $pickerDate,
-                        in: earliestDate...latestDate,
-                        displayedComponents: .date
+                    CalendarView(
+                        selectedDate: $pickerDate,
+                        earliest: earliestDate,
+                        latest: latestDate
                     )
-                    .datePickerStyle(.graphical)
-                    .padding()
                 }
-                Spacer()
             }
             .navigationTitle("Pick a Date")
             .navigationBarTitleDisplayMode(.inline)

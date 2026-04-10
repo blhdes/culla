@@ -472,6 +472,41 @@ final class PhotoLibraryService {
         }
     }
 
+    // MARK: - Calendar Data
+
+    /// Returns photo counts and up to 4 thumbnail asset identifiers per calendar day.
+    /// For days with more than 4 photos, 4 are picked randomly (stable per load).
+    /// Single fetch — use this instead of separate count + thumbnail calls.
+    func calendarData(from earliest: Date, to latest: Date) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(
+            format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
+            earliest as NSDate,
+            latest as NSDate,
+            PHAssetMediaType.image.rawValue
+        )
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+
+        let assets = PHAsset.fetchAssets(with: options)
+        var counts: [Date: Int] = [:]
+        var allIDs: [Date: [String]] = [:]
+        let cal = Calendar.current
+
+        assets.enumerateObjects { asset, _, _ in
+            guard let date = asset.creationDate else { return }
+            let day = cal.startOfDay(for: date)
+            counts[day, default: 0] += 1
+            allIDs[day, default: []].append(asset.localIdentifier)
+        }
+
+        var thumbnailIDs: [Date: [String]] = [:]
+        for (day, ids) in allIDs {
+            thumbnailIDs[day] = ids.count <= 4 ? ids : Array(ids.shuffled().prefix(4))
+        }
+
+        return (counts, thumbnailIDs)
+    }
+
     // MARK: - Preloading
 
     /// Tells PHCachingImageManager to start caching images for upcoming identifiers.

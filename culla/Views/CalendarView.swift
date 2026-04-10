@@ -1,58 +1,60 @@
 import SwiftUI
+import UIKit
 
-/// Pure SwiftUI calendar grid — no UIDatePicker, no rogue animations.
 struct CalendarView: View {
     @Binding var selectedDate: Date
     var earliest: Date = .distantPast
     var latest: Date = .distantFuture
 
-    @State private var displayedMonth = Date()
+    @State private var photoCounts: [Date: Int] = [:]
+    @State private var thumbnailIDs: [Date: [String]] = [:]
 
     private let calendar = Calendar.current
-    private let weekdaySymbols = Calendar.current.shortStandaloneWeekdaySymbols
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Month header
-            HStack {
-                Text(monthYearLabel)
-                    .font(.body)
-                    .fontWeight(.semibold)
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 24) {
+                    weekdayHeader
+                        .padding(.horizontal)
 
-                Spacer()
-
-                Button { changeMonth(by: -1) } label: {
-                    Image(systemName: "chevron.left")
+                    ForEach(months, id: \.self) { month in
+                        monthSection(month)
+                            .id(month)
+                    }
                 }
-                .disabled(!canGoBack)
-
-                Button { changeMonth(by: 1) } label: {
-                    Image(systemName: "chevron.right")
-                }
-                .disabled(!canGoForward)
+                .padding(.vertical)
             }
-
-            // Weekday headers (Mon first)
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(orderedWeekdaySymbols, id: \.self) { symbol in
-                    Text(symbol.uppercased())
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                }
+            .onAppear {
+                proxy.scrollTo(calendar.startOfMonth(for: selectedDate), anchor: .top)
             }
+        }
+        .task {
+            let data = await Task.detached(priority: .userInitiated) {
+                PhotoLibraryService.shared.calendarData(from: earliest, to: latest)
+            }.value
+            photoCounts = data.counts
+            thumbnailIDs = data.thumbnailIDs
+        }
+    }
 
-            // Day grid — always 6 rows so height never changes
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(daysInGrid, id: \.self) { day in
+    // MARK: - Month Section
+
+    private func monthSection(_ month: Date) -> some View {
+        VStack(spacing: 8) {
+            Text(month.formatted(.dateTime.month(.wide).year()))
+                .font(.body)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(Array(daysInGrid(for: month).enumerated()), id: \.offset) { _, day in
                     dayCell(day)
                 }
             }
-        }
-        .onAppear {
-            displayedMonth = calendar.startOfMonth(for: selectedDate)
+            .padding(.horizontal)
         }
     }
 
@@ -65,99 +67,185 @@ struct CalendarView: View {
             let isToday = calendar.isDateInToday(day)
             let isEnabled = day >= calendar.startOfDay(for: earliest)
                          && day <= calendar.startOfDay(for: latest)
+            let dayKey = calendar.startOfDay(for: day)
+            let count = photoCounts[dayKey] ?? 0
+            let ids = thumbnailIDs[dayKey] ?? []
 
             Button {
                 selectedDate = day
             } label: {
-                Text("\(calendar.component(.day, from: day))")
-                    .font(.body)
-                    .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(
-                        !isEnabled ? Color.gray.opacity(0.3) :
-                        isSelected ? Color.white :
-                        isToday ? Color.accentColor :
-                        Color.primary
-                    )
-                    .frame(maxWidth: .infinity, minHeight: 36)
-                    .background {
-                        if isSelected {
-                            Circle().fill(Color.accentColor)
-                        } else if isToday {
-                            Circle().strokeBorder(Color.accentColor, lineWidth: 1)
+                VStack(spacing: 2) {
+                    Text("\(calendar.component(.day, from: day))")
+                        .font(.body)
+                        .fontWeight(isToday ? .bold : .regular)
+                        .foregroundStyle(
+                            !isEnabled ? Color.gray.opacity(0.3) :
+                            isSelected ? Color.white :
+                            isToday ? Color.accentColor :
+                            Color.primary
+                        )
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                        .background {
+                            if isSelected {
+                                Circle().fill(Color.accentColor)
+                            } else if isToday {
+                                Circle().strokeBorder(Color.accentColor, lineWidth: 1)
+                            }
                         }
+
+                    if ids.isEmpty {
+                        Spacer().frame(height: 36)
+                    } else {
+                        CalendarMosaicView(assetIdentifiers: ids, totalCount: count)
                     }
+                }
             }
             .disabled(!isEnabled)
         } else {
-            Color.clear.frame(minHeight: 36)
+            Color.clear.frame(minHeight: 68)
+        }
+    }
+
+    // MARK: - Weekday Header
+
+    private var weekdayHeader: some View {
+        LazyVGrid(columns: columns, spacing: 0) {
+            ForEach(orderedWeekdaySymbols, id: \.self) { symbol in
+                Text(symbol.uppercased())
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
 
     // MARK: - Grid Data
 
-    /// Returns exactly 42 slots (6 rows x 7 columns). Empty slots are nil.
-    private var daysInGrid: [Date?] {
-        let first = calendar.startOfMonth(for: displayedMonth)
+    private var months: [Date] {
+        var result: [Date] = []
+        var current = calendar.startOfMonth(for: earliest)
+        let end = calendar.startOfMonth(for: latest)
+        while current <= end {
+            result.append(current)
+            guard let next = calendar.date(byAdding: .month, value: 1, to: current) else { break }
+            current = next
+        }
+        return result
+    }
+
+    private func daysInGrid(for month: Date) -> [Date?] {
+        let first = calendar.startOfMonth(for: month)
         guard let range = calendar.range(of: .day, in: .month, for: first) else { return [] }
 
-        // Weekday of the 1st, shifted so Monday = 0
         let rawWeekday = calendar.component(.weekday, from: first)
-        let offset = (rawWeekday + 5) % 7 // Mon=0, Tue=1, ..., Sun=6
+        let offset = (rawWeekday + 5) % 7 // Mon=0 … Sun=6
 
         var grid: [Date?] = Array(repeating: nil, count: 42)
-
         for day in range {
             if let date = calendar.date(byAdding: .day, value: day - 1, to: first) {
                 grid[offset + day - 1] = date
             }
         }
-
         return grid
     }
 
-    /// Weekday symbols starting from Monday.
     private var orderedWeekdaySymbols: [String] {
-        let symbols = weekdaySymbols
-        // Calendar weekday indices: 1=Sun, 2=Mon … 7=Sat
-        // Reorder to Mon…Sun
+        let symbols = Calendar.current.shortStandaloneWeekdaySymbols
         return Array(symbols[1...]) + [symbols[0]]
     }
+}
 
-    // MARK: - Month Navigation
+// MARK: - Mosaic View
 
-    private var monthYearLabel: String {
-        displayedMonth.formatted(.dateTime.month(.wide).year())
+private struct CalendarMosaicView: View {
+    let assetIdentifiers: [String]
+    let totalCount: Int
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            mosaicLayout
+                .frame(maxWidth: .infinity)
+                .frame(height: 34)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            if totalCount > 4 {
+                Text("\(totalCount)")
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 3)
+                    .padding(.vertical, 1)
+                    .background(.black.opacity(0.55), in: Capsule())
+                    .padding(2)
+            }
+        }
     }
 
-    private var canGoBack: Bool {
-        guard let prevMonth = calendar.date(byAdding: .month, value: -1, to: displayedMonth) else { return false }
-        let endOfPrev = calendar.endOfMonth(for: prevMonth)
-        return endOfPrev >= calendar.startOfDay(for: earliest)
+    @ViewBuilder
+    private var mosaicLayout: some View {
+        switch assetIdentifiers.count {
+        case 1:
+            ThumbnailImage(id: assetIdentifiers[0])
+        case 2:
+            HStack(spacing: 1) {
+                ThumbnailImage(id: assetIdentifiers[0])
+                ThumbnailImage(id: assetIdentifiers[1])
+            }
+        case 3:
+            VStack(spacing: 1) {
+                HStack(spacing: 1) {
+                    ThumbnailImage(id: assetIdentifiers[0])
+                    ThumbnailImage(id: assetIdentifiers[1])
+                }
+                ThumbnailImage(id: assetIdentifiers[2])
+            }
+        default: // 4
+            VStack(spacing: 1) {
+                HStack(spacing: 1) {
+                    ThumbnailImage(id: assetIdentifiers[0])
+                    ThumbnailImage(id: assetIdentifiers[1])
+                }
+                HStack(spacing: 1) {
+                    ThumbnailImage(id: assetIdentifiers[2])
+                    ThumbnailImage(id: assetIdentifiers[3])
+                }
+            }
+        }
     }
+}
 
-    private var canGoForward: Bool {
-        guard let nextMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth) else { return false }
-        let startOfNext = calendar.startOfMonth(for: nextMonth)
-        return startOfNext <= calendar.startOfDay(for: latest)
-    }
+// MARK: - Thumbnail Image
 
-    private func changeMonth(by value: Int) {
-        if let newMonth = calendar.date(byAdding: .month, value: value, to: displayedMonth) {
-            displayedMonth = newMonth
+private struct ThumbnailImage: View {
+    let id: String
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Color.secondary.opacity(0.15)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
+        .task {
+            image = await PhotoLibraryService.shared.loadImage(
+                for: id,
+                targetSize: CGSize(width: 80, height: 80)
+            )
         }
     }
 }
 
 // MARK: - Calendar Helpers
 
-private extension Calendar {
+extension Calendar {
     func startOfMonth(for date: Date) -> Date {
         let components = dateComponents([.year, .month], from: date)
         return self.date(from: components) ?? date
-    }
-
-    func endOfMonth(for date: Date) -> Date {
-        let start = startOfMonth(for: date)
-        return self.date(byAdding: DateComponents(month: 1, day: -1), to: start) ?? start
     }
 }
