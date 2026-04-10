@@ -11,7 +11,7 @@ struct CullaApp: App {
             SplashGate()
                 .tint(sessionAccent)
         }
-        .modelContainer(for: [Gallery.self, SortedPhoto.self, DismissedPhoto.self])
+        .modelContainer(for: [Gallery.self, SortedPhoto.self, DismissedPhoto.self, DailyStats.self])
     }
 }
 

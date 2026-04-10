@@ -158,6 +158,7 @@ struct SwipeView: View {
                 .onTapGesture(count: 2) {
                     viewModel.skipCurrent()
                     totalSkippedPhotos += 1
+                    upsertDailyStats(skippedDelta: 1)
                 }
                 .gesture(longPressGesture)
                 .highPriorityGesture(dragGesture(viewModel: viewModel))
@@ -542,6 +543,7 @@ struct SwipeView: View {
             Button {
                 if case .skipped = viewModel.actionHistory.last {
                     totalSkippedPhotos = max(0, totalSkippedPhotos - 1)
+                    upsertDailyStats(skippedDelta: -1)
                 }
                 withAnimation(.easeInOut(duration: 0.2)) {
                     viewModel.undo()
@@ -586,6 +588,7 @@ struct SwipeView: View {
                 isDeleting = false
                 if count > 0 {
                     totalDeletedPhotos += count
+                    upsertDailyStats(deletedDelta: count)
                     deleteMessage = DeleteFeedback(
                         sessionCount: count,
                         totalCount: totalDeletedPhotos
@@ -664,6 +667,27 @@ struct SwipeView: View {
         let s = totalSeconds % 60
         if s == 0 { return "\(m) min" }
         return "\(m)m \(s)s"
+    }
+
+    // MARK: - Daily Stats
+
+    /// Find-or-create today's DailyStats record and apply deltas.
+    private func upsertDailyStats(skippedDelta: Int = 0, deletedDelta: Int = 0) {
+        let today = Calendar.current.startOfDay(for: .now)
+        let descriptor = FetchDescriptor<DailyStats>(
+            predicate: #Predicate { $0.date == today }
+        )
+        if let existing = try? modelContext.fetch(descriptor).first {
+            existing.skipped = max(0, existing.skipped + skippedDelta)
+            existing.deleted = max(0, existing.deleted + deletedDelta)
+        } else {
+            let record = DailyStats(
+                date: today,
+                skipped: max(0, skippedDelta),
+                deleted: max(0, deletedDelta)
+            )
+            modelContext.insert(record)
+        }
     }
 
     // MARK: - Empty State

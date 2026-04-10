@@ -1,10 +1,12 @@
 import SwiftUI
 import SwiftData
+import Charts
 
 struct InsightsView: View {
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
+    @Query private var allDailyStats: [DailyStats]
 
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
@@ -106,9 +108,94 @@ struct InsightsView: View {
                 .padding(.vertical, 8)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                 .padding(.horizontal)
+
+                // 7-day activity chart
+                activityChart
             }
             .padding(.bottom, 40)
         }
+    }
+
+    // MARK: - Chart
+
+    private struct ChartPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let count: Int
+        let series: String
+    }
+
+    private var chartData: [ChartPoint] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today)!
+        let days = (0..<7).map { calendar.date(byAdding: .day, value: $0, to: sevenDaysAgo)! }
+
+        // Group sorted photos by day
+        let sortedByDay = Dictionary(
+            grouping: sortedPhotos.filter { $0.sortedAt >= sevenDaysAgo },
+            by: { calendar.startOfDay(for: $0.sortedAt) }
+        ).mapValues { $0.count }
+
+        // DailyStats lookup by date
+        let statsLookup = Dictionary(
+            uniqueKeysWithValues: allDailyStats
+                .filter { $0.date >= sevenDaysAgo }
+                .map { ($0.date, $0) }
+        )
+
+        return days.flatMap { day in [
+            ChartPoint(date: day, count: sortedByDay[day] ?? 0,          series: "Sorted"),
+            ChartPoint(date: day, count: statsLookup[day]?.skipped ?? 0, series: "Skipped"),
+            ChartPoint(date: day, count: statsLookup[day]?.deleted ?? 0, series: "Deleted"),
+        ]}
+    }
+
+    private var activityChart: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Last 7 days")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.horizontal, 4)
+
+            Chart(chartData) { point in
+                LineMark(
+                    x: .value("Day", point.date, unit: .day),
+                    y: .value("Count", point.count)
+                )
+                .foregroundStyle(by: .value("Series", point.series))
+                .symbol(by: .value("Series", point.series))
+                .interpolationMethod(.catmullRom)
+            }
+            .chartForegroundStyleScale([
+                "Sorted":  Color.blue,
+                "Skipped": Color.orange,
+                "Deleted": Color.red,
+            ])
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day)) { value in
+                    if let date = value.as(Date.self) {
+                        AxisValueLabel {
+                            Text(date, format: .dateTime.weekday(.abbreviated))
+                                .font(.caption2)
+                        }
+                    }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                    AxisValueLabel()
+                }
+            }
+            .chartLegend(position: .bottom, alignment: .center, spacing: 12)
+            .frame(height: 180)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
     }
 
     // MARK: - Computed Stats
