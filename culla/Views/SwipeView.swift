@@ -56,6 +56,8 @@ struct SwipeView: View {
     @State private var isDeleting = false
     @State private var deleteMessage: DeleteFeedback?
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
+    @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
+    @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
 
     private let swipeThreshold: CGFloat = 100
     private let maxSidebarGalleries = 10
@@ -155,6 +157,7 @@ struct SwipeView: View {
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2) {
                     viewModel.skipCurrent()
+                    totalSkippedPhotos += 1
                 }
                 .gesture(longPressGesture)
                 .highPriorityGesture(dragGesture(viewModel: viewModel))
@@ -421,6 +424,11 @@ struct SwipeView: View {
                     guard let identifier = viewModel.currentIdentifier else { return }
                     let isFavorite = await photoService.toggleFavorite(identifier: identifier)
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    if isFavorite {
+                        totalFavouritedPhotos += 1
+                    } else {
+                        totalFavouritedPhotos = max(0, totalFavouritedPhotos - 1)
+                    }
                     showToast(isFavorite ? "Favorited ♥" : "Unfavorited")
                 }
                 return
@@ -532,6 +540,9 @@ struct SwipeView: View {
     private func undoButton(viewModel: SwipeViewModel) -> some View {
         if viewModel.canUndo, showUndo {
             Button {
+                if case .skipped = viewModel.actionHistory.last {
+                    totalSkippedPhotos = max(0, totalSkippedPhotos - 1)
+                }
                 withAnimation(.easeInOut(duration: 0.2)) {
                     viewModel.undo()
                 }

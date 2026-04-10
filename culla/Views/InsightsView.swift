@@ -7,6 +7,8 @@ struct InsightsView: View {
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
+    @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
+    @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
 
     @State private var viewModel = InsightsViewModel()
     @Environment(\.dismiss) private var dismiss
@@ -96,6 +98,8 @@ struct InsightsView: View {
                     detailRow("Deleted", value: "\(totalDeletedPhotos)")
                     detailRow("Remaining", value: "\(remainingCount)")
                     detailRow("Galleries", value: "\(galleries.count)")
+                    detailRow("Skipped", value: "\(totalSkippedPhotos)")
+                    detailRow("Favourites", value: "\(totalFavouritedPhotos)")
                     detailRow("Top this week", value: mostActiveGalleryText)
                 }
                 .padding(.horizontal, 16)

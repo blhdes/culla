@@ -6,7 +6,6 @@ final class InsightsViewModel {
     private(set) var totalLibraryCount: Int = 0
     private(set) var longestStreak: Int = 0
     private(set) var currentStreak: Int = 0
-
     private let photoService: PhotoLibraryService
 
     init(photoService: PhotoLibraryService = .shared) {
@@ -22,7 +21,6 @@ final class InsightsViewModel {
         )
         totalLibraryCount = PHAsset.fetchAssets(with: options).count
     }
-
     /// Calculates longest and current sorting streaks from SortedPhoto dates.
     /// Groups by calendar day and finds consecutive-day runs.
     func calculateStreaks(from sortedDates: [Date]) {
