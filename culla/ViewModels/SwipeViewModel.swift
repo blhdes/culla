@@ -82,14 +82,6 @@ final class SwipeViewModel {
         isLoading = true
         actionHistory.removeAll()
 
-        // Dismissed photos are session-only — clear any leftovers from the previous session
-        // so those photos appear again in this new session.
-        let dismissedDescriptor = FetchDescriptor<DismissedPhoto>()
-        if let previousDismissed = try? modelContext.fetch(dismissedDescriptor) {
-            previousDismissed.forEach { modelContext.delete($0) }
-            try? modelContext.save()
-        }
-
         let excludedIDs = fetchExcludedIdentifiers()
         let fetched: [String]
         if isOnThisDay {
@@ -312,14 +304,23 @@ final class SwipeViewModel {
     }
 
     private func fetchExcludedIdentifiers() -> Set<String> {
-        // Only exclude photos the user actually sorted — not imports.
+        // Exclude photos the user has sorted (non-imports) and dismissed photos.
         // Imported photos should still appear so the user can move/copy them to other galleries.
-        // Dismissed photos are cleared before this is called (session-only), so they are not excluded.
+        var excluded = Set<String>()
+
         let sortedDescriptor = FetchDescriptor<SortedPhoto>(
             predicate: #Predicate<SortedPhoto> { !$0.isImported }
         )
-        guard let sorted = try? modelContext.fetch(sortedDescriptor) else { return [] }
-        return Set(sorted.map(\.assetIdentifier))
+        if let sorted = try? modelContext.fetch(sortedDescriptor) {
+            excluded.formUnion(sorted.map(\.assetIdentifier))
+        }
+
+        let dismissedDescriptor = FetchDescriptor<DismissedPhoto>()
+        if let dismissed = try? modelContext.fetch(dismissedDescriptor) {
+            excluded.formUnion(dismissed.map(\.assetIdentifier))
+        }
+
+        return excluded
     }
 
     /// Creates the iPhone album for a gallery if it doesn't exist yet.
