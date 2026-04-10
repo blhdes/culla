@@ -172,11 +172,13 @@ struct DatePickerView: View {
                         showDismissedPhotos = true
                     } label: {
                         Image(systemName: "trash")
-                            .overlay(alignment: .bottom) {
+                            .overlay(alignment: .topTrailing) {
                                 Text("\(dismissedPhotos.count)")
                                     .font(.system(size: 8, weight: .bold))
-                                    .foregroundStyle(.primary)
-                                    .offset(y: -1)
+                                    .foregroundStyle(.white)
+                                    .padding(3)
+                                    .background(.red, in: Circle())
+                                    .offset(x: 6, y: -6)
                             }
                     }
                 }
