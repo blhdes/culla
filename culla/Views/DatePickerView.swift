@@ -31,6 +31,16 @@ struct DatePickerView: View {
     var body: some View {
         VStack(spacing: 28) {
             HStack(spacing: 8) {
+                Button {
+                    let today = Date.now
+                    pickerDate = min(max(today, earliestDate ?? today), latestDate ?? today)
+                } label: {
+                    Label("Today", systemImage: "play.fill")
+                        .font(.subheadline)
+                }
+
+                Spacer()
+
                 Text("Pick a starting date")
                     .font(.title2)
                     .fontWeight(.semibold)
@@ -91,14 +101,6 @@ struct DatePickerView: View {
                             .font(.subheadline)
                     }
 
-                    if !dismissedPhotos.isEmpty {
-                        Button {
-                            showDismissedPhotos = true
-                        } label: {
-                            Label("Dismissed (\(dismissedPhotos.count))", systemImage: "trash.circle")
-                                .font(.subheadline)
-                        }
-                    }
                 }
             } else if permissionDenied {
                 Spacer()
@@ -161,6 +163,18 @@ struct DatePickerView: View {
                     Image(systemName: "rectangle.stack")
                 }
             }
+            if !dismissedPhotos.isEmpty {
+                ToolbarItem(placement: .bottomBar) {
+                    Spacer()
+                }
+                ToolbarItem(placement: .bottomBar) {
+                    Button {
+                        showDismissedPhotos = true
+                    } label: {
+                        Label("\(dismissedPhotos.count)", systemImage: "trash")
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showFullCalendar) {
             calendarSheet
@@ -169,9 +183,9 @@ struct DatePickerView: View {
             NavigationStack {
                 AlbumPickerView(albums: albums, unsortedCount: unsortedCount, favoritesCount: favoritesCount) { album in
                     selectedAlbum = album
-                    // "From the very first photo" always starts from the beginning
-                    if album.isUnsorted, let earliest = earliestDate {
-                        pickerDate = earliest
+                    if let latest = photoService.latestPhotoDate(inAlbum: album.collectionIdentifier),
+                       let earliest = earliestDate, let bound = latestDate {
+                        pickerDate = min(max(latest, earliest), bound)
                     }
                 }
                 .toolbar {
@@ -202,7 +216,7 @@ struct DatePickerView: View {
 
             earliestDate = range.earliest
             latestDate = range.latest
-            pickerDate = range.latest
+            pickerDate = photoService.latestPhotoDate(inAlbum: selectedAlbum?.collectionIdentifier) ?? range.latest
 
             albums = photoService.fetchAlbums()
             // Only exclude already-sorted photos. Dismissed photos are cleared at session
@@ -311,6 +325,7 @@ struct DatePickerView: View {
                     Button {
                         self.selectedAlbum = nil
                         self.sortMode = .copy
+                        if let latest = latestDate { pickerDate = latest }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)

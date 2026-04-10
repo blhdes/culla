@@ -31,6 +31,32 @@ final class PhotoLibraryService {
     /// Returns the creation dates of the earliest and latest photos in the library.
     /// Ignores photos with creation dates before 2000-01-01 to filter out corrupted
     /// EXIF dates (e.g. images saved from the web that inherit old embedded metadata).
+    /// Returns the creation date of the most recent photo in a given album.
+    /// Pass `nil` for all photos, or a `PhoneAlbum` collection identifier for a specific album.
+    func latestPhotoDate(inAlbum albumIdentifier: String? = nil) -> Date? {
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        options.fetchLimit = 1
+
+        if albumIdentifier == PhoneAlbum.favoritesIdentifier {
+            options.predicate = NSPredicate(
+                format: "mediaType == %d AND isFavorite == YES",
+                PHAssetMediaType.image.rawValue
+            )
+            return PHAsset.fetchAssets(with: options).firstObject?.creationDate
+        } else if let albumIdentifier,
+                  albumIdentifier != PhoneAlbum.unsortedIdentifier,
+                  let collection = PHAssetCollection.fetchAssetCollections(
+                      withLocalIdentifiers: [albumIdentifier], options: nil
+                  ).firstObject {
+            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            return PHAsset.fetchAssets(in: collection, options: options).firstObject?.creationDate
+        } else {
+            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            return PHAsset.fetchAssets(with: options).firstObject?.creationDate
+        }
+    }
+
     func photoDateRange() -> (earliest: Date, latest: Date)? {
         let imageType = PHAssetMediaType.image.rawValue
         let floorDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!
