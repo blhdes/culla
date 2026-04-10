@@ -5,6 +5,7 @@ struct CalendarView: View {
     @Binding var selectedDate: Date
     var earliest: Date = .distantPast
     var latest: Date = .distantFuture
+    var albumIdentifier: String? = nil
 
     @State private var photoCounts: [Date: Int] = [:]
     @State private var thumbnailIDs: [Date: [String]] = [:]
@@ -31,8 +32,9 @@ struct CalendarView: View {
             }
         }
         .task {
+            let albumID = albumIdentifier
             let data = await Task.detached(priority: .userInitiated) {
-                PhotoLibraryService.shared.calendarData(from: earliest, to: latest)
+                PhotoLibraryService.shared.calendarData(from: earliest, to: latest, inAlbum: albumID)
             }.value
             photoCounts = data.counts
             thumbnailIDs = data.thumbnailIDs

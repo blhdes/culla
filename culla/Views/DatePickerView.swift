@@ -292,7 +292,8 @@ struct DatePickerView: View {
                     CalendarView(
                         selectedDate: $pickerDate,
                         earliest: earliestDate,
-                        latest: latestDate
+                        latest: latestDate,
+                        albumIdentifier: selectedAlbum?.collectionIdentifier
                     )
                 }
             }

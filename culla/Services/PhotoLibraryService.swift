@@ -476,23 +476,43 @@ final class PhotoLibraryService {
 
     /// Returns photo counts and up to 4 thumbnail asset identifiers per calendar day.
     /// For days with more than 4 photos, 4 are picked randomly (stable per load).
-    /// Single fetch — use this instead of separate count + thumbnail calls.
-    func calendarData(from earliest: Date, to latest: Date) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
+    /// Respects album filtering: pass a collectionIdentifier to scope to an album,
+    /// PhoneAlbum.favoritesIdentifier for favorites, or nil for all photos.
+    func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
         let options = PHFetchOptions()
-        options.predicate = NSPredicate(
-            format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
-            earliest as NSDate,
-            latest as NSDate,
-            PHAssetMediaType.image.rawValue
-        )
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 
-        let assets = PHAsset.fetchAssets(with: options)
+        let result: PHFetchResult<PHAsset>
+
+        if albumIdentifier == PhoneAlbum.favoritesIdentifier {
+            options.predicate = NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d AND isFavorite == YES",
+                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
+            )
+            result = PHAsset.fetchAssets(with: options)
+        } else if let albumIdentifier,
+                  albumIdentifier != PhoneAlbum.unsortedIdentifier,
+                  let collection = PHAssetCollection.fetchAssetCollections(
+                      withLocalIdentifiers: [albumIdentifier], options: nil
+                  ).firstObject {
+            options.predicate = NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
+                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
+            )
+            result = PHAsset.fetchAssets(in: collection, options: options)
+        } else {
+            options.predicate = NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
+                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
+            )
+            result = PHAsset.fetchAssets(with: options)
+        }
+
         var counts: [Date: Int] = [:]
         var allIDs: [Date: [String]] = [:]
         let cal = Calendar.current
 
-        assets.enumerateObjects { asset, _, _ in
+        result.enumerateObjects { asset, _, _ in
             guard let date = asset.creationDate else { return }
             let day = cal.startOfDay(for: date)
             counts[day, default: 0] += 1
