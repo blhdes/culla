@@ -6,6 +6,11 @@ import UIKit
 /// while remaining fast to decode. Must match between loadThumbnail and startCachingCalendarThumbnails.
 let CalendarThumbnailSize = CGSize(width: 200, height: 200)
 
+// Session-scoped cache — avoids re-enumerating PHFetchResult every time CalendarView opens.
+// nonisolated(unsafe) because calendarData() is nonisolated and this is only written
+// from one Task.detached at a time (safe in practice).
+private nonisolated(unsafe) var _calendarDataCache: [String?: (counts: [Date: Int], thumbnailIDs: [Date: [String]])] = [:]
+
 @Observable
 final class PhotoLibraryService {
 
@@ -515,7 +520,11 @@ final class PhotoLibraryService {
     /// For days with more than 4 photos, 4 are picked randomly (stable per load).
     /// Respects album filtering: pass a collectionIdentifier to scope to an album,
     /// PhoneAlbum.favoritesIdentifier for favorites, or nil for all photos.
-    func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
+    nonisolated func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
+        if let cached = _calendarDataCache[albumIdentifier] {
+            return cached
+        }
+
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 
@@ -561,7 +570,9 @@ final class PhotoLibraryService {
             thumbnailIDs[day] = ids.count <= 4 ? ids : Self.spreadPick(ids, count: 4)
         }
 
-        return (counts, thumbnailIDs)
+        let calendarResult = (counts, thumbnailIDs)
+        _calendarDataCache[albumIdentifier] = calendarResult
+        return calendarResult
     }
 
     // MARK: - Preloading
@@ -615,7 +626,7 @@ final class PhotoLibraryService {
     /// Picks `count` evenly-distributed items from `ids` in O(1) — no full-array copy.
     /// Gives a representative spread across the day (first, middle, last-ish photos)
     /// rather than a random grab that varies on every load.
-    private static func spreadPick(_ ids: [String], count: Int) -> [String] {
+    private nonisolated static func spreadPick(_ ids: [String], count: Int) -> [String] {
         let n = ids.count
         return (0..<count).map { i in ids[(i * n) / count] }
     }

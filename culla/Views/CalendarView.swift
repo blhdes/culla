@@ -9,33 +9,36 @@ struct CalendarView: View {
 
     @State private var photoCounts: [Date: Int] = [:]
     @State private var thumbnailIDs: [Date: [String]] = [:]
-    @State private var scrollPositionMonth: Date?
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 24) {
-                weekdayHeader
-                    .padding(.horizontal)
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 24) {
+                    weekdayHeader
+                        .padding(.horizontal)
 
-                ForEach(months, id: \.self) { month in
-                    monthSection(month)
-                        .id(month)
+                    ForEach(months, id: \.self) { month in
+                        monthSection(month)
+                            .id(month)
+                    }
+                }
+                .padding(.vertical)
+            }
+            .onAppear {
+                let target = calendar.startOfMonth(for: selectedDate)
+                DispatchQueue.main.async {
+                    proxy.scrollTo(target, anchor: .top)
                 }
             }
-            .scrollTargetLayout()
-            .padding(.vertical)
-        }
-        .scrollPosition(id: $scrollPositionMonth, anchor: .top)
-        .onAppear {
-            scrollPositionMonth = calendar.startOfMonth(for: selectedDate)
         }
         .task {
             let albumID = albumIdentifier
+            let service = PhotoLibraryService.shared
             let data = await Task.detached(priority: .userInitiated) {
-                PhotoLibraryService.shared.calendarData(from: earliest, to: latest, inAlbum: albumID)
+                service.calendarData(from: earliest, to: latest, inAlbum: albumID)
             }.value
             photoCounts = data.counts
             thumbnailIDs = data.thumbnailIDs
@@ -177,19 +180,23 @@ private struct CalendarMosaicView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .bottomTrailing) {
+                // Fills the 1pt gaps between tiles with a consistent color instead of
+                // letting the screen background bleed through.
+                Color.secondary.opacity(0.12)
+
                 mosaic(width: geo.size.width)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
 
                 if totalCount > 4 {
-                    Text("\(totalCount)")
-                        .font(.system(size: 8, weight: .semibold))
+                    Text("+\(totalCount - 4)")
+                        .font(.system(size: 7, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 3)
                         .padding(.vertical, 1)
-                        .background(.black.opacity(0.55), in: Capsule())
+                        .background(.black.opacity(0.6), in: Capsule())
                         .padding(2)
                 }
             }
+            .clipShape(RoundedRectangle(cornerRadius: 4))
         }
         .frame(height: Self.mosaicHeight)
     }
@@ -209,26 +216,31 @@ private struct CalendarMosaicView: View {
                 thumb(assetIdentifiers[0], w: hw, h: h)
                 thumb(assetIdentifiers[1], w: hw, h: h)
             }
+            .frame(width: w, height: h)
         case 3:
-            // 1 large on the left, 2 small stacked on the right
             HStack(spacing: gap) {
                 thumb(assetIdentifiers[0], w: hw, h: h)
                 VStack(spacing: gap) {
                     thumb(assetIdentifiers[1], w: hw, h: hh)
                     thumb(assetIdentifiers[2], w: hw, h: hh)
                 }
+                .frame(width: hw, height: h)
             }
+            .frame(width: w, height: h)
         default: // 4
             VStack(spacing: gap) {
                 HStack(spacing: gap) {
                     thumb(assetIdentifiers[0], w: hw, h: hh)
                     thumb(assetIdentifiers[1], w: hw, h: hh)
                 }
+                .frame(width: w, height: hh)
                 HStack(spacing: gap) {
                     thumb(assetIdentifiers[2], w: hw, h: hh)
                     thumb(assetIdentifiers[3], w: hw, h: hh)
                 }
+                .frame(width: w, height: hh)
             }
+            .frame(width: w, height: h)
         }
     }
 
@@ -245,19 +257,22 @@ private struct ThumbnailImage: View {
     @State private var image: UIImage?
 
     var body: some View {
-        Group {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                Color.secondary.opacity(0.15)
+        // Color fills the exact proposed frame (set by .frame(width:height:) on the caller).
+        // The overlay is bounded to that same frame, so scaledToFill + clipped never bleeds
+        // outside the cell — fixing the thumbnail overlap issue.
+        Color.secondary.opacity(0.12)
+            .overlay {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .clipped()
+                }
             }
-        }
-        .clipped()
-        .task {
-            image = await PhotoLibraryService.shared.loadThumbnail(for: id)
-        }
+            .clipped()
+            .task(id: id) {
+                image = await PhotoLibraryService.shared.loadThumbnail(for: id)
+            }
     }
 }
 

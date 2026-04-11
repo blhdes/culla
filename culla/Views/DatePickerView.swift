@@ -21,6 +21,7 @@ struct DatePickerView: View {
     @State private var favoritesCount: Int = 0
     @State private var showAlbumPicker = false
     @State private var showFullCalendar = false
+    @State private var calendarID = UUID()
     @State private var showDismissedPhotos = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
@@ -42,6 +43,7 @@ struct DatePickerView: View {
                 Spacer()
 
                 Button {
+                    calendarID = UUID()
                     showFullCalendar = true
                 } label: {
                     Image(systemName: "calendar")
@@ -301,6 +303,7 @@ struct DatePickerView: View {
                         latest: latestDate,
                         albumIdentifier: selectedAlbum?.collectionIdentifier
                     )
+                    .id(calendarID)
                 }
             }
             .navigationTitle("Pick a Date")
