@@ -9,27 +9,28 @@ struct CalendarView: View {
 
     @State private var photoCounts: [Date: Int] = [:]
     @State private var thumbnailIDs: [Date: [String]] = [:]
+    @State private var scrollPositionMonth: Date?
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 24) {
-                    weekdayHeader
-                        .padding(.horizontal)
+        ScrollView {
+            LazyVStack(spacing: 24) {
+                weekdayHeader
+                    .padding(.horizontal)
 
-                    ForEach(months, id: \.self) { month in
-                        monthSection(month)
-                            .id(month)
-                    }
+                ForEach(months, id: \.self) { month in
+                    monthSection(month)
+                        .id(month)
                 }
-                .padding(.vertical)
             }
-            .onAppear {
-                proxy.scrollTo(calendar.startOfMonth(for: selectedDate), anchor: .top)
-            }
+            .scrollTargetLayout()
+            .padding(.vertical)
+        }
+        .scrollPosition(id: $scrollPositionMonth, anchor: .top)
+        .onAppear {
+            scrollPositionMonth = calendar.startOfMonth(for: selectedDate)
         }
         .task {
             let albumID = albumIdentifier
@@ -38,6 +39,14 @@ struct CalendarView: View {
             }.value
             photoCounts = data.counts
             thumbnailIDs = data.thumbnailIDs
+
+            // Pre-warm the PHCachingImageManager for every thumbnail at once.
+            // Cells that render later hit the cache instead of fetching cold.
+            let allIDs = data.thumbnailIDs.values.flatMap { $0 }
+            PhotoLibraryService.shared.startCachingCalendarThumbnails(allIDs)
+        }
+        .onDisappear {
+            PhotoLibraryService.shared.stopCachingAll()
         }
     }
 
@@ -80,23 +89,23 @@ struct CalendarView: View {
                     Text("\(calendar.component(.day, from: day))")
                         .font(.body)
                         .fontWeight(isToday ? .bold : .regular)
-                        .foregroundStyle(
-                            !isEnabled ? Color.gray.opacity(0.3) :
-                            isSelected ? Color.white :
-                            isToday ? Color.accentColor :
-                            Color.primary
-                        )
+                        .foregroundStyle({
+                            guard isEnabled else { return AnyShapeStyle(Color.gray.opacity(0.3)) }
+                            if isSelected { return AnyShapeStyle(Color.white) }
+                            if isToday    { return AnyShapeStyle(.tint) }
+                            return AnyShapeStyle(.primary)
+                        }())
                         .frame(maxWidth: .infinity, minHeight: 32)
                         .background {
                             if isSelected {
-                                Circle().fill(Color.accentColor)
+                                Circle().fill(.tint)
                             } else if isToday {
-                                Circle().strokeBorder(Color.accentColor, lineWidth: 1)
+                                Circle().strokeBorder(.tint, lineWidth: 1)
                             }
                         }
 
                     if ids.isEmpty {
-                        Spacer().frame(height: 36)
+                        Color.clear.frame(height: 44)
                     } else {
                         CalendarMosaicView(assetIdentifiers: ids, totalCount: count)
                     }
@@ -104,7 +113,7 @@ struct CalendarView: View {
             }
             .disabled(!isEnabled)
         } else {
-            Color.clear.frame(minHeight: 68)
+            Color.clear.frame(minHeight: 78)
         }
     }
 
@@ -163,56 +172,69 @@ struct CalendarView: View {
 private struct CalendarMosaicView: View {
     let assetIdentifiers: [String]
     let totalCount: Int
+    private static let mosaicHeight: CGFloat = 44
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            mosaicLayout
-                .frame(maxWidth: .infinity)
-                .frame(height: 34)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+        GeometryReader { geo in
+            ZStack(alignment: .bottomTrailing) {
+                mosaic(width: geo.size.width)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
 
-            if totalCount > 4 {
-                Text("\(totalCount)")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 3)
-                    .padding(.vertical, 1)
-                    .background(.black.opacity(0.55), in: Capsule())
-                    .padding(2)
+                if totalCount > 4 {
+                    Text("\(totalCount)")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 3)
+                        .padding(.vertical, 1)
+                        .background(.black.opacity(0.55), in: Capsule())
+                        .padding(2)
+                }
+            }
+        }
+        .frame(height: Self.mosaicHeight)
+    }
+
+    @ViewBuilder
+    private func mosaic(width w: CGFloat) -> some View {
+        let h = Self.mosaicHeight
+        let gap: CGFloat = 1
+        let hw = (w - gap) / 2
+        let hh = (h - gap) / 2
+
+        switch assetIdentifiers.count {
+        case 1:
+            thumb(assetIdentifiers[0], w: w, h: h)
+        case 2:
+            HStack(spacing: gap) {
+                thumb(assetIdentifiers[0], w: hw, h: h)
+                thumb(assetIdentifiers[1], w: hw, h: h)
+            }
+        case 3:
+            // 1 large on the left, 2 small stacked on the right
+            HStack(spacing: gap) {
+                thumb(assetIdentifiers[0], w: hw, h: h)
+                VStack(spacing: gap) {
+                    thumb(assetIdentifiers[1], w: hw, h: hh)
+                    thumb(assetIdentifiers[2], w: hw, h: hh)
+                }
+            }
+        default: // 4
+            VStack(spacing: gap) {
+                HStack(spacing: gap) {
+                    thumb(assetIdentifiers[0], w: hw, h: hh)
+                    thumb(assetIdentifiers[1], w: hw, h: hh)
+                }
+                HStack(spacing: gap) {
+                    thumb(assetIdentifiers[2], w: hw, h: hh)
+                    thumb(assetIdentifiers[3], w: hw, h: hh)
+                }
             }
         }
     }
 
-    @ViewBuilder
-    private var mosaicLayout: some View {
-        switch assetIdentifiers.count {
-        case 1:
-            ThumbnailImage(id: assetIdentifiers[0])
-        case 2:
-            HStack(spacing: 1) {
-                ThumbnailImage(id: assetIdentifiers[0])
-                ThumbnailImage(id: assetIdentifiers[1])
-            }
-        case 3:
-            VStack(spacing: 1) {
-                HStack(spacing: 1) {
-                    ThumbnailImage(id: assetIdentifiers[0])
-                    ThumbnailImage(id: assetIdentifiers[1])
-                }
-                ThumbnailImage(id: assetIdentifiers[2])
-            }
-        default: // 4
-            VStack(spacing: 1) {
-                HStack(spacing: 1) {
-                    ThumbnailImage(id: assetIdentifiers[0])
-                    ThumbnailImage(id: assetIdentifiers[1])
-                }
-                HStack(spacing: 1) {
-                    ThumbnailImage(id: assetIdentifiers[2])
-                    ThumbnailImage(id: assetIdentifiers[3])
-                }
-            }
-        }
+    private func thumb(_ id: String, w: CGFloat, h: CGFloat) -> some View {
+        ThumbnailImage(id: id)
+            .frame(width: w, height: h)
     }
 }
 
@@ -232,13 +254,9 @@ private struct ThumbnailImage: View {
                 Color.secondary.opacity(0.15)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipped()
         .task {
-            image = await PhotoLibraryService.shared.loadImage(
-                for: id,
-                targetSize: CGSize(width: 80, height: 80)
-            )
+            image = await PhotoLibraryService.shared.loadThumbnail(for: id)
         }
     }
 }

@@ -41,9 +41,6 @@ struct DatePickerView: View {
 
                 Spacer()
 
-                Text("Pick a starting date")
-                    .font(.title2)
-                    .fontWeight(.semibold)
                 Button {
                     showFullCalendar = true
                 } label: {
@@ -51,6 +48,7 @@ struct DatePickerView: View {
                         .font(.title3)
                 }
             }
+            .padding(.horizontal, 8)
 
             if let earliestDate, let latestDate {
                 // Wheel date picker
@@ -268,7 +266,7 @@ struct DatePickerView: View {
         } label: {
             Image(systemName: focusDuration != nil ? "timer.circle.fill" : "timer")
                 .font(.title2)
-                .foregroundStyle(focusDuration != nil ? Color.accentColor : .secondary)
+                .foregroundStyle(focusDuration != nil ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
         }
     }
 

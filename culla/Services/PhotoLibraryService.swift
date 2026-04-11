@@ -1,6 +1,11 @@
 import Photos
 import UIKit
 
+/// Shared pixel size for all calendar cell thumbnails.
+/// 200×200 pixels covers full-width cells at @3x (≈153px) without blurriness,
+/// while remaining fast to decode. Must match between loadThumbnail and startCachingCalendarThumbnails.
+let CalendarThumbnailSize = CGSize(width: 200, height: 200)
+
 @Observable
 final class PhotoLibraryService {
 
@@ -472,6 +477,38 @@ final class PhotoLibraryService {
         }
     }
 
+    // MARK: - Calendar Thumbnail Loading
+
+    /// Fast, local-only thumbnail load for calendar grid cells.
+    /// Uses fastFormat delivery (single callback, no iCloud wait) and aspectFill
+    /// so the image fills the cell without letterboxing.
+    func loadThumbnail(for assetIdentifier: String) async -> UIImage? {
+        guard !Task.isCancelled else { return nil }
+
+        guard let asset = PHAsset.fetchAssets(
+            withLocalIdentifiers: [assetIdentifier],
+            options: nil
+        ).firstObject else { return nil }
+
+        guard !Task.isCancelled else { return nil }
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .fastFormat
+        options.isNetworkAccessAllowed = false
+        options.resizeMode = .fast
+
+        return await withCheckedContinuation { continuation in
+            imageManager.requestImage(
+                for: asset,
+                targetSize: CalendarThumbnailSize,
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                continuation.resume(returning: image)
+            }
+        }
+    }
+
     // MARK: - Calendar Data
 
     /// Returns photo counts and up to 4 thumbnail asset identifiers per calendar day.
@@ -521,7 +558,7 @@ final class PhotoLibraryService {
 
         var thumbnailIDs: [Date: [String]] = [:]
         for (day, ids) in allIDs {
-            thumbnailIDs[day] = ids.count <= 4 ? ids : Array(ids.shuffled().prefix(4))
+            thumbnailIDs[day] = ids.count <= 4 ? ids : Self.spreadPick(ids, count: 4)
         }
 
         return (counts, thumbnailIDs)
@@ -555,7 +592,33 @@ final class PhotoLibraryService {
         imageManager.stopCachingImagesForAllAssets()
     }
 
+    /// Pre-warms the image cache for all calendar thumbnails at once.
+    /// Call this right after calendarData() resolves so cells hit the cache on first render.
+    func startCachingCalendarThumbnails(_ identifiers: [String]) {
+        guard !identifiers.isEmpty else { return }
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .fastFormat
+        options.isNetworkAccessAllowed = false
+        options.resizeMode = .fast
+        let assets = fetchAssets(for: identifiers)
+        guard !assets.isEmpty else { return }
+        imageManager.startCachingImages(
+            for: assets,
+            targetSize: CalendarThumbnailSize,
+            contentMode: .aspectFill,
+            options: options
+        )
+    }
+
     // MARK: - Private
+
+    /// Picks `count` evenly-distributed items from `ids` in O(1) — no full-array copy.
+    /// Gives a representative spread across the day (first, middle, last-ish photos)
+    /// rather than a random grab that varies on every load.
+    private static func spreadPick(_ ids: [String], count: Int) -> [String] {
+        let n = ids.count
+        return (0..<count).map { i in ids[(i * n) / count] }
+    }
 
     private func fetchAssets(for identifiers: [String]) -> [PHAsset] {
         guard !identifiers.isEmpty else { return [] }
