@@ -25,6 +25,7 @@ struct DatePickerView: View {
     @State private var showFullCalendar = false
     @State private var calendarID = UUID()
     @State private var showDismissedPhotos = false
+    @State private var showSettings = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
 
@@ -164,6 +165,13 @@ struct DatePickerView: View {
         }
         .padding(.horizontal)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gear")
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showGalleries = true
@@ -191,6 +199,9 @@ struct DatePickerView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
         .sheet(isPresented: $showFullCalendar) {
             calendarSheet

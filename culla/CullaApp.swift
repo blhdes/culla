@@ -3,15 +3,37 @@ import SwiftData
 
 @main
 struct CullaApp: App {
-    /// Random neon accent picked fresh each launch — adapts to light/dark.
-    private let sessionAccent = Color.adaptiveNeon(hex: Color.neonHexes.randomElement()!)
+    /// Fresh random neon picked once per cold launch — stable for the full session.
+    private static let sessionRandomHex: String = Color.neonHexes.randomElement()!
+
+    @AppStorage("accentColorMode") private var accentMode = "random"
+    @AppStorage("customAccentHex") private var customAccentHex = ""
+    @AppStorage("appColorScheme") private var colorSchemeString = "system"
+    @AppStorage("statusBarVisible") private var statusBarVisible = false
 
     var body: some Scene {
         WindowGroup {
             SplashGate()
-                .tint(sessionAccent)
+                .tint(currentAccent)
+                .preferredColorScheme(preferredScheme)
+                .statusBarHidden(!statusBarVisible)
         }
         .modelContainer(for: [Gallery.self, SortedPhoto.self, DismissedPhoto.self, DailyStats.self])
+    }
+
+    private var currentAccent: Color {
+        if accentMode == "custom" && !customAccentHex.isEmpty {
+            return Color.adaptiveNeon(hex: customAccentHex)
+        }
+        return Color.adaptiveNeon(hex: Self.sessionRandomHex)
+    }
+
+    private var preferredScheme: ColorScheme? {
+        switch colorSchemeString {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
     }
 }
 
