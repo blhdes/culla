@@ -164,6 +164,10 @@ struct DatePickerView: View {
             }
         }
         .padding(.horizontal)
+        .overlay(alignment: .top) {
+            CullaEyes()
+                .padding(.top, 4)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
