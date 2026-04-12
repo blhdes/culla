@@ -21,6 +21,15 @@ final class PhotoLibraryService {
 
     private let imageManager = PHCachingImageManager()
 
+    /// In-memory cache for calendar thumbnails — avoids re-fetching when scrolling back.
+    /// NSCache auto-evicts under memory pressure, so this is safe.
+    private let thumbnailCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 500
+        cache.totalCostLimit = 50_000_000  // ~50 MB
+        return cache
+    }()
+
     // MARK: - Authorization
 
     @MainActor
@@ -490,6 +499,11 @@ final class PhotoLibraryService {
     func loadThumbnail(for assetIdentifier: String) async -> UIImage? {
         guard !Task.isCancelled else { return nil }
 
+        let cacheKey = assetIdentifier as NSString
+        if let cached = thumbnailCache.object(forKey: cacheKey) {
+            return cached
+        }
+
         guard let asset = PHAsset.fetchAssets(
             withLocalIdentifiers: [assetIdentifier],
             options: nil
@@ -502,7 +516,7 @@ final class PhotoLibraryService {
         options.isNetworkAccessAllowed = false
         options.resizeMode = .fast
 
-        return await withCheckedContinuation { continuation in
+        let image: UIImage? = await withCheckedContinuation { continuation in
             imageManager.requestImage(
                 for: asset,
                 targetSize: CalendarThumbnailSize,
@@ -512,6 +526,12 @@ final class PhotoLibraryService {
                 continuation.resume(returning: image)
             }
         }
+
+        if let image {
+            thumbnailCache.setObject(image, forKey: cacheKey)
+        }
+
+        return image
     }
 
     // MARK: - Calendar Data

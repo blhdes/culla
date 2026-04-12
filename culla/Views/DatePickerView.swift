@@ -12,7 +12,9 @@ struct DatePickerView: View {
     @Binding var showDuplicateSweep: Bool
     @Binding var isReady: Bool
 
-    @State private var pickerDate = Date()
+    @AppStorage("lastSelectedDate") private var pickerDate = Date()
+    @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
+
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
     @State private var latestDate: Date?
@@ -31,38 +33,43 @@ struct DatePickerView: View {
 
     var body: some View {
         VStack(spacing: 28) {
-            HStack(spacing: 8) {
-                Button {
-                    let today = Date.now
-                    pickerDate = min(max(today, earliestDate ?? today), latestDate ?? today)
-                } label: {
-                    Label("Today", systemImage: "play.fill")
-                        .font(.subheadline)
+            // Compact picker controls group: buttons + wheel with minimal spacing
+            VStack(spacing: 4) {
+                HStack(spacing: 8) {
+                    Button {
+                        let today = Date.now
+                        pickerDate = min(max(today, earliestDate ?? today), latestDate ?? today)
+                    } label: {
+                        Label("Today", systemImage: "play.fill")
+                            .font(.subheadline)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        calendarID = UUID()
+                        showFullCalendar = true
+                    } label: {
+                        Image(systemName: "calendar")
+                            .font(.title3)
+                    }
                 }
 
-                Spacer()
-
-                Button {
-                    calendarID = UUID()
-                    showFullCalendar = true
-                } label: {
-                    Image(systemName: "calendar")
-                        .font(.title3)
+                if let earliestDate, let latestDate {
+                    // Wheel date picker
+                    DatePicker(
+                        "Date",
+                        selection: $pickerDate,
+                        in: earliestDate...latestDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
                 }
             }
             .padding(.horizontal, 8)
 
             if let earliestDate, let latestDate {
-                // Wheel date picker
-                DatePicker(
-                    "Date",
-                    selection: $pickerDate,
-                    in: earliestDate...latestDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.wheel)
-                .labelsHidden()
-
                 // Album filter
                 albumFilterButton
 
@@ -77,6 +84,7 @@ struct DatePickerView: View {
 
                         Button {
                             selectedDate = pickerDate
+                            lastSelectedAlbumID = selectedAlbum?.collectionIdentifier ?? ""
                         } label: {
                             Text(startButtonLabel)
                                 .frame(maxWidth: .infinity)
@@ -224,7 +232,6 @@ struct DatePickerView: View {
 
             earliestDate = range.earliest
             latestDate = range.latest
-            pickerDate = photoService.latestPhotoDate(inAlbum: selectedAlbum?.collectionIdentifier) ?? range.latest
 
             albums = photoService.fetchAlbums()
             // Only exclude already-sorted photos. Dismissed photos are cleared at session
@@ -233,6 +240,13 @@ struct DatePickerView: View {
             unsortedCount = photoService.unsortedPhotoCount(excluding: excludedIDs)
             favoritesCount = photoService.favoritesPhotoCount()
             isReady = true
+        }
+        .onChange(of: selectedAlbum?.collectionIdentifier) { _, newID in
+            // Reset date to today when album changes
+            if newID != lastSelectedAlbumID {
+                pickerDate = Date()
+                lastSelectedAlbumID = newID ?? ""
+            }
         }
     }
 

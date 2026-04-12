@@ -1,52 +1,91 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Pre-computed Data Models
+
+/// One calendar day's static info — computed once, never recalculated during render.
+struct DayInfo: Identifiable {
+    let id: Date          // startOfDay — used as dictionary key into photo data
+    let dayNumber: Int    // 1–31
+    let isToday: Bool
+    let isEnabled: Bool
+}
+
+/// One month's worth of pre-computed grid data.
+struct CalendarMonth: Identifiable {
+    let id: Date          // first-of-month — used as scroll anchor
+    let title: String     // "April 2024"
+    let days: [DayInfo?]  // 35–42 slots (trailing empty rows trimmed)
+}
+
+/// Everything the calendar needs to render — assigned in a single @State mutation.
+private struct CalendarViewData {
+    let months: [CalendarMonth]
+    let photoCounts: [Date: Int]
+    let thumbnailIDs: [Date: [String]]
+}
+
+// MARK: - CalendarView
+
 struct CalendarView: View {
     @Binding var selectedDate: Date
     var earliest: Date = .distantPast
     var latest: Date = .distantFuture
     var albumIdentifier: String? = nil
 
-    @State private var photoCounts: [Date: Int] = [:]
-    @State private var thumbnailIDs: [Date: [String]] = [:]
+    @State private var viewData: CalendarViewData?
+    @State private var scrollPosition = ScrollPosition()
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 24) {
-                    weekdayHeader
-                        .padding(.horizontal)
+        Group {
+            if let viewData {
+                let selectedDay = calendar.startOfDay(for: selectedDate)
 
-                    ForEach(months, id: \.self) { month in
-                        monthSection(month)
-                            .id(month)
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        weekdayHeader
+                            .padding(.horizontal)
+
+                        ForEach(viewData.months) { month in
+                            monthSection(month, selectedDay: selectedDay, viewData: viewData)
+                                .id(month.id)
+                        }
                     }
+                    .padding(.vertical)
                 }
-                .padding(.vertical)
-            }
-            .onAppear {
-                let target = calendar.startOfMonth(for: selectedDate)
-                DispatchQueue.main.async {
-                    proxy.scrollTo(target, anchor: .top)
+                .scrollPosition($scrollPosition)
+                .onAppear {
+                    let target = calendar.startOfMonth(for: selectedDate)
+                    scrollPosition.scrollTo(id: target, anchor: .top)
                 }
+            } else {
+                ProgressView()
             }
         }
         .task {
             let albumID = albumIdentifier
             let service = PhotoLibraryService.shared
+            let e = earliest
+            let l = latest
+
             let data = await Task.detached(priority: .userInitiated) {
-                service.calendarData(from: earliest, to: latest, inAlbum: albumID)
+                service.calendarData(from: e, to: l, inAlbum: albumID)
             }.value
-            photoCounts = data.counts
-            thumbnailIDs = data.thumbnailIDs
 
             // Pre-warm the PHCachingImageManager for every thumbnail at once.
-            // Cells that render later hit the cache instead of fetching cold.
             let allIDs = data.thumbnailIDs.values.flatMap { $0 }
             PhotoLibraryService.shared.startCachingCalendarThumbnails(allIDs)
+
+            // Build pre-computed months and assign everything in one state mutation.
+            let months = buildMonths(earliest: e, latest: l)
+            viewData = CalendarViewData(
+                months: months,
+                photoCounts: data.counts,
+                thumbnailIDs: data.thumbnailIDs
+            )
         }
         .onDisappear {
             PhotoLibraryService.shared.stopCachingAll()
@@ -55,17 +94,17 @@ struct CalendarView: View {
 
     // MARK: - Month Section
 
-    private func monthSection(_ month: Date) -> some View {
+    private func monthSection(_ month: CalendarMonth, selectedDay: Date, viewData: CalendarViewData) -> some View {
         VStack(spacing: 8) {
-            Text(month.formatted(.dateTime.month(.wide).year()))
+            Text(month.title)
                 .font(.body)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
 
             LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(Array(daysInGrid(for: month).enumerated()), id: \.offset) { _, day in
-                    dayCell(day)
+                ForEach(Array(month.days.enumerated()), id: \.offset) { _, day in
+                    dayCell(day, selectedDay: selectedDay, viewData: viewData)
                 }
             }
             .padding(.horizontal)
@@ -75,34 +114,30 @@ struct CalendarView: View {
     // MARK: - Day Cell
 
     @ViewBuilder
-    private func dayCell(_ day: Date?) -> some View {
+    private func dayCell(_ day: DayInfo?, selectedDay: Date, viewData: CalendarViewData) -> some View {
         if let day {
-            let isSelected = calendar.isDate(day, inSameDayAs: selectedDate)
-            let isToday = calendar.isDateInToday(day)
-            let isEnabled = day >= calendar.startOfDay(for: earliest)
-                         && day <= calendar.startOfDay(for: latest)
-            let dayKey = calendar.startOfDay(for: day)
-            let count = photoCounts[dayKey] ?? 0
-            let ids = thumbnailIDs[dayKey] ?? []
+            let isSelected = day.id == selectedDay
+            let count = viewData.photoCounts[day.id] ?? 0
+            let ids = viewData.thumbnailIDs[day.id] ?? []
 
             Button {
-                selectedDate = day
+                selectedDate = day.id
             } label: {
                 VStack(spacing: 2) {
-                    Text("\(calendar.component(.day, from: day))")
+                    Text("\(day.dayNumber)")
                         .font(.body)
-                        .fontWeight(isToday ? .bold : .regular)
+                        .fontWeight(day.isToday ? .bold : .regular)
                         .foregroundStyle({
-                            guard isEnabled else { return AnyShapeStyle(Color.gray.opacity(0.3)) }
+                            guard day.isEnabled else { return AnyShapeStyle(Color.gray.opacity(0.3)) }
                             if isSelected { return AnyShapeStyle(Color.white) }
-                            if isToday    { return AnyShapeStyle(.tint) }
+                            if day.isToday { return AnyShapeStyle(.tint) }
                             return AnyShapeStyle(.primary)
                         }())
                         .frame(maxWidth: .infinity, minHeight: 32)
                         .background {
                             if isSelected {
                                 Circle().fill(.tint)
-                            } else if isToday {
+                            } else if day.isToday {
                                 Circle().strokeBorder(.tint, lineWidth: 1)
                             }
                         }
@@ -114,7 +149,7 @@ struct CalendarView: View {
                     }
                 }
             }
-            .disabled(!isEnabled)
+            .disabled(!day.isEnabled)
         } else {
             Color.clear.frame(minHeight: 78)
         }
@@ -134,34 +169,56 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - Grid Data
+    // MARK: - Pre-computation
 
-    private var months: [Date] {
-        var result: [Date] = []
-        var current = calendar.startOfMonth(for: earliest)
-        let end = calendar.startOfMonth(for: latest)
+    /// Builds all month/day data once. Called from .task, never during render.
+    private func buildMonths(earliest: Date, latest: Date) -> [CalendarMonth] {
+        let cal = calendar
+        let today = cal.startOfDay(for: .now)
+        let enabledStart = cal.startOfDay(for: earliest)
+        let enabledEnd = cal.startOfDay(for: latest)
+
+        var result: [CalendarMonth] = []
+        var current = cal.startOfMonth(for: earliest)
+        let end = cal.startOfMonth(for: latest)
+
         while current <= end {
-            result.append(current)
-            guard let next = calendar.date(byAdding: .month, value: 1, to: current) else { break }
+            let title = current.formatted(.dateTime.month(.wide).year())
+
+            guard let range = cal.range(of: .day, in: .month, for: current) else {
+                guard let next = cal.date(byAdding: .month, value: 1, to: current) else { break }
+                current = next
+                continue
+            }
+
+            let rawWeekday = cal.component(.weekday, from: current)
+            let offset = (rawWeekday + 5) % 7 // Mon=0 … Sun=6
+
+            var grid: [DayInfo?] = Array(repeating: nil, count: 42)
+            for day in range {
+                if let date = cal.date(byAdding: .day, value: day - 1, to: current) {
+                    let startOfDay = cal.startOfDay(for: date)
+                    grid[offset + day - 1] = DayInfo(
+                        id: startOfDay,
+                        dayNumber: day,
+                        isToday: startOfDay == today,
+                        isEnabled: startOfDay >= enabledStart && startOfDay <= enabledEnd
+                    )
+                }
+            }
+
+            // Trim trailing empty rows — most months need 5 rows, not 6.
+            while grid.count > 7 && grid.suffix(7).allSatisfy({ $0 == nil }) {
+                grid.removeLast(7)
+            }
+
+            result.append(CalendarMonth(id: current, title: title, days: grid))
+
+            guard let next = cal.date(byAdding: .month, value: 1, to: current) else { break }
             current = next
         }
+
         return result
-    }
-
-    private func daysInGrid(for month: Date) -> [Date?] {
-        let first = calendar.startOfMonth(for: month)
-        guard let range = calendar.range(of: .day, in: .month, for: first) else { return [] }
-
-        let rawWeekday = calendar.component(.weekday, from: first)
-        let offset = (rawWeekday + 5) % 7 // Mon=0 … Sun=6
-
-        var grid: [Date?] = Array(repeating: nil, count: 42)
-        for day in range {
-            if let date = calendar.date(byAdding: .day, value: day - 1, to: first) {
-                grid[offset + day - 1] = date
-            }
-        }
-        return grid
     }
 
     private var orderedWeekdaySymbols: [String] {
@@ -180,8 +237,6 @@ private struct CalendarMosaicView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .bottomTrailing) {
-                // Fills the 1pt gaps between tiles with a consistent color instead of
-                // letting the screen background bleed through.
                 Color.secondary.opacity(0.12)
 
                 mosaic(width: geo.size.width)
@@ -257,9 +312,6 @@ private struct ThumbnailImage: View {
     @State private var image: UIImage?
 
     var body: some View {
-        // Color fills the exact proposed frame (set by .frame(width:height:) on the caller).
-        // The overlay is bounded to that same frame, so scaledToFill + clipped never bleeds
-        // outside the cell — fixing the thumbnail overlap issue.
         Color.secondary.opacity(0.12)
             .overlay {
                 if let image {
@@ -267,11 +319,17 @@ private struct ThumbnailImage: View {
                         .resizable()
                         .scaledToFill()
                         .clipped()
+                        .transition(.opacity)
                 }
             }
             .clipped()
             .task(id: id) {
-                image = await PhotoLibraryService.shared.loadThumbnail(for: id)
+                let loaded = await PhotoLibraryService.shared.loadThumbnail(for: id)
+                if !Task.isCancelled {
+                    withAnimation(.easeIn(duration: 0.15)) {
+                        image = loaded
+                    }
+                }
             }
     }
 }
