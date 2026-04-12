@@ -134,18 +134,19 @@ struct CalendarView: View {
                             return AnyShapeStyle(.primary)
                         }())
                         .frame(maxWidth: .infinity, minHeight: 32)
-                        .background {
-                            if isSelected {
-                                Circle().fill(.tint)
-                            } else if day.isToday {
-                                Circle().strokeBorder(.tint, lineWidth: 1)
-                            }
-                        }
 
                     if ids.isEmpty {
                         Color.clear.frame(height: 44)
                     } else {
                         CalendarMosaicView(assetIdentifiers: ids, totalCount: count)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .background {
+                    if isSelected {
+                        Circle().fill(.tint)
+                    } else if day.isToday {
+                        Circle().strokeBorder(.tint, lineWidth: 1)
                     }
                 }
             }
