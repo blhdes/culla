@@ -222,34 +222,7 @@ struct SwipeView: View {
                 }
 
                 // Navigation buttons (replaces toolbar so they can fade)
-                .overlay(alignment: .topLeading) {
-                    Button {
-                        onBack?()
-                    } label: {
-                        Image(systemName: "calendar")
-                            .font(.body)
-                            .frame(width: 20, height: 20)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .padding(.leading, 16)
-                    .padding(.top, 8)
-                    .opacity(chromeOpacity)
-                }
-                .overlay(alignment: .topTrailing) {
-                    Button {
-                        onShowGalleries?()
-                    } label: {
-                        Image(systemName: "rectangle.stack")
-                            .font(.body)
-                            .frame(width: 20, height: 20)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.top, 8)
-                    .opacity(chromeOpacity)
-                }
+                .swipeTopNav(onBack: onBack, onShowGalleries: onShowGalleries, opacity: chromeOpacity)
         }
         .deleteFeedback($deleteMessage)
         // Counter + toast at top
@@ -740,33 +713,48 @@ struct SwipeView: View {
             }
             .padding(.bottom, 40)
         }
-        .overlay(alignment: .topLeading) {
-            Button {
-                onBack?()
-            } label: {
-                Image(systemName: "calendar")
-                    .font(.body)
-                    .frame(width: 20, height: 20)
-                    .padding(10)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-            .padding(.leading, 16)
-            .padding(.top, 8)
-        }
-        .overlay(alignment: .topTrailing) {
-            Button {
-                onShowGalleries?()
-            } label: {
-                Image(systemName: "rectangle.stack")
-                    .font(.body)
-                    .frame(width: 20, height: 20)
-                    .padding(10)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-            .padding(.trailing, 16)
-            .padding(.top, 8)
-        }
+        .swipeTopNav(onBack: onBack, onShowGalleries: onShowGalleries)
         .deleteFeedback($deleteMessage)
+    }
+}
+
+// MARK: - Top Nav Buttons
+
+private struct TopNavButtons: ViewModifier {
+    let onBack: (() -> Void)?
+    let onShowGalleries: (() -> Void)?
+    var opacity: Double = 1.0
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .topLeading) {
+                circleButton("calendar", action: onBack)
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+                    .opacity(opacity)
+            }
+            .overlay(alignment: .topTrailing) {
+                circleButton("rectangle.stack", action: onShowGalleries)
+                    .padding(.trailing, 16)
+                    .padding(.top, 8)
+                    .opacity(opacity)
+            }
+    }
+
+    private func circleButton(_ icon: String, action: (() -> Void)?) -> some View {
+        Button { action?() } label: {
+            Image(systemName: icon)
+                .font(.title3)
+                .frame(width: 24, height: 24)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+    }
+}
+
+private extension View {
+    func swipeTopNav(onBack: (() -> Void)?, onShowGalleries: (() -> Void)?, opacity: Double = 1.0) -> some View {
+        modifier(TopNavButtons(onBack: onBack, onShowGalleries: onShowGalleries, opacity: opacity))
     }
 }
 
