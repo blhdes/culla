@@ -14,6 +14,7 @@ struct DatePickerView: View {
 
     @AppStorage("lastSelectedDate") private var pickerDate = Date()
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
+    @AppStorage("showCullaEyes") private var showCullaEyes = false
 
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
@@ -34,11 +35,12 @@ struct DatePickerView: View {
 
     var body: some View {
         VStack(spacing: 28) {
-            CullaEyes()
-                .padding(.top, 8)
-
-            // Wheel date picker with Today + Calendar overlaid at top corners
             if let earliestDate, let latestDate {
+                if showCullaEyes {
+                    CullaEyes()
+                        .padding(.top, 8)
+                }
+
                 VStack(spacing: 12) {
                     ZStack(alignment: .top) {
                         DatePicker(
@@ -75,13 +77,11 @@ struct DatePickerView: View {
 
                     albumFilterButton
                 }
-            }
-
-            if self.earliestDate != nil, self.latestDate != nil {
 
                 // Move vs. copy — only when sorting from a real album
                 if let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
                     sortModePicker
+                        .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
                 }
 
                 VStack(spacing: 18) {
@@ -114,7 +114,6 @@ struct DatePickerView: View {
                         Label("Duplicate Sweep", systemImage: "square.on.square")
                             .font(.subheadline)
                     }
-
                 }
             } else if permissionDenied {
                 Spacer()
@@ -168,6 +167,8 @@ struct DatePickerView: View {
                 Spacer()
             }
         }
+        .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
+        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
         .padding(.horizontal)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {

@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("accentColorMode") private var accentMode = "random"
     @AppStorage("customAccentHex") private var customAccentHex = ""
     @AppStorage("statusBarVisible") private var statusBarVisible = false
+    @AppStorage("showCullaEyes") private var showCullaEyes = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -52,6 +53,7 @@ struct SettingsView: View {
 
                 Section("Interface") {
                     Toggle("Show status bar", isOn: $statusBarVisible)
+                    Toggle("Culla Eyes", isOn: $showCullaEyes)
                 }
             }
             .navigationTitle("Settings")
