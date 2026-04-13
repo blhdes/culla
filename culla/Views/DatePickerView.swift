@@ -50,13 +50,15 @@ struct DatePickerView: View {
                     .labelsHidden()
 
                     HStack {
-                        Button {
-                            let today = Date.now
-                            pickerDate = min(max(today, earliestDate), latestDate)
-                        } label: {
-                            Label("Today", systemImage: "play.fill")
-                                .font(.subheadline)
-                        }
+//                        Button {
+//                            let today = Date.now
+//                            pickerDate = min(max(today, earliestDate), latestDate)
+//                        } label: {
+//                            Label("Today", systemImage: "play.fill")
+//                                .font(.subheadline)
+//                        }
+//
+//                        Spacer()
 
                         Spacer()
 
@@ -73,7 +75,7 @@ struct DatePickerView: View {
                 }
             }
 
-            if let earliestDate, let latestDate {
+            if self.earliestDate != nil, self.latestDate != nil {
                 // Album filter
                 albumFilterButton
 

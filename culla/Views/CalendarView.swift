@@ -58,8 +58,15 @@ struct CalendarView: View {
                 }
                 .scrollPosition($scrollPosition)
                 .onAppear {
-                    let target = calendar.startOfDay(for: selectedDate)
-                    scrollPosition.scrollTo(id: target, anchor: .center)
+                    let monthTarget = calendar.startOfMonth(for: selectedDate)
+                    let dayTarget = calendar.startOfDay(for: selectedDate)
+                    // Step 1: jump to the month — LazyVStack knows its position without rendering it.
+                    scrollPosition.scrollTo(id: monthTarget, anchor: .top)
+                    // Step 2: defer one layout pass so the month's LazyVGrid cells are
+                    // registered, then refine to the exact day.
+                    DispatchQueue.main.async {
+                        scrollPosition.scrollTo(id: dayTarget, anchor: .center)
+                    }
                 }
             } else {
                 ProgressView()
