@@ -58,7 +58,8 @@ struct CalendarView: View {
                             .padding(.bottom, 4)
 
                         ForEach(viewData.months) { month in
-                            // Month title — direct LazyVStack child
+                            // Month title — direct LazyVStack child, typed id avoids
+                            // collision with week row Date ids.
                             Text(month.title)
                                 .font(.body)
                                 .fontWeight(.semibold)
@@ -66,9 +67,9 @@ struct CalendarView: View {
                                 .padding(.horizontal)
                                 .padding(.top, 16)
                                 .padding(.bottom, 4)
+                                .id("header_\(month.id.timeIntervalSinceReferenceDate)")
 
-                            // Week rows — each is a direct LazyVStack child with a
-                            // stable id, so scrollTo can find them without rendering.
+                            // Week rows — direct LazyVStack children for reliable scrollTo.
                             ForEach(Array(month.weeks.enumerated()), id: \.offset) { weekIdx, week in
                                 LazyVGrid(columns: columns, spacing: 4) {
                                     ForEach(Array(week.enumerated()), id: \.offset) { _, day in
@@ -84,10 +85,9 @@ struct CalendarView: View {
                 }
                 .scrollPosition($scrollPosition)
                 .onAppear {
-                    // One deferred pass is enough — week rows are direct LazyVStack
-                    // children, so their positions are known without being rendered.
                     DispatchQueue.main.async {
-                        scrollPosition.scrollTo(id: selectedWeekRowID, anchor: UnitPoint(x: 0.5, y: 0.25))
+                        let monthStart = calendar.startOfMonth(for: selectedDate)
+                        scrollPosition.scrollTo(id: "header_\(monthStart.timeIntervalSinceReferenceDate)", anchor: .top)
                     }
                 }
             } else {
@@ -127,16 +127,6 @@ struct CalendarView: View {
     /// Mirrors exactly how weeks are built, so the id is always findable.
     private func weekRowID(monthStart: Date, weekIndex: Int) -> Date {
         calendar.date(byAdding: .day, value: weekIndex * 7, to: monthStart) ?? monthStart
-    }
-
-    /// The week row id that contains the currently selected date.
-    private var selectedWeekRowID: Date {
-        let monthStart = calendar.startOfMonth(for: selectedDate)
-        let rawWeekday = calendar.component(.weekday, from: monthStart)
-        let offset = (rawWeekday + 5) % 7   // Mon=0 … Sun=6, matches buildMonths
-        let dayOfMonth = calendar.component(.day, from: selectedDate)
-        let weekIndex = (offset + dayOfMonth - 1) / 7
-        return weekRowID(monthStart: monthStart, weekIndex: weekIndex)
     }
 
     // MARK: - Day Cell
