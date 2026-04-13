@@ -76,6 +76,30 @@ final class PhotoLibraryService {
         }
     }
 
+    func earliestPhotoDate(inAlbum albumIdentifier: String? = nil) -> Date? {
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+        options.fetchLimit = 1
+
+        if albumIdentifier == PhoneAlbum.favoritesIdentifier {
+            options.predicate = NSPredicate(
+                format: "mediaType == %d AND isFavorite == YES",
+                PHAssetMediaType.image.rawValue
+            )
+            return PHAsset.fetchAssets(with: options).firstObject?.creationDate
+        } else if let albumIdentifier,
+                  albumIdentifier != PhoneAlbum.unsortedIdentifier,
+                  let collection = PHAssetCollection.fetchAssetCollections(
+                      withLocalIdentifiers: [albumIdentifier], options: nil
+                  ).firstObject {
+            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            return PHAsset.fetchAssets(in: collection, options: options).firstObject?.creationDate
+        } else {
+            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            return PHAsset.fetchAssets(with: options).firstObject?.creationDate
+        }
+    }
+
     func photoDateRange() -> (earliest: Date, latest: Date)? {
         let imageType = PHAssetMediaType.image.rawValue
         let floorDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!

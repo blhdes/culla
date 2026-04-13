@@ -214,10 +214,11 @@ struct DatePickerView: View {
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {
                 AlbumPickerView(albums: albums, unsortedCount: unsortedCount, favoritesCount: favoritesCount) { album in
+                    lastSelectedAlbumID = album.collectionIdentifier
                     selectedAlbum = album
-                    if let latest = photoService.latestPhotoDate(inAlbum: album.collectionIdentifier),
-                       let earliest = earliestDate, let bound = latestDate {
-                        pickerDate = min(max(latest, earliest), bound)
+                    if let earliest = photoService.earliestPhotoDate(inAlbum: album.collectionIdentifier),
+                       let bound = latestDate, let floor = earliestDate {
+                        pickerDate = min(max(earliest, floor), bound)
                     }
                 }
                 .toolbar {
