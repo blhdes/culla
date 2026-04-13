@@ -3,58 +3,38 @@ import Combine
 
 struct CullaEyes: View {
     @State private var isClosed = false
-    @State private var pupilX: CGFloat = 0
+    @State private var pupilX: CGFloat = -6
 
     private let timer = Timer.publish(every: 3.5, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 60) {
             eye
             eye
         }
-        .onReceive(timer) { _ in
-            blink()
-        }
+        .onReceive(timer) { _ in blink() }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                pupilX = 4
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                pupilX = 6
             }
         }
     }
 
     private var eye: some View {
         ZStack {
-            // Sclera
-            Ellipse()
-                .fill(.white)
-                .overlay(
-                    Ellipse().strokeBorder(Color.secondary.opacity(0.25), lineWidth: 1.5)
-                )
-                .frame(width: 28, height: 36)
-
-            // Iris
+            // Fixed tinted pupil — never moves
             Circle()
-                .fill(.tint.opacity(0.9))
-                .frame(width: 16, height: 16)
-                .offset(x: pupilX)
+                .fill(.tint)
+                .frame(width: 26, height: 26)
 
-            // Pupil
-            Circle()
-                .fill(.black)
-                .frame(width: 8, height: 8)
-                .offset(x: pupilX)
-
-            // Specular highlight
+            // Highlight drifts across the pupil surface to suggest rotation
             Circle()
                 .fill(.white)
-                .frame(width: 3.5, height: 3.5)
-                .offset(x: pupilX + 3, y: -3.5)
+                .frame(width: 6, height: 6)
+                .offset(x: pupilX * 0.7, y: -7)
         }
-        .frame(width: 28, height: 36)
-        .clipShape(Ellipse())                                      // clean blink collapse
         .scaleEffect(y: isClosed ? 0.05 : 1.0, anchor: .center)
-        .animation(.easeInOut(duration: 0.08), value: isClosed)
-        .shadow(color: .black.opacity(0.08), radius: 3, y: 2)
+        .animation(.easeInOut(duration: 0.1), value: isClosed)
     }
 
     private func blink() {
