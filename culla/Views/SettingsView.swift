@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("customAccentHex") private var customAccentHex = ""
     @AppStorage("statusBarVisible") private var statusBarVisible = false
     @AppStorage("showCullaEyes") private var showCullaEyes = false
+    @AppStorage("hapticsEnabled") private var hapticsEnabled = true
 
     @Environment(\.dismiss) private var dismiss
 
@@ -54,6 +55,7 @@ struct SettingsView: View {
                 Section("Interface") {
                     Toggle("Show status bar", isOn: $statusBarVisible)
                     Toggle("Culla Eyes", isOn: $showCullaEyes)
+                    Toggle("Haptics", isOn: $hapticsEnabled)
                 }
             }
             .navigationTitle("Settings")

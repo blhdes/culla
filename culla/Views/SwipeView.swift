@@ -383,7 +383,7 @@ struct SwipeView: View {
            let gallery = sidebarGalleries.first(where: { $0.id == id }) {
             flyOff(x: 500) {
                 viewModel.assignToGallery(gallery)
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                Haptics.swipeRight()
                 showToast("\u{2192} \(gallery.name)")
             }
             return
@@ -397,7 +397,7 @@ struct SwipeView: View {
                 Task {
                     guard let identifier = viewModel.currentIdentifier else { return }
                     let isFavorite = await photoService.toggleFavorite(identifier: identifier)
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    Haptics.swipeUp()
                     if isFavorite {
                         totalFavouritedPhotos += 1
                     } else {
@@ -409,6 +409,7 @@ struct SwipeView: View {
             }
             // Swipe DOWN → share
             if ty > swipeThreshold || pty > swipeThreshold {
+                Haptics.swipeDown()
                 snapBack()
                 Task {
                     guard let identifier = viewModel.currentIdentifier else { return }
@@ -427,7 +428,7 @@ struct SwipeView: View {
         if tx < -swipeThreshold || ptx < -swipeThreshold {
             flyOff(x: -500) {
                 viewModel.dismissCurrent()
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                Haptics.swipeLeft()
                 showToast("Dismissed")
             }
             return

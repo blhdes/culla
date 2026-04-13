@@ -51,6 +51,9 @@ struct DatePickerView: View {
                         )
                         .datePickerStyle(.wheel)
                         .labelsHidden()
+                        .onChange(of: pickerDate) {
+                            Haptics.dateWheelTick()
+                        }
 
                         HStack {
                             Spacer()
@@ -89,6 +92,7 @@ struct DatePickerView: View {
                         timerMenu
 
                         Button {
+                            Haptics.startCullaing()
                             selectedDate = pickerDate
                             lastSelectedAlbumID = selectedAlbum?.collectionIdentifier ?? ""
                         } label: {

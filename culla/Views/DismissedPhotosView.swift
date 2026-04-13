@@ -137,6 +137,7 @@ struct DismissedPhotosView: View {
                     .controlSize(.regular)
 
                     Button {
+                        Haptics.deleteConfirm()
                         Task {
                             let count = await viewModel.deleteSelected()
                             showDeleteFeedback(count)
@@ -160,6 +161,7 @@ struct DismissedPhotosView: View {
                     .controlSize(.regular)
 
                     Button {
+                        Haptics.deleteConfirm()
                         Task {
                             let count = await viewModel.deleteAll()
                             showDeleteFeedback(count)
