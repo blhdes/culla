@@ -50,16 +50,6 @@ struct DatePickerView: View {
                     .labelsHidden()
 
                     HStack {
-//                        Button {
-//                            let today = Date.now
-//                            pickerDate = min(max(today, earliestDate), latestDate)
-//                        } label: {
-//                            Label("Today", systemImage: "play.fill")
-//                                .font(.subheadline)
-//                        }
-//
-//                        Spacer()
-
                         Spacer()
 
                         Button {
@@ -72,6 +62,14 @@ struct DatePickerView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
+                }
+
+                Button {
+                    let today = Date.now
+                    pickerDate = min(max(today, earliestDate), latestDate)
+                } label: {
+                    Label("Today", systemImage: "play.fill")
+                        .font(.subheadline)
                 }
             }
 

@@ -41,7 +41,6 @@ struct CalendarView: View {
     var albumIdentifier: String? = nil
 
     @State private var viewData: CalendarViewData?
-    @State private var scrollPosition = ScrollPosition()
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
@@ -51,43 +50,37 @@ struct CalendarView: View {
             if let viewData {
                 let selectedDay = calendar.startOfDay(for: selectedDate)
 
-                ScrollView {
-                    LazyVStack(spacing: 4) {
-                        weekdayHeader
-                            .padding(.horizontal)
-                            .padding(.bottom, 4)
-
-                        ForEach(viewData.months) { month in
-                            // Month title — direct LazyVStack child, typed id avoids
-                            // collision with week row Date ids.
-                            Text(month.title)
-                                .font(.body)
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 4) {
+                            weekdayHeader
                                 .padding(.horizontal)
-                                .padding(.top, 16)
                                 .padding(.bottom, 4)
-                                .id("header_\(month.id.timeIntervalSinceReferenceDate)")
 
-                            // Week rows — direct LazyVStack children for reliable scrollTo.
-                            ForEach(Array(month.weeks.enumerated()), id: \.offset) { weekIdx, week in
-                                LazyVGrid(columns: columns, spacing: 4) {
-                                    ForEach(Array(week.enumerated()), id: \.offset) { _, day in
-                                        dayCell(day, selectedDay: selectedDay, viewData: viewData)
+                            ForEach(viewData.months) { month in
+                                Text(month.title)
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                    .padding(.top, 16)
+                                    .padding(.bottom, 4)
+                                    .id("title_\(month.id)")
+
+                                ForEach(Array(month.weeks.enumerated()), id: \.offset) { weekIdx, week in
+                                    LazyVGrid(columns: columns, spacing: 4) {
+                                        ForEach(Array(week.enumerated()), id: \.offset) { _, day in
+                                            dayCell(day, selectedDay: selectedDay, viewData: viewData)
+                                        }
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.horizontal)
-                                .id(weekRowID(monthStart: month.id, weekIndex: weekIdx))
                             }
                         }
+                        .padding(.vertical)
                     }
-                    .padding(.vertical)
-                }
-                .scrollPosition($scrollPosition)
-                .onAppear {
-                    DispatchQueue.main.async {
-                        let monthStart = calendar.startOfMonth(for: selectedDate)
-                        scrollPosition.scrollTo(id: "header_\(monthStart.timeIntervalSinceReferenceDate)", anchor: .top)
+                    .onAppear {
+                        proxy.scrollTo("title_\(calendar.startOfMonth(for: selectedDate))", anchor: .top)
                     }
                 }
             } else {
@@ -119,14 +112,6 @@ struct CalendarView: View {
         .onDisappear {
             PhotoLibraryService.shared.stopCachingAll()
         }
-    }
-
-    // MARK: - Scroll Helpers
-
-    /// Stable id for a week row: monthStart + weekIndex × 7 days.
-    /// Mirrors exactly how weeks are built, so the id is always findable.
-    private func weekRowID(monthStart: Date, weekIndex: Int) -> Date {
-        calendar.date(byAdding: .day, value: weekIndex * 7, to: monthStart) ?? monthStart
     }
 
     // MARK: - Day Cell
