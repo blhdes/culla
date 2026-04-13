@@ -58,8 +58,8 @@ struct CalendarView: View {
                 }
                 .scrollPosition($scrollPosition)
                 .onAppear {
-                    let target = calendar.startOfMonth(for: selectedDate)
-                    scrollPosition.scrollTo(id: target, anchor: .top)
+                    let target = calendar.startOfDay(for: selectedDate)
+                    scrollPosition.scrollTo(id: target, anchor: .center)
                 }
             } else {
                 ProgressView()
@@ -133,7 +133,15 @@ struct CalendarView: View {
                             if day.isToday { return AnyShapeStyle(.tint) }
                             return AnyShapeStyle(.primary)
                         }())
-                        .frame(maxWidth: .infinity, minHeight: 32)
+                        .frame(width: 32, height: 32)
+                        .background {
+                            if isSelected {
+                                Circle().fill(.tint)
+                            } else if day.isToday {
+                                Circle().strokeBorder(.tint, lineWidth: 1)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
 
                     if ids.isEmpty {
                         Color.clear.frame(height: 44)
@@ -141,16 +149,9 @@ struct CalendarView: View {
                         CalendarMosaicView(assetIdentifiers: ids, totalCount: count)
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .background {
-                    if isSelected {
-                        Circle().fill(.tint)
-                    } else if day.isToday {
-                        Circle().strokeBorder(.tint, lineWidth: 1)
-                    }
-                }
             }
             .disabled(!day.isEnabled)
+            .id(day.id)
         } else {
             Color.clear.frame(minHeight: 78)
         }

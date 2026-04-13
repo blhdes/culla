@@ -34,30 +34,12 @@ struct DatePickerView: View {
 
     var body: some View {
         VStack(spacing: 28) {
-            // Compact picker controls group: buttons + wheel with minimal spacing
-            VStack(spacing: 4) {
-                HStack(spacing: 8) {
-                    Button {
-                        let today = Date.now
-                        pickerDate = min(max(today, earliestDate ?? today), latestDate ?? today)
-                    } label: {
-                        Label("Today", systemImage: "play.fill")
-                            .font(.subheadline)
-                    }
+            CullaEyes()
+                .padding(.top, 8)
 
-                    Spacer()
-
-                    Button {
-                        calendarID = UUID()
-                        showFullCalendar = true
-                    } label: {
-                        Image(systemName: "calendar")
-                            .font(.title3)
-                    }
-                }
-
-                if let earliestDate, let latestDate {
-                    // Wheel date picker
+            // Wheel date picker with Today + Calendar overlaid at top corners
+            if let earliestDate, let latestDate {
+                ZStack(alignment: .top) {
                     DatePicker(
                         "Date",
                         selection: $pickerDate,
@@ -66,9 +48,30 @@ struct DatePickerView: View {
                     )
                     .datePickerStyle(.wheel)
                     .labelsHidden()
+
+                    HStack {
+                        Button {
+                            let today = Date.now
+                            pickerDate = min(max(today, earliestDate), latestDate)
+                        } label: {
+                            Label("Today", systemImage: "play.fill")
+                                .font(.subheadline)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            calendarID = UUID()
+                            showFullCalendar = true
+                        } label: {
+                            Image(systemName: "calendar")
+                                .font(.title3)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
                 }
             }
-            .padding(.horizontal, 8)
 
             if let earliestDate, let latestDate {
                 // Album filter
@@ -164,10 +167,6 @@ struct DatePickerView: View {
             }
         }
         .padding(.horizontal)
-        .overlay(alignment: .top) {
-            CullaEyes()
-                .padding(.top, 4)
-        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
