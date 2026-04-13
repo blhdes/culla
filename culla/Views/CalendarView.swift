@@ -16,6 +16,13 @@ struct CalendarMonth: Identifiable {
     let id: Date          // first-of-month — used as scroll anchor
     let title: String     // "April 2024"
     let days: [DayInfo?]  // 35–42 slots (trailing empty rows trimmed)
+
+    /// Days split into week rows of 7 for flat LazyVStack rendering.
+    var weeks: [[DayInfo?]] {
+        stride(from: 0, to: days.count, by: 7).map { i in
+            Array(days[i..<min(i + 7, days.count)])
+        }
+    }
 }
 
 /// Everything the calendar needs to render — assigned in a single @State mutation.
@@ -45,27 +52,42 @@ struct CalendarView: View {
                 let selectedDay = calendar.startOfDay(for: selectedDate)
 
                 ScrollView {
-                    LazyVStack(spacing: 24) {
+                    LazyVStack(spacing: 4) {
                         weekdayHeader
                             .padding(.horizontal)
+                            .padding(.bottom, 4)
 
                         ForEach(viewData.months) { month in
-                            monthSection(month, selectedDay: selectedDay, viewData: viewData)
-                                .id(month.id)
+                            // Month title — direct LazyVStack child
+                            Text(month.title)
+                                .font(.body)
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal)
+                                .padding(.top, 16)
+                                .padding(.bottom, 4)
+
+                            // Week rows — each is a direct LazyVStack child with a
+                            // stable id, so scrollTo can find them without rendering.
+                            ForEach(Array(month.weeks.enumerated()), id: \.offset) { weekIdx, week in
+                                LazyVGrid(columns: columns, spacing: 4) {
+                                    ForEach(Array(week.enumerated()), id: \.offset) { _, day in
+                                        dayCell(day, selectedDay: selectedDay, viewData: viewData)
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .id(weekRowID(monthStart: month.id, weekIndex: weekIdx))
+                            }
                         }
                     }
                     .padding(.vertical)
                 }
                 .scrollPosition($scrollPosition)
                 .onAppear {
-                    let monthTarget = calendar.startOfMonth(for: selectedDate)
-                    let dayTarget = calendar.startOfDay(for: selectedDate)
-                    // Step 1: jump to the month — LazyVStack knows its position without rendering it.
-                    scrollPosition.scrollTo(id: monthTarget, anchor: .top)
-                    // Step 2: defer one layout pass so the month's LazyVGrid cells are
-                    // registered, then refine to the exact day.
+                    // One deferred pass is enough — week rows are direct LazyVStack
+                    // children, so their positions are known without being rendered.
                     DispatchQueue.main.async {
-                        scrollPosition.scrollTo(id: dayTarget, anchor: .center)
+                        scrollPosition.scrollTo(id: selectedWeekRowID, anchor: UnitPoint(x: 0.5, y: 0.25))
                     }
                 }
             } else {
@@ -99,23 +121,22 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - Month Section
+    // MARK: - Scroll Helpers
 
-    private func monthSection(_ month: CalendarMonth, selectedDay: Date, viewData: CalendarViewData) -> some View {
-        VStack(spacing: 8) {
-            Text(month.title)
-                .font(.body)
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
+    /// Stable id for a week row: monthStart + weekIndex × 7 days.
+    /// Mirrors exactly how weeks are built, so the id is always findable.
+    private func weekRowID(monthStart: Date, weekIndex: Int) -> Date {
+        calendar.date(byAdding: .day, value: weekIndex * 7, to: monthStart) ?? monthStart
+    }
 
-            LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(Array(month.days.enumerated()), id: \.offset) { _, day in
-                    dayCell(day, selectedDay: selectedDay, viewData: viewData)
-                }
-            }
-            .padding(.horizontal)
-        }
+    /// The week row id that contains the currently selected date.
+    private var selectedWeekRowID: Date {
+        let monthStart = calendar.startOfMonth(for: selectedDate)
+        let rawWeekday = calendar.component(.weekday, from: monthStart)
+        let offset = (rawWeekday + 5) % 7   // Mon=0 … Sun=6, matches buildMonths
+        let dayOfMonth = calendar.component(.day, from: selectedDate)
+        let weekIndex = (offset + dayOfMonth - 1) / 7
+        return weekRowID(monthStart: monthStart, weekIndex: weekIndex)
     }
 
     // MARK: - Day Cell
