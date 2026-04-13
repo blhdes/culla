@@ -39,43 +39,45 @@ struct DatePickerView: View {
 
             // Wheel date picker with Today + Calendar overlaid at top corners
             if let earliestDate, let latestDate {
-                ZStack(alignment: .top) {
-                    DatePicker(
-                        "Date",
-                        selection: $pickerDate,
-                        in: earliestDate...latestDate,
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
+                VStack(spacing: 12) {
+                    ZStack(alignment: .top) {
+                        DatePicker(
+                            "Date",
+                            selection: $pickerDate,
+                            in: earliestDate...latestDate,
+                            displayedComponents: .date
+                        )
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
 
-                    HStack {
-                        Spacer()
+                        HStack {
+                            Spacer()
 
-                        Button {
-                            calendarID = UUID()
-                            showFullCalendar = true
-                        } label: {
-                            Image(systemName: "calendar")
-                                .font(.title3)
+                            Button {
+                                calendarID = UUID()
+                                showFullCalendar = true
+                            } label: {
+                                Image(systemName: "calendar")
+                                    .font(.title3)
+                            }
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 8)
-                }
 
-                Button {
-                    let today = Date.now
-                    pickerDate = min(max(today, earliestDate), latestDate)
-                } label: {
-                    Label("Today", systemImage: "play.fill")
-                        .font(.subheadline)
+                    Button {
+                        let today = Date.now
+                        pickerDate = min(max(today, earliestDate), latestDate)
+                    } label: {
+                        Label("Today", systemImage: "play.fill")
+                            .font(.subheadline)
+                    }
+
+                    albumFilterButton
                 }
             }
 
             if self.earliestDate != nil, self.latestDate != nil {
-                // Album filter
-                albumFilterButton
 
                 // Move vs. copy — only when sorting from a real album
                 if let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
