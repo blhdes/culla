@@ -2,6 +2,12 @@ import SwiftUI
 import SwiftData
 import Photos
 
+enum CullaMode: String, CaseIterable {
+    case cullaing
+    case thisDay
+    case duplicates
+}
+
 struct DatePickerView: View {
     @Binding var selectedDate: Date?
     @Binding var selectedAlbum: PhoneAlbum?
@@ -28,6 +34,7 @@ struct DatePickerView: View {
     @State private var showSettings = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
+    @State private var selectedMode: CullaMode = .cullaing
 
     @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
@@ -40,8 +47,10 @@ struct DatePickerView: View {
                         .padding(.top, 8)
                 }
 
-                VStack(spacing: 12) {
-                    ZStack(alignment: .top) {
+                Spacer()
+
+                if selectedMode != .duplicates {
+                    VStack(spacing: 12) {
                         DatePicker(
                             "Date",
                             selection: $pickerDate,
@@ -53,73 +62,59 @@ struct DatePickerView: View {
                         .onChange(of: pickerDate) {
                             Haptics.dateWheelTick()
                         }
-
-                        HStack {
-                            Spacer()
-
-                            Button {
-                                showFullCalendar = true
-                            } label: {
-                                Image(systemName: "calendar")
-                                    .font(.title3)
-                            }
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.top, 8)
-                    }
-
-                    Button {
-                        let today = Date.now
-                        pickerDate = min(max(today, earliestDate), latestDate)
-                    } label: {
-                        Label("Today", systemImage: "play.fill")
-                            .font(.subheadline)
-                    }
-                    .opacity(Calendar.current.isDateInToday(pickerDate) ? 0 : 1)
-                    .allowsHitTesting(!Calendar.current.isDateInToday(pickerDate))
-                    .animation(.easeInOut(duration: 0.25), value: Calendar.current.isDateInToday(pickerDate))
-
-                    albumFilterButton
-                }
-
-                // Move vs. copy — only when sorting from a real album
-                if let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
-                    sortModePicker
-                        .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
-                }
-
-                VStack(spacing: 18) {
-                    HStack(spacing: 12) {
-                        timerMenu
+                        .simultaneousGesture(
+                            TapGesture()
+                                .onEnded { _ in
+                                    showFullCalendar = true
+                                }
+                        )
 
                         Button {
-                            Haptics.startCullaing()
-                            selectedDate = pickerDate
-                            lastSelectedAlbumID = selectedAlbum?.collectionIdentifier ?? ""
+                            let today = Date.now
+                            pickerDate = min(max(today, earliestDate), latestDate)
                         } label: {
-                            Text(startButtonLabel)
+                            Label("Today", systemImage: "play.fill")
+                                .font(.subheadline)
+                        }
+                        .opacity(Calendar.current.isDateInToday(pickerDate) ? 0 : 1)
+                        .allowsHitTesting(!Calendar.current.isDateInToday(pickerDate))
+                        .animation(.easeInOut(duration: 0.25), value: Calendar.current.isDateInToday(pickerDate))
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
+                Spacer()
+
+                // Album + sort mode + start button — anchored just above the bottom toolbar
+                VStack(spacing: 12) {
+                    if selectedMode == .cullaing {
+                        albumFilterButton
+
+                        if let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
+                            sortModePicker
+                                .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
+                        }
+                    }
+
+                    HStack(spacing: 12) {
+                        if selectedMode == .cullaing {
+                            timerMenu
+                        }
+
+                        Button {
+                            startAction()
+                        } label: {
+                            Text(actionButtonLabel)
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
+                        .animation(.easeInOut(duration: 0.2), value: selectedMode)
                     }
                     .padding(.horizontal)
-
-                    Button {
-                        isOnThisDay = true
-                        selectedDate = .now
-                    } label: {
-                        Label("On This Day", systemImage: "clock.arrow.circlepath")
-                            .font(.subheadline)
-                    }
-
-                    Button {
-                        showDuplicateSweep = true
-                    } label: {
-                        Label("Duplicate Sweep", systemImage: "square.on.square")
-                            .font(.subheadline)
-                    }
+                    .padding(.bottom, 12)
                 }
+
             } else if permissionDenied {
                 Spacer()
                 VStack(spacing: 16) {
@@ -172,6 +167,7 @@ struct DatePickerView: View {
                 Spacer()
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
         .padding(.horizontal)
@@ -189,6 +185,14 @@ struct DatePickerView: View {
                 } label: {
                     Image(systemName: "rectangle.stack")
                 }
+            }
+            ToolbarItem(placement: .bottomBar) {
+                Picker("Mode", selection: $selectedMode) {
+                    Text("Cullaing").tag(CullaMode.cullaing)
+                    Text("This Day").tag(CullaMode.thisDay)
+                    Text("Duplicates").tag(CullaMode.duplicates)
+                }
+                .pickerStyle(.segmented)
             }
             if !dismissedPhotos.isEmpty {
                 ToolbarItem(placement: .bottomBar) {
@@ -208,6 +212,7 @@ struct DatePickerView: View {
                                     .offset(x: 6, y: -6)
                             }
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -257,15 +262,12 @@ struct DatePickerView: View {
             latestDate = range.latest
 
             albums = photoService.fetchAlbums()
-            // Only exclude already-sorted photos. Dismissed photos are cleared at session
-            // start so they'll appear again — don't subtract them from the count.
             let excludedIDs = Set(sortedPhotos.map(\.assetIdentifier))
             unsortedCount = photoService.unsortedPhotoCount(excluding: excludedIDs)
             favoritesCount = photoService.favoritesPhotoCount()
             isReady = true
         }
         .onChange(of: selectedAlbum?.collectionIdentifier) { _, newID in
-            // Reset date to today when album changes
             if newID != lastSelectedAlbumID {
                 pickerDate = Date()
                 lastSelectedAlbumID = newID ?? ""
@@ -273,13 +275,36 @@ struct DatePickerView: View {
         }
     }
 
-    // MARK: - Focus Timer Menu
+    // MARK: - Actions
 
-    private var startButtonLabel: String {
-        guard let focusDuration else { return "Start Cullaing" }
-        let minutes = Int(focusDuration) / 60
-        return "Culla for \(minutes) min"
+    private func startAction() {
+        Haptics.startCullaing()
+        switch selectedMode {
+        case .cullaing:
+            selectedDate = pickerDate
+            lastSelectedAlbumID = selectedAlbum?.collectionIdentifier ?? ""
+        case .thisDay:
+            isOnThisDay = true
+            selectedDate = .now
+        case .duplicates:
+            showDuplicateSweep = true
+        }
     }
+
+    private var actionButtonLabel: String {
+        switch selectedMode {
+        case .cullaing:
+            guard let focusDuration else { return "Start Cullaing" }
+            let minutes = Int(focusDuration) / 60
+            return "Culla for \(minutes) min"
+        case .thisDay:
+            return "This Day"
+        case .duplicates:
+            return "Sweep"
+        }
+    }
+
+    // MARK: - Focus Timer Menu
 
     private var timerMenu: some View {
         Menu {
