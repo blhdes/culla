@@ -729,7 +729,7 @@ private struct TopNavButtons: ViewModifier {
     func body(content: Content) -> some View {
         content
             .overlay(alignment: .topLeading) {
-                circleButton("calendar", action: onBack)
+                circleButton("chevron.left", action: onBack)
                     .padding(.leading, 16)
                     .padding(.top, 8)
                     .opacity(opacity)
