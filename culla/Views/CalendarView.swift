@@ -4,25 +4,30 @@ import UIKit
 // MARK: - Pre-computed Data Models
 
 /// One calendar day's static info — computed once, never recalculated during render.
-struct DayInfo: Identifiable {
+struct DayInfo: Identifiable, Equatable {
     let id: Date          // startOfDay — used as dictionary key into photo data
     let dayNumber: Int    // 1–31
     let isToday: Bool
     let isEnabled: Bool
 }
 
+/// Wraps an optional DayInfo with a stable grid-position ID for ForEach.
+struct DaySlot: Identifiable, Equatable {
+    let id: Int        // grid position within month (0–41)
+    let info: DayInfo?
+}
+
+/// One row of 7 day slots with a stable identity.
+struct WeekRow: Identifiable, Equatable {
+    let id: Int        // week index within month (0–5)
+    let slots: [DaySlot]
+}
+
 /// One month's worth of pre-computed grid data.
 struct CalendarMonth: Identifiable {
     let id: Date          // first-of-month — used as scroll anchor
     let title: String     // "April 2024"
-    let days: [DayInfo?]  // 35–42 slots (trailing empty rows trimmed)
-
-    /// Days split into week rows of 7 for flat LazyVStack rendering.
-    var weeks: [[DayInfo?]] {
-        stride(from: 0, to: days.count, by: 7).map { i in
-            Array(days[i..<min(i + 7, days.count)])
-        }
-    }
+    let weeks: [WeekRow]  // pre-computed, stored — not re-sliced on each render
 }
 
 /// Everything the calendar needs to render — assigned in a single @State mutation.
@@ -67,10 +72,16 @@ struct CalendarView: View {
                                     .padding(.bottom, 4)
                                     .id("title_\(month.id)")
 
-                                ForEach(Array(month.weeks.enumerated()), id: \.offset) { weekIdx, week in
+                                ForEach(month.weeks) { week in
                                     LazyVGrid(columns: columns, spacing: 4) {
-                                        ForEach(Array(week.enumerated()), id: \.offset) { _, day in
-                                            dayCell(day, selectedDay: selectedDay, viewData: viewData)
+                                        ForEach(week.slots) { slot in
+                                            DayCellView(
+                                                slot: slot,
+                                                isSelected: slot.info?.id == selectedDay,
+                                                photoCount: slot.info.flatMap { viewData.photoCounts[$0.id] } ?? 0,
+                                                thumbnailIDs: slot.info.flatMap { viewData.thumbnailIDs[$0.id] } ?? [],
+                                                selectedDate: $selectedDate
+                                            )
                                         }
                                     }
                                     .padding(.horizontal)
@@ -92,17 +103,19 @@ struct CalendarView: View {
             let service = PhotoLibraryService.shared
             let e = earliest
             let l = latest
+            let cal = calendar
 
-            let data = await Task.detached(priority: .userInitiated) {
-                service.calendarData(from: e, to: l, inAlbum: albumID)
+            let (months, data) = await Task.detached(priority: .userInitiated) {
+                let data = service.calendarData(from: e, to: l, inAlbum: albumID)
+                let months = CalendarView.buildMonths(calendar: cal, earliest: e, latest: l)
+                return (months, data)
             }.value
 
-            // Pre-warm the PHCachingImageManager for every thumbnail at once.
+            // startCachingCalendarThumbnails is @MainActor — call it here after await.
+            // PHCachingImageManager dispatches caching work to its own internal thread.
             let allIDs = data.thumbnailIDs.values.flatMap { $0 }
-            PhotoLibraryService.shared.startCachingCalendarThumbnails(allIDs)
+            service.startCachingCalendarThumbnails(allIDs)
 
-            // Build pre-computed months and assign everything in one state mutation.
-            let months = buildMonths(earliest: e, latest: l)
             viewData = CalendarViewData(
                 months: months,
                 photoCounts: data.counts,
@@ -111,52 +124,6 @@ struct CalendarView: View {
         }
         .onDisappear {
             PhotoLibraryService.shared.stopCachingAll()
-        }
-    }
-
-    // MARK: - Day Cell
-
-    @ViewBuilder
-    private func dayCell(_ day: DayInfo?, selectedDay: Date, viewData: CalendarViewData) -> some View {
-        if let day {
-            let isSelected = day.id == selectedDay
-            let count = viewData.photoCounts[day.id] ?? 0
-            let ids = viewData.thumbnailIDs[day.id] ?? []
-
-            Button {
-                selectedDate = day.id
-            } label: {
-                VStack(spacing: 2) {
-                    Text("\(day.dayNumber)")
-                        .font(.body)
-                        .fontWeight(day.isToday ? .bold : .regular)
-                        .foregroundStyle({
-                            guard day.isEnabled else { return AnyShapeStyle(Color.gray.opacity(0.3)) }
-                            if isSelected { return AnyShapeStyle(Color.white) }
-                            if day.isToday { return AnyShapeStyle(.tint) }
-                            return AnyShapeStyle(.primary)
-                        }())
-                        .frame(width: 32, height: 32)
-                        .background {
-                            if isSelected {
-                                Circle().fill(.tint)
-                            } else if day.isToday {
-                                Circle().strokeBorder(.tint, lineWidth: 1)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-
-                    if ids.isEmpty {
-                        Color.clear.frame(height: 44)
-                    } else {
-                        CalendarMosaicView(assetIdentifiers: ids, totalCount: count)
-                    }
-                }
-            }
-            .disabled(!day.isEnabled)
-            .id(day.id)
-        } else {
-            Color.clear.frame(minHeight: 78)
         }
     }
 
@@ -176,9 +143,8 @@ struct CalendarView: View {
 
     // MARK: - Pre-computation
 
-    /// Builds all month/day data once. Called from .task, never during render.
-    private func buildMonths(earliest: Date, latest: Date) -> [CalendarMonth] {
-        let cal = calendar
+    /// Builds all month/day data once on a background thread. Pure function — no instance state.
+    private nonisolated static func buildMonths(calendar cal: Calendar, earliest: Date, latest: Date) -> [CalendarMonth] {
         let today = cal.startOfDay(for: .now)
         let enabledStart = cal.startOfDay(for: earliest)
         let enabledEnd = cal.startOfDay(for: latest)
@@ -217,7 +183,15 @@ struct CalendarView: View {
                 grid.removeLast(7)
             }
 
-            result.append(CalendarMonth(id: current, title: title, days: grid))
+            // Convert flat grid into WeekRows with stable IDs.
+            let weeks = stride(from: 0, to: grid.count, by: 7).enumerated().map { weekIdx, startIdx in
+                let slots = (startIdx..<min(startIdx + 7, grid.count)).map { i in
+                    DaySlot(id: i, info: grid[i])
+                }
+                return WeekRow(id: weekIdx, slots: slots)
+            }
+
+            result.append(CalendarMonth(id: current, title: title, weeks: weeks))
 
             guard let next = cal.date(byAdding: .month, value: 1, to: current) else { break }
             current = next
@@ -232,81 +206,125 @@ struct CalendarView: View {
     }
 }
 
-// MARK: - Mosaic View
+// MARK: - Day Cell View (Equatable — only redraws when inputs change)
 
-private struct CalendarMosaicView: View {
+private struct DayCellView: View, Equatable {
+    let slot: DaySlot
+    let isSelected: Bool
+    let photoCount: Int
+    let thumbnailIDs: [String]
+    @Binding var selectedDate: Date
+
+    static func == (lhs: DayCellView, rhs: DayCellView) -> Bool {
+        lhs.slot == rhs.slot &&
+        lhs.isSelected == rhs.isSelected &&
+        lhs.photoCount == rhs.photoCount &&
+        lhs.thumbnailIDs == rhs.thumbnailIDs
+    }
+
+    var body: some View {
+        if let day = slot.info {
+            Button {
+                selectedDate = day.id
+            } label: {
+                VStack(spacing: 2) {
+                    Text("\(day.dayNumber)")
+                        .font(.body)
+                        .fontWeight(day.isToday ? .bold : .regular)
+                        .foregroundStyle({
+                            guard day.isEnabled else { return AnyShapeStyle(Color.gray.opacity(0.3)) }
+                            if isSelected { return AnyShapeStyle(Color.white) }
+                            if day.isToday { return AnyShapeStyle(.tint) }
+                            return AnyShapeStyle(.primary)
+                        }())
+                        .frame(width: 32, height: 32)
+                        .background {
+                            if isSelected {
+                                Circle().fill(.tint)
+                            } else if day.isToday {
+                                Circle().strokeBorder(.tint, lineWidth: 1)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+
+                    if thumbnailIDs.isEmpty {
+                        Color.clear.frame(height: 44)
+                    } else {
+                        CalendarMosaicView(assetIdentifiers: thumbnailIDs, totalCount: photoCount)
+                    }
+                }
+            }
+            .disabled(!day.isEnabled)
+            .id(day.id)
+        } else {
+            Color.clear.frame(minHeight: 78)
+        }
+    }
+}
+
+// MARK: - Mosaic View (Equatable, no GeometryReader)
+
+private struct CalendarMosaicView: View, Equatable {
     let assetIdentifiers: [String]
     let totalCount: Int
     private static let mosaicHeight: CGFloat = 44
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .bottomTrailing) {
-                Color.secondary.opacity(0.12)
+        ZStack(alignment: .bottomTrailing) {
+            Color.secondary.opacity(0.12)
 
-                mosaic(width: geo.size.width)
+            mosaic()
 
-                if totalCount > 4 {
-                    Text("+\(totalCount - 4)")
-                        .font(.system(size: 7, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 3)
-                        .padding(.vertical, 1)
-                        .background(.black.opacity(0.6), in: Capsule())
-                        .padding(2)
-                }
+            if totalCount > 4 {
+                Text("+\(totalCount - 4)")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 3)
+                    .padding(.vertical, 1)
+                    .background(.black.opacity(0.6), in: Capsule())
+                    .padding(2)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 4))
         }
+        .clipShape(RoundedRectangle(cornerRadius: 4))
         .frame(height: Self.mosaicHeight)
     }
 
     @ViewBuilder
-    private func mosaic(width w: CGFloat) -> some View {
-        let h = Self.mosaicHeight
+    private func mosaic() -> some View {
         let gap: CGFloat = 1
-        let hw = (w - gap) / 2
-        let hh = (h - gap) / 2
 
         switch assetIdentifiers.count {
         case 1:
-            thumb(assetIdentifiers[0], w: w, h: h)
+            thumb(assetIdentifiers[0])
         case 2:
             HStack(spacing: gap) {
-                thumb(assetIdentifiers[0], w: hw, h: h)
-                thumb(assetIdentifiers[1], w: hw, h: h)
+                thumb(assetIdentifiers[0])
+                thumb(assetIdentifiers[1])
             }
-            .frame(width: w, height: h)
         case 3:
             HStack(spacing: gap) {
-                thumb(assetIdentifiers[0], w: hw, h: h)
+                thumb(assetIdentifiers[0])
                 VStack(spacing: gap) {
-                    thumb(assetIdentifiers[1], w: hw, h: hh)
-                    thumb(assetIdentifiers[2], w: hw, h: hh)
+                    thumb(assetIdentifiers[1])
+                    thumb(assetIdentifiers[2])
                 }
-                .frame(width: hw, height: h)
             }
-            .frame(width: w, height: h)
-        default: // 4
+        default:
             VStack(spacing: gap) {
                 HStack(spacing: gap) {
-                    thumb(assetIdentifiers[0], w: hw, h: hh)
-                    thumb(assetIdentifiers[1], w: hw, h: hh)
+                    thumb(assetIdentifiers[0])
+                    thumb(assetIdentifiers[1])
                 }
-                .frame(width: w, height: hh)
                 HStack(spacing: gap) {
-                    thumb(assetIdentifiers[2], w: hw, h: hh)
-                    thumb(assetIdentifiers[3], w: hw, h: hh)
+                    thumb(assetIdentifiers[2])
+                    thumb(assetIdentifiers[3])
                 }
-                .frame(width: w, height: hh)
             }
-            .frame(width: w, height: h)
         }
     }
 
-    private func thumb(_ id: String, w: CGFloat, h: CGFloat) -> some View {
+    private func thumb(_ id: String) -> some View {
         ThumbnailImage(id: id)
-            .frame(width: w, height: h)
     }
 }
 
@@ -324,16 +342,13 @@ private struct ThumbnailImage: View {
                         .resizable()
                         .scaledToFill()
                         .clipped()
-                        .transition(.opacity)
                 }
             }
             .clipped()
             .task(id: id) {
                 let loaded = await PhotoLibraryService.shared.loadThumbnail(for: id)
                 if !Task.isCancelled {
-                    withAnimation(.easeIn(duration: 0.15)) {
-                        image = loaded
-                    }
+                    image = loaded
                 }
             }
     }
@@ -342,7 +357,7 @@ private struct ThumbnailImage: View {
 // MARK: - Calendar Helpers
 
 extension Calendar {
-    func startOfMonth(for date: Date) -> Date {
+    nonisolated func startOfMonth(for date: Date) -> Date {
         let components = dateComponents([.year, .month], from: date)
         return self.date(from: components) ?? date
     }

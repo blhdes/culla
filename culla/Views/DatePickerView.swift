@@ -77,6 +77,9 @@ struct DatePickerView: View {
                         Label("Today", systemImage: "play.fill")
                             .font(.subheadline)
                     }
+                    .opacity(Calendar.current.isDateInToday(pickerDate) ? 0 : 1)
+                    .allowsHitTesting(!Calendar.current.isDateInToday(pickerDate))
+                    .animation(.easeInOut(duration: 0.25), value: Calendar.current.isDateInToday(pickerDate))
 
                     albumFilterButton
                 }
