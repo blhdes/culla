@@ -222,7 +222,7 @@ struct SwipeView: View {
                 }
 
                 // Navigation buttons (replaces toolbar so they can fade)
-                .swipeTopNav(onBack: onBack, onShowGalleries: onShowGalleries, opacity: chromeOpacity)
+                .swipeTopNav(onBack: onBack, opacity: chromeOpacity)
         }
         .deleteFeedback($deleteMessage)
         // Counter + toast at top
@@ -714,7 +714,7 @@ struct SwipeView: View {
             }
             .padding(.bottom, 40)
         }
-        .swipeTopNav(onBack: onBack, onShowGalleries: onShowGalleries)
+        .swipeTopNav(onBack: onBack)
         .deleteFeedback($deleteMessage)
     }
 }
@@ -723,7 +723,6 @@ struct SwipeView: View {
 
 private struct TopNavButtons: ViewModifier {
     let onBack: (() -> Void)?
-    let onShowGalleries: (() -> Void)?
     var opacity: Double = 1.0
 
     func body(content: Content) -> some View {
@@ -731,12 +730,6 @@ private struct TopNavButtons: ViewModifier {
             .overlay(alignment: .topLeading) {
                 circleButton("chevron.left", action: onBack)
                     .padding(.leading, 16)
-                    .padding(.top, 8)
-                    .opacity(opacity)
-            }
-            .overlay(alignment: .topTrailing) {
-                circleButton("rectangle.stack", action: onShowGalleries)
-                    .padding(.trailing, 16)
                     .padding(.top, 8)
                     .opacity(opacity)
             }
@@ -754,8 +747,8 @@ private struct TopNavButtons: ViewModifier {
 }
 
 private extension View {
-    func swipeTopNav(onBack: (() -> Void)?, onShowGalleries: (() -> Void)?, opacity: Double = 1.0) -> some View {
-        modifier(TopNavButtons(onBack: onBack, onShowGalleries: onShowGalleries, opacity: opacity))
+    func swipeTopNav(onBack: (() -> Void)?, opacity: Double = 1.0) -> some View {
+        modifier(TopNavButtons(onBack: onBack, opacity: opacity))
     }
 }
 
