@@ -14,8 +14,12 @@ struct CullaEyes: View {
         }
         .onReceive(timer) { _ in blink() }
         .onAppear {
-            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
-                pupilX = 6
+            // Defer to the next run loop so the parent's appearance animation
+            // doesn't override the repeatForever transaction.
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                    pupilX = 6
+                }
             }
         }
     }
