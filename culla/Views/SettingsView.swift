@@ -19,7 +19,7 @@ struct SettingsView: View {
         let stored = customPaletteHexes
             .split(separator: ",", omittingEmptySubsequences: false)
             .map(String.init)
-        guard stored.count == 18 else { return Color.neonHexes }
+        guard stored.count == 12 else { return Array(Color.neonHexes[0..<12]) }
         return stored.enumerated().map { i, hex in
             hex.isEmpty ? Color.neonHexes[i] : hex
         }
@@ -58,14 +58,14 @@ struct SettingsView: View {
 
                         if accentMode == "custom" {
                             LazyVGrid(columns: swatchColumns, spacing: 12) {
-                                ForEach(0..<18, id: \.self) { i in
+                                ForEach(0..<12, id: \.self) { i in
                                     colorSwatch(index: i, hex: paletteHexes[i])
                                 }
                             }
                             .padding(.top, 4)
 
-                            ColorPicker("Edit swatch", selection: Binding(
-                                get: { Color(hex: paletteHexes[selectedSwatchIndex]) },
+                            ColorPicker("Edit colour", selection: Binding(
+                                get: { Color.adaptiveNeon(hex: paletteHexes[selectedSwatchIndex]) },
                                 set: { newColor in
                                     var updated = paletteHexes
                                     let newHex = newColor.hexString
