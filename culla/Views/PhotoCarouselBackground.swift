@@ -22,7 +22,7 @@ final class PhotoBackgroundManager {
     private let cacheManager = PHCachingImageManager()
     private static let thumbSize = CGSize(width: 150, height: 150)
 
-    func load(albumIdentifier: String? = nil) async {
+    func load(albumIdentifier: String? = nil, showFavourites: Bool = false) async {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else { return }
 
@@ -33,7 +33,18 @@ final class PhotoBackgroundManager {
 
         var assets: [PHAsset] = []
 
-        if let albumID = albumIdentifier {
+        if showFavourites {
+            // Fetch only favorited photos
+            let favOptions = PHFetchOptions()
+            favOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+            favOptions.fetchLimit = 36
+            favOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue),
+                NSPredicate(format: "favorite == YES")
+            ])
+            let favResult = PHAsset.fetchAssets(with: favOptions)
+            favResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+        } else if let albumID = albumIdentifier {
             let collections = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil)
             if let collection = collections.firstObject {
                 let albumResult = PHAsset.fetchAssets(in: collection, options: fetchOptions)
@@ -94,7 +105,7 @@ final class PhotoBackgroundManager {
 struct PhotoCarouselBackground: View {
     var albumIdentifier: String?
 
-    @AppStorage("dynamicGalleryBackground") private var isEnabled = true
+    @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
 
@@ -110,7 +121,7 @@ struct PhotoCarouselBackground: View {
         ZStack {
             // Fallback gradient is always the base — never a dark void during loading or when disabled
             fallbackGradient
-            if isEnabled {
+            if backgroundMode != "off" {
                 if !manager.images.isEmpty {
                     photoCanvas
                         .transition(.opacity)
@@ -121,9 +132,10 @@ struct PhotoCarouselBackground: View {
         }
         .ignoresSafeArea(.all)
         .animation(.easeIn(duration: 0.8), value: manager.images.isEmpty)
-        .task(id: "\(isEnabled)-\(albumIdentifier ?? "")") {
-            guard isEnabled else { return }
-            await manager.load(albumIdentifier: albumIdentifier)
+        .task(id: "\(backgroundMode)-\(albumIdentifier ?? "")") {
+            guard backgroundMode != "off" else { return }
+            let showFavourites = backgroundMode == "favourites"
+            await manager.load(albumIdentifier: albumIdentifier, showFavourites: showFavourites)
             noiseImage = await Task.detached(priority: .background) {
                 makeNoiseTexture()
             }.value
@@ -197,7 +209,7 @@ struct PhotoCarouselBackground: View {
                     }
                 }
             }
-            .blur(radius: 3)
+            .blur(radius: 6)
             .opacity(0.9)
         }
     }
