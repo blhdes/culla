@@ -19,6 +19,8 @@ struct DatePickerView: View {
     @Binding var isReady: Bool
     @Binding var selectedMode: CullaMode
 
+    @Environment(\.appAccent) private var accent
+
     @AppStorage("lastSelectedDate") private var pickerDate = Date()
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
     @AppStorage("showCullaEyes") private var showCullaEyes = false
@@ -44,6 +46,7 @@ struct DatePickerView: View {
             if let earliestDate, let latestDate {
                 if showCullaEyes {
                     CullaEyes()
+                        .tint(accent)
                         .padding(.top, 8)
                 }
 
@@ -114,6 +117,7 @@ struct DatePickerView: View {
                     .padding(.horizontal)
                     .padding(.bottom, 12)
                 }
+                .tint(accent)
 
             } else if permissionDenied {
                 Spacer()
@@ -185,6 +189,7 @@ struct DatePickerView: View {
                 } label: {
                     Image(systemName: "rectangle.stack")
                 }
+                .tint(accent)
             }
             ToolbarItem(placement: .bottomBar) {
                 Picker("Mode", selection: $selectedMode) {
@@ -218,9 +223,11 @@ struct DatePickerView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .tint(accent)
         }
         .sheet(isPresented: $showFullCalendar) {
             calendarSheet
+                .tint(accent)
         }
         .sheet(isPresented: $showAlbumPicker) {
             NavigationStack {

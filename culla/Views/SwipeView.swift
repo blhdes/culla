@@ -15,6 +15,7 @@ struct SwipeView: View {
     var onSessionEnd: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appAccent) private var accent
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     @State private var viewModel: SwipeViewModel?
@@ -609,6 +610,7 @@ struct SwipeView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.regular)
+                    .tint(accent)
 
                     Button("Done") {
                         showSessionSummary = false

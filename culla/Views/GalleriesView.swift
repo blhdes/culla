@@ -6,6 +6,7 @@ struct GalleriesView: View {
     let maxSidebarGalleries: Int
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appAccent) private var accent
     @Query private var allSortedPhotos: [SortedPhoto]
     @State private var viewModel: GalleryViewModel?
     @State private var insightsViewModel = InsightsViewModel()
@@ -100,6 +101,7 @@ struct GalleriesView: View {
                     sidebarGalleryIDs.insert(id)
                 }
             }
+            .tint(accent)
         }
         .alert("New Gallery", isPresented: $showCreateAlert) {
             TextField("Name", text: $newGalleryName)

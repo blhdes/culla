@@ -14,7 +14,8 @@ struct CullaApp: App {
     var body: some Scene {
         WindowGroup {
             SplashGate()
-                .tint(currentAccent)
+                .tint(.primary)
+                .environment(\.appAccent, currentAccent)
                 .preferredColorScheme(preferredScheme)
                 .statusBarHidden(!statusBarVisible)
         }
