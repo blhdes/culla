@@ -3,7 +3,7 @@ import Photos
 
 // MARK: - Noise Texture
 
-private func makeNoiseTexture() -> UIImage? {
+private nonisolated func makeNoiseTexture() -> UIImage? {
     guard let filter = CIFilter(name: "CIRandomGenerator"),
           let output = filter.outputImage else { return nil }
     let size = CGSize(width: 400, height: 900)
@@ -22,7 +22,7 @@ final class PhotoBackgroundManager {
     private let cacheManager = PHCachingImageManager()
     private static let thumbSize = CGSize(width: 150, height: 150)
 
-    func load() async {
+    func load(albumIdentifier: String? = nil) async {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else { return }
 
@@ -32,8 +32,18 @@ final class PhotoBackgroundManager {
         fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
 
         var assets: [PHAsset] = []
-        let result = PHAsset.fetchAssets(with: fetchOptions)
-        result.enumerateObjects { asset, _, _ in assets.append(asset) }
+
+        if let albumID = albumIdentifier {
+            let collections = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil)
+            if let collection = collections.firstObject {
+                let albumResult = PHAsset.fetchAssets(in: collection, options: fetchOptions)
+                albumResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+            }
+        } else {
+            let allResult = PHAsset.fetchAssets(with: fetchOptions)
+            allResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+        }
+
         assets.shuffle()
         guard !assets.isEmpty else { return }
 
@@ -82,6 +92,8 @@ final class PhotoBackgroundManager {
 // MARK: - Carousel Background View
 
 struct PhotoCarouselBackground: View {
+    var albumIdentifier: String?
+
     @AppStorage("dynamicGalleryBackground") private var isEnabled = true
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
@@ -108,9 +120,9 @@ struct PhotoCarouselBackground: View {
         }
         .ignoresSafeArea(.all)
         .animation(.easeIn(duration: 0.8), value: manager.images.isEmpty)
-        .task(id: isEnabled) {
+        .task(id: "\(isEnabled)-\(albumIdentifier ?? "")") {
             guard isEnabled else { return }
-            await manager.load()
+            await manager.load(albumIdentifier: albumIdentifier)
             noiseImage = await Task.detached(priority: .background) {
                 makeNoiseTexture()
             }.value
