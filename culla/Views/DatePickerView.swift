@@ -17,6 +17,7 @@ struct DatePickerView: View {
     @Binding var showGalleries: Bool
     @Binding var showDuplicateSweep: Bool
     @Binding var isReady: Bool
+    @Binding var selectedMode: CullaMode
 
     @AppStorage("lastSelectedDate") private var pickerDate = Date()
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
@@ -34,7 +35,6 @@ struct DatePickerView: View {
     @State private var showSettings = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
-    @State private var selectedMode: CullaMode = .cullaing
 
     @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]

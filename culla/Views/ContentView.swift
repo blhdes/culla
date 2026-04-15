@@ -4,6 +4,7 @@ struct ContentView: View {
     @Binding var isReady: Bool
 
     @State private var startDate: Date?
+    @State private var selectedCullaMode: CullaMode = .cullaing
     @State private var selectedAlbum: PhoneAlbum?
     @State private var sortMode: SortMode = .copy
     @State private var focusDuration: TimeInterval?
@@ -57,7 +58,8 @@ struct ContentView: View {
                     isOnThisDay: $isOnThisDay,
                     showGalleries: $showGalleries,
                     showDuplicateSweep: $showDuplicateSweep,
-                    isReady: $isReady
+                    isReady: $isReady,
+                    selectedMode: $selectedCullaMode
                 )
             }
         }
