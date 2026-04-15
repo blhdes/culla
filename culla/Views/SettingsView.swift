@@ -7,10 +7,27 @@ struct SettingsView: View {
     @AppStorage("statusBarVisible") private var statusBarVisible = false
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
+    @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
 
     @Environment(\.dismiss) private var dismiss
 
+    @State private var selectedSwatchIndex: Int = 0
+
     private let swatchColumns = Array(repeating: GridItem(.flexible()), count: 6)
+
+    private var paletteHexes: [String] {
+        let stored = customPaletteHexes
+            .split(separator: ",", omittingEmptySubsequences: false)
+            .map(String.init)
+        guard stored.count == 18 else { return Color.neonHexes }
+        return stored.enumerated().map { i, hex in
+            hex.isEmpty ? Color.neonHexes[i] : hex
+        }
+    }
+
+    private func savePalette(_ hexes: [String]) {
+        customPaletteHexes = hexes.joined(separator: ",")
+    }
 
     var body: some View {
         NavigationStack {
@@ -41,11 +58,23 @@ struct SettingsView: View {
 
                         if accentMode == "custom" {
                             LazyVGrid(columns: swatchColumns, spacing: 12) {
-                                ForEach(Color.neonHexes, id: \.self) { hex in
-                                    colorSwatch(hex: hex)
+                                ForEach(0..<18, id: \.self) { i in
+                                    colorSwatch(index: i, hex: paletteHexes[i])
                                 }
                             }
                             .padding(.top, 4)
+
+                            ColorPicker("Edit swatch", selection: Binding(
+                                get: { Color(hex: paletteHexes[selectedSwatchIndex]) },
+                                set: { newColor in
+                                    var updated = paletteHexes
+                                    let newHex = newColor.hexString
+                                    updated[selectedSwatchIndex] = newHex
+                                    savePalette(updated)
+                                    customAccentHex = newHex
+                                }
+                            ), supportsOpacity: false)
+                            .padding(.top, 8)
                         }
                     }
                     .padding(.vertical, 4)
@@ -68,16 +97,24 @@ struct SettingsView: View {
             }
         }
         .onChange(of: accentMode) { _, newMode in
-            // Auto-select the first colour when switching to custom with nothing saved yet.
-            if newMode == "custom" && customAccentHex.isEmpty {
-                customAccentHex = Color.neonHexes[0]
+            guard newMode == "custom" else { return }
+            if customAccentHex.isEmpty {
+                selectedSwatchIndex = 0
+                customAccentHex = paletteHexes[0]
+            } else {
+                selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
+            }
+        }
+        .onAppear {
+            if accentMode == "custom" && !customAccentHex.isEmpty {
+                selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
             }
         }
     }
 
     @ViewBuilder
-    private func colorSwatch(hex: String) -> some View {
-        let isSelected = customAccentHex == hex
+    private func colorSwatch(index: Int, hex: String) -> some View {
+        let isSelected = selectedSwatchIndex == index
         Circle()
             .fill(Color.adaptiveNeon(hex: hex))
             .frame(width: 40, height: 40)
@@ -89,6 +126,7 @@ struct SettingsView: View {
                 }
             }
             .onTapGesture {
+                selectedSwatchIndex = index
                 customAccentHex = hex
             }
     }
