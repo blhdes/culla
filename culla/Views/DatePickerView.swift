@@ -171,10 +171,11 @@ struct DatePickerView: View {
                 Spacer()
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { PhotoCarouselBackground() }
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
-        .padding(.horizontal)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {

@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
+    @AppStorage("dynamicGalleryBackground") private var dynamicGalleryBackground = true
 
     @Environment(\.dismiss) private var dismiss
 
@@ -85,6 +86,7 @@ struct SettingsView: View {
                     Toggle("Show status bar", isOn: $statusBarVisible)
                     Toggle("Culla Eyes", isOn: $showCullaEyes)
                     Toggle("Haptics", isOn: $hapticsEnabled)
+                    Toggle("Dynamic Gallery Background", isOn: $dynamicGalleryBackground)
                 }
             }
             .navigationTitle("Settings")
