@@ -86,43 +86,50 @@ struct DatePickerView: View {
                     .transition(.opacity)
                 }
 
+                if selectedMode == .duplicates {
+                    duplicateEntryButton
+                        .transition(.opacity)
+                }
+
                 Spacer()
 
                 // Album + sort mode + start button — anchored just above the bottom toolbar
                 VStack(spacing: 12) {
-                    if selectedMode == .cullaing || selectedMode == .thisDay {
+                    if selectedMode == .cullaing {
                         albumFilterButton
                     }
 
-                    if selectedMode == .cullaing,
-                       let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
+                    if selectedMode == .thisDay ||
+                       (selectedMode == .cullaing && selectedAlbum.map { !$0.isUnsorted && !$0.isFavorites } == true) {
                         sortModePicker
                             .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
                     }
 
-                    HStack(spacing: 12) {
-                        if selectedMode == .cullaing {
-                            timerMenu
-                        }
-
-                        Button {
-                            startAction()
-                        } label: {
-                            HStack(spacing: 8) {
-                                if let icon = actionButtonIcon {
-                                    Image(systemName: icon)
-                                        .imageScale(.medium)
-                                }
-                                Text(actionButtonLabel)
+                    if selectedMode != .duplicates {
+                        HStack(spacing: 12) {
+                            if selectedMode == .cullaing {
+                                timerMenu
                             }
-                            .frame(maxWidth: .infinity)
+
+                            Button {
+                                startAction()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    if let icon = actionButtonIcon {
+                                        Image(systemName: icon)
+                                            .imageScale(.medium)
+                                    }
+                                    Text(actionButtonLabel)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .animation(.easeInOut(duration: 0.2), value: selectedMode)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .animation(.easeInOut(duration: 0.2), value: selectedMode)
+                        .padding(.horizontal)
+                        .padding(.bottom, 12)
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 12)
                 }
                 .tint(accent)
 
@@ -367,9 +374,11 @@ struct DatePickerView: View {
             }
             .pickerStyle(.segmented)
 
-            Text(sortMode == .copy
-                 ? "Sorted photos stay in the source album too."
-                 : "Sorted photos are removed from the source album.")
+            Text(selectedMode == .thisDay
+                 ? "* Photos already sorted into other galleries will also appear here."
+                 : sortMode == .copy
+                     ? "Sorted photos stay in the source album too."
+                     : "Sorted photos are removed from the source album.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -399,6 +408,24 @@ struct DatePickerView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Duplicate Entry Button
+
+    private var duplicateEntryButton: some View {
+        Button {
+            startAction()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 120, height: 120)
+                Image(systemName: "plus")
+                    .font(.system(size: 44, weight: .light))
+                    .foregroundStyle(accent)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Album Filter Button
