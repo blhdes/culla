@@ -28,7 +28,7 @@ final class PhotoBackgroundManager {
 
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 32
+        fetchOptions.fetchLimit = 36
         fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
 
         var assets: [PHAsset] = []
@@ -64,7 +64,7 @@ final class PhotoBackgroundManager {
                 loaded.append(img)
             }
             // Show first batch immediately so the carousel starts early
-            if loaded.count == 16 { images = loaded }
+            if loaded.count == 18 { images = loaded }
         }
         images = loaded
     }
@@ -101,10 +101,8 @@ struct PhotoCarouselBackground: View {
     // Rows scroll horizontally (alternating direction) while the whole wall drifts upward.
     // X and Y are completely independent so no row ever moves faster/slower than another.
     private let photoSize: CGFloat = 110
-    private let colsPerTile = 4              // 4 columns
-    private let rowsPerTile = 8              // 8 rows → 32 total unique photos
-    private var tileSizeX: CGFloat { CGFloat(colsPerTile) * photoSize }   // 440 pt
-    private var tileSizeY: CGFloat { CGFloat(rowsPerTile) * photoSize }   // 880 pt
+    private let photosPerTile = 6           // 6×6 = 36 unique photos, 1:1 square tile
+    private var tileSize: CGFloat { CGFloat(photosPerTile) * photoSize }   // 660 pt
     private let verticalSpeed: Double = 14  // pt/s — whole wall drifts upward
     private let rowSpeed: Double = 20       // pt/s — per-row horizontal stream
 
@@ -143,22 +141,22 @@ struct PhotoCarouselBackground: View {
             Canvas { context, size in
                 let tRaw = timeline.date.timeIntervalSinceReferenceDate
 
-                // Vertical: whole wall drifts upward, resets seamlessly at tileSizeY
+                // Vertical: whole wall drifts upward, resets seamlessly at tileSize
                 let verticalOffset = -CGFloat(tRaw * verticalSpeed)
-                    .truncatingRemainder(dividingBy: tileSizeY)
+                    .truncatingRemainder(dividingBy: tileSize)
 
                 // Horizontal: rows stream — base offset shared, direction flips per row
                 let rowScrollBase = CGFloat(tRaw * rowSpeed)
-                    .truncatingRemainder(dividingBy: tileSizeX)
+                    .truncatingRemainder(dividingBy: tileSize)
 
                 // Enough Y tiles to always cover the screen whatever the vertical offset
-                let rowTilesNeeded = Int(ceil(size.height / tileSizeY)) + 2
+                let rowTilesNeeded = Int(ceil(size.height / tileSize)) + 2
                 // Enough X tiles to always cover the screen whatever the horizontal offset
-                let colTilesNeeded = Int(ceil(size.width / tileSizeX)) + 2
+                let colTilesNeeded = Int(ceil(size.width / tileSize)) + 2
 
                 for tileRow in (-1)..<rowTilesNeeded {
-                    for row in 0..<rowsPerTile {
-                        let y = CGFloat(tileRow) * tileSizeY
+                    for row in 0..<photosPerTile {
+                        let y = CGFloat(tileRow) * tileSize
                             + CGFloat(row) * photoSize
                             + verticalOffset
 
@@ -169,15 +167,15 @@ struct PhotoCarouselBackground: View {
                         let rowScroll = rowDir * rowScrollBase
 
                         for tileCol in (-1)..<colTilesNeeded {
-                            for col in 0..<colsPerTile {
-                                let x = CGFloat(tileCol) * tileSizeX
+                            for col in 0..<photosPerTile {
+                                let x = CGFloat(tileCol) * tileSize
                                     + CGFloat(col) * photoSize
                                     + rowScroll
 
                                 guard x + photoSize > 0, x < size.width else { continue }
 
-                                // Each row uses a unique photo slice: row 0 → 0‥3, row 1 → 4‥7, …, row 7 → 28‥31
-                                let idx = (row * colsPerTile + col) % manager.images.count
+                                // Each row uses a unique photo slice: row 0 → 0‥5, row 1 → 6‥11, …
+                                let idx = (row * photosPerTile + col) % manager.images.count
                                 let img = manager.images[idx]
 
                                 let imgSize = img.size
