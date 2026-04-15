@@ -28,7 +28,7 @@ final class PhotoBackgroundManager {
 
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 28
+        fetchOptions.fetchLimit = 40
         fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
 
         var assets: [PHAsset] = []
@@ -98,20 +98,21 @@ struct PhotoCarouselBackground: View {
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
 
-    // Each "tile" is a photosPerTile × photosPerTile grid that repeats seamlessly.
-    // Moving the offset by exactly -tileSize in both X and Y looks identical to 0 → seamless loop.
-    private let photoSize: CGFloat = 130
-    private let photosPerTile = 4               // 4×4 = 16 photos per tile
-    private var tileSize: CGFloat { CGFloat(photosPerTile) * photoSize }  // 520 pt
-    private let cycleDuration: Double = 20      // seconds per full loop
+    // Rows scroll horizontally (alternating direction) while the whole wall drifts downward.
+    // X and Y are completely independent so no row ever moves faster/slower than another.
+    private let photoSize: CGFloat = 110
+    private let photosPerTile = 5           // 5 columns per row tile → tileSize = 550 pt
+    private var tileSize: CGFloat { CGFloat(photosPerTile) * photoSize }
+    private let verticalSpeed: Double = 14  // pt/s — whole wall drifts downward
+    private let rowSpeed: Double = 20       // pt/s — per-row horizontal stream
 
     var body: some View {
         ZStack {
-            if !isEnabled {
-                fallbackGradient
-            } else {
+            // Fallback gradient is always the base — never a dark void during loading or when disabled
+            fallbackGradient
+            if isEnabled {
                 if !manager.images.isEmpty {
-                    diagonalCanvas
+                    photoCanvas
                         .transition(.opacity)
                 }
                 Rectangle().fill(Color(.systemBackground).opacity(0.25))
@@ -130,41 +131,53 @@ struct PhotoCarouselBackground: View {
         .onDisappear { manager.stopCaching() }
     }
 
-    // MARK: - Diagonal canvas
+    // MARK: - Photo canvas
 
-    /// Single-layer photo wall scrolling at 45°.
-    /// Canvas only draws photos that intersect the visible frame, so GPU work scales
-    /// with screen area (~20 photos drawn per frame) not with total grid size.
-    private var diagonalCanvas: some View {
+    /// Rows stream horizontally in alternating directions while the whole wall scrolls down.
+    /// Y and X offsets are fully decoupled — no coupling between row speed and vertical speed.
+    /// Each row uses a unique slice of the image pool so no photo repeats across visible rows.
+    private var photoCanvas: some View {
         TimelineView(.periodic(from: .now, by: 1.0 / 30)) { timeline in
             Canvas { context, size in
-                let t = timeline.date.timeIntervalSinceReferenceDate
-                    .truncatingRemainder(dividingBy: cycleDuration)
-                // shift moves 0 → -tileSize over one cycle, then instantly resets
-                let shift = -CGFloat(t / cycleDuration) * tileSize
+                let tRaw = timeline.date.timeIntervalSinceReferenceDate
 
-                // Enough tile repetitions to cover the screen at any offset
-                let tilesNeeded = Int(ceil(max(size.width, size.height) / tileSize)) + 2
+                // Vertical: whole wall drifts downward, resets seamlessly at tileSize
+                let verticalOffset = CGFloat(tRaw * verticalSpeed)
+                    .truncatingRemainder(dividingBy: tileSize)
 
-                for tileRow in (-1)..<tilesNeeded {
-                    for tileCol in (-1)..<tilesNeeded {
-                        // NE direction: X increases (right), Y decreases (up)
-                        let originX = CGFloat(tileCol) * tileSize - shift
-                        let originY = CGFloat(tileRow) * tileSize + shift
+                // Horizontal: rows stream — base offset shared, direction flips per row
+                let rowScrollBase = CGFloat(tRaw * rowSpeed)
+                    .truncatingRemainder(dividingBy: tileSize)
 
-                        for row in 0..<photosPerTile {
+                // Enough Y tiles to always cover the screen whatever the vertical offset
+                let rowTilesNeeded = Int(ceil(size.height / tileSize)) + 2
+                // Enough X tiles to always cover the screen whatever the horizontal offset
+                let colTilesNeeded = Int(ceil(size.width / tileSize)) + 2
+
+                for tileRow in (-1)..<rowTilesNeeded {
+                    for row in 0..<photosPerTile {
+                        let y = CGFloat(tileRow) * tileSize
+                            + CGFloat(row) * photoSize
+                            + verticalOffset
+
+                        guard y + photoSize > 0, y < size.height else { continue }
+
+                        // Even rows scroll right, odd rows scroll left — continuous, no oscillation
+                        let rowDir: CGFloat = row % 2 == 0 ? 1 : -1
+                        let rowScroll = rowDir * rowScrollBase
+
+                        for tileCol in (-1)..<colTilesNeeded {
                             for col in 0..<photosPerTile {
-                                let x = originX + CGFloat(col) * photoSize
-                                let y = originY + CGFloat(row) * photoSize
+                                let x = CGFloat(tileCol) * tileSize
+                                    + CGFloat(col) * photoSize
+                                    + rowScroll
 
-                                // Cull photos outside the visible area
-                                guard x + photoSize > 0, y + photoSize > 0,
-                                      x < size.width, y < size.height else { continue }
+                                guard x + photoSize > 0, x < size.width else { continue }
 
+                                // Each row uses a unique photo slice: row 0 → 0‥4, row 1 → 5‥9, …
                                 let idx = (row * photosPerTile + col) % manager.images.count
                                 let img = manager.images[idx]
 
-                                // Center-crop to fill the square without distortion
                                 let imgSize = img.size
                                 let scale = max(photoSize / imgSize.width, photoSize / imgSize.height)
                                 let drawW = imgSize.width * scale
@@ -172,20 +185,19 @@ struct PhotoCarouselBackground: View {
                                 let drawRect = CGRect(
                                     x: x + (photoSize - drawW) / 2,
                                     y: y + (photoSize - drawH) / 2,
-                                    width: drawW,
-                                    height: drawH
+                                    width: drawW, height: drawH
                                 )
 
-                                // Clip to the cell square so overflow from aspect-fill doesn't bleed
                                 var clipped = context
-                                clipped.clip(to: Path(CGRect(x: x, y: y, width: photoSize, height: photoSize)))
+                                clipped.clip(to: Path(CGRect(x: x, y: y,
+                                                             width: photoSize, height: photoSize)))
                                 clipped.draw(Image(uiImage: img), in: drawRect)
                             }
                         }
                     }
                 }
             }
-            .blur(radius: 6)
+            .blur(radius: 3)
             .opacity(0.9)
         }
     }

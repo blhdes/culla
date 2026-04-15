@@ -83,20 +83,21 @@ struct DatePickerView: View {
                         .allowsHitTesting(!Calendar.current.isDateInToday(pickerDate))
                         .animation(.easeInOut(duration: 0.25), value: Calendar.current.isDateInToday(pickerDate))
                     }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(.opacity)
                 }
 
                 Spacer()
 
                 // Album + sort mode + start button — anchored just above the bottom toolbar
                 VStack(spacing: 12) {
-                    if selectedMode == .cullaing {
+                    if selectedMode == .cullaing || selectedMode == .thisDay {
                         albumFilterButton
+                    }
 
-                        if let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
-                            sortModePicker
-                                .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
-                        }
+                    if selectedMode == .cullaing,
+                       let album = selectedAlbum, !album.isUnsorted, !album.isFavorites {
+                        sortModePicker
+                            .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
                     }
 
                     HStack(spacing: 12) {
@@ -107,8 +108,14 @@ struct DatePickerView: View {
                         Button {
                             startAction()
                         } label: {
-                            Text(actionButtonLabel)
-                                .frame(maxWidth: .infinity)
+                            HStack(spacing: 8) {
+                                if let icon = actionButtonIcon {
+                                    Image(systemName: icon)
+                                        .imageScale(.medium)
+                                }
+                                Text(actionButtonLabel)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -309,6 +316,14 @@ struct DatePickerView: View {
             return "This Day"
         case .duplicates:
             return "Sweep"
+        }
+    }
+
+    private var actionButtonIcon: String? {
+        switch selectedMode {
+        case .cullaing: return nil
+        case .thisDay: return "clock.arrow.circlepath"
+        case .duplicates: return "doc.on.doc"
         }
     }
 
