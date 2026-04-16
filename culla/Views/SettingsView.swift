@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
+    @AppStorage("monochromeBackground") private var monochrome = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -86,12 +87,11 @@ struct SettingsView: View {
                     Toggle("Show status bar", isOn: $statusBarVisible)
                     Toggle("Culla Eyes", isOn: $showCullaEyes)
                     Toggle("Haptics", isOn: $hapticsEnabled)
+                }
 
+                Section("Dynamic background") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Dynamic background")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Picker("Dynamic background", selection: $backgroundMode) {
+                        Picker("Mode", selection: $backgroundMode) {
                             Text("Off").tag("off")
                             Text("Gallery").tag("gallery")
                             Text("Favourites").tag("favourites")
@@ -99,6 +99,10 @@ struct SettingsView: View {
                         .pickerStyle(.segmented)
                     }
                     .padding(.vertical, 4)
+
+                    if backgroundMode != "off" {
+                        Toggle("Monochrome", isOn: $monochrome)
+                    }
                 }
             }
             .navigationTitle("Settings")

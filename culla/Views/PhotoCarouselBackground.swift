@@ -106,6 +106,7 @@ struct PhotoCarouselBackground: View {
     var albumIdentifier: String?
 
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
+    @AppStorage("monochromeBackground") private var monochrome = false
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
 
@@ -211,6 +212,7 @@ struct PhotoCarouselBackground: View {
             }
             .blur(radius: 6)
             .opacity(0.9)
+            .saturation(monochrome ? 0 : 1)
         }
     }
 
