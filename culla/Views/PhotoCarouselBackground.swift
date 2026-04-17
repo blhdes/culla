@@ -213,6 +213,7 @@ struct PhotoCarouselBackground: View {
             .blur(radius: 6)
             .opacity(0.9)
             .saturation(monochrome ? 0 : 1)
+            .contrast(monochrome ? 1.3 : 1)
         }
     }
 
