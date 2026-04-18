@@ -45,7 +45,7 @@ final class PhotoLibraryService {
     /// PHAsset identifiers contain "/" — replace with "-" to make filename-safe.
     private func diskCachePath(for id: String) -> URL {
         let safe = id.replacingOccurrences(of: "/", with: "-")
-        return Self.diskCacheDir.appendingPathComponent("\(safe).jpg")
+        return Self.diskCacheDir.appendingPathComponent("\(safe).png")
     }
 
     // MARK: - Authorization
@@ -586,7 +586,7 @@ final class PhotoLibraryService {
             // Write to disk in background — don't await, return immediately
             let pathForWrite = diskPath  // capture before escaping
             Task.detached(priority: .background) {
-                if let data = decoded.jpegData(compressionQuality: 0.7) {
+                if let data = decoded.pngData() {
                     try? data.write(to: pathForWrite, options: .atomic)
                 }
             }
