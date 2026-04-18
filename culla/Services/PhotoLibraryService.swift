@@ -32,6 +32,22 @@ final class PhotoLibraryService {
         return cache
     }()
 
+    /// Persistent disk cache for decoded thumbnails — survives app restarts.
+    /// Located in ~/Library/Caches/CalendarThumbnails/. iOS auto-evicts under pressure.
+    private static let diskCacheDir: URL = {
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let dir = caches.appendingPathComponent("CalendarThumbnails", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
+    /// Returns the disk cache file path for an asset identifier.
+    /// PHAsset identifiers contain "/" — replace with "-" to make filename-safe.
+    private func diskCachePath(for id: String) -> URL {
+        let safe = id.replacingOccurrences(of: "/", with: "-")
+        return Self.diskCacheDir.appendingPathComponent("\(safe).jpg")
+    }
+
     // MARK: - Authorization
 
     @MainActor
@@ -530,6 +546,15 @@ final class PhotoLibraryService {
             return cached
         }
 
+        // Disk cache hit — much faster than PHImageManager
+        let diskPath = diskCachePath(for: assetIdentifier)
+        if let data = try? Data(contentsOf: diskPath),
+           let diskImage = UIImage(data: data) {
+            let decoded = diskImage.preparingForDisplay() ?? diskImage
+            thumbnailCache.setObject(decoded, forKey: cacheKey)
+            return decoded
+        }
+
         guard let asset = PHAsset.fetchAssets(
             withLocalIdentifiers: [assetIdentifier],
             options: nil
@@ -557,6 +582,15 @@ final class PhotoLibraryService {
             // Pre-decode pixels on this background thread so the main thread only composites.
             let decoded = image.preparingForDisplay() ?? image
             thumbnailCache.setObject(decoded, forKey: cacheKey)
+
+            // Write to disk in background — don't await, return immediately
+            let pathForWrite = diskPath  // capture before escaping
+            Task.detached(priority: .background) {
+                if let data = decoded.jpegData(compressionQuality: 0.7) {
+                    try? data.write(to: pathForWrite, options: .atomic)
+                }
+            }
+
             return decoded
         }
 
@@ -650,6 +684,26 @@ final class PhotoLibraryService {
 
     func stopCachingAll() {
         imageManager.stopCachingImagesForAllAssets()
+    }
+
+    /// Pre-loads all calendar thumbnails into NSCache and disk for a given date range.
+    /// Runs concurrent background tasks to populate memory cache from disk (or PHImageManager on first load).
+    /// Safe to call with .background priority — does not block the caller.
+    /// Call this at app launch to ensure hot cache before user opens the calendar view.
+    func warmCalendarCache(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) async {
+        let data = calendarData(from: earliest, to: latest, inAlbum: albumIdentifier)
+        let allIDs = data.thumbnailIDs.values.flatMap { $0 }
+        guard !allIDs.isEmpty else { return }
+
+        startCachingCalendarThumbnails(allIDs)
+
+        await withTaskGroup(of: Void.self) { group in
+            for id in allIDs {
+                group.addTask(priority: .background) { [self] in
+                    _ = await self.loadThumbnail(for: id)
+                }
+            }
+        }
     }
 
     /// Pre-warms the image cache for all calendar thumbnails at once.

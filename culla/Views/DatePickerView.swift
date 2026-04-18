@@ -99,8 +99,12 @@ struct DatePickerView: View {
                         albumFilterButton
                     }
 
-                    if selectedMode == .thisDay ||
-                       (selectedMode == .cullaing && selectedAlbum.map { !$0.isUnsorted && !$0.isFavorites } == true) {
+                    if selectedMode == .thisDay {
+                        sortModePicker
+                            .transition(.opacity)
+                    }
+
+                    if selectedMode == .cullaing && selectedAlbum.map({ !$0.isUnsorted && !$0.isFavorites }) == true {
                         sortModePicker
                             .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
                     }
@@ -287,6 +291,15 @@ struct DatePickerView: View {
             let excludedIDs = Set(sortedPhotos.map(\.assetIdentifier))
             unsortedCount = photoService.unsortedPhotoCount(excluding: excludedIDs)
             favoritesCount = photoService.favoritesPhotoCount()
+
+            // Fire background pre-warm of calendar thumbnails — don't await
+            let service = photoService
+            let warmEarliest = range.earliest
+            let warmLatest = range.latest
+            Task.detached(priority: .background) {
+                await service.warmCalendarCache(from: warmEarliest, to: warmLatest)
+            }
+
             isReady = true
         }
         .onChange(of: selectedAlbum?.collectionIdentifier) { _, newID in
