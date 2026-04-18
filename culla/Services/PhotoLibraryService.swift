@@ -2,9 +2,11 @@ import Photos
 import UIKit
 
 /// Shared pixel size for all calendar cell thumbnails.
-/// 200×200 pixels covers full-width cells at @3x (≈153px) without blurriness,
-/// while remaining fast to decode. Must match between loadThumbnail and startCachingCalendarThumbnails.
-let CalendarThumbnailSize = CGSize(width: 200, height: 200)
+/// The mosaic is 44pt tall; the largest cell (1-photo, widest iPhone) is ~57pt wide.
+/// At @3x that's ~171×132px. 160×160px covers that with a small buffer while keeping
+/// the 4-photo 2×2 case (78×66px) from fetching excess pixels.
+/// Must match between loadThumbnail and startCachingCalendarThumbnails.
+let CalendarThumbnailSize = CGSize(width: 160, height: 160)
 
 // Session-scoped cache — avoids re-enumerating PHFetchResult every time CalendarView opens.
 // nonisolated(unsafe) because calendarData() is nonisolated and this is only written
@@ -552,10 +554,13 @@ final class PhotoLibraryService {
         }
 
         if let image {
-            thumbnailCache.setObject(image, forKey: cacheKey)
+            // Pre-decode pixels on this background thread so the main thread only composites.
+            let decoded = image.preparingForDisplay() ?? image
+            thumbnailCache.setObject(decoded, forKey: cacheKey)
+            return decoded
         }
 
-        return image
+        return nil
     }
 
     // MARK: - Calendar Data
