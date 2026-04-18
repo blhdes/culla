@@ -137,12 +137,22 @@ struct InsightsView: View {
             by: { calendar.startOfDay(for: $0.sortedAt) }
         ).mapValues { $0.count }
 
-        // DailyStats lookup by date
-        let statsLookup = Dictionary(
-            uniqueKeysWithValues: allDailyStats
-                .filter { $0.date >= sevenDaysAgo }
-                .map { ($0.date, $0) }
-        )
+        // DailyStats lookup by day — normalise stored dates to startOfDay
+        // so any sub-millisecond difference between the stored value and the
+        // computed `day` keys doesn't break the lookup.
+        var statsLookup: [Date: DailyStats] = [:]
+        for stat in allDailyStats where stat.date >= sevenDaysAgo {
+            let key = calendar.startOfDay(for: stat.date)
+            // If duplicates exist (shouldn't, but guards against past bad writes),
+            // merge counts rather than silently dropping one.
+            if let existing = statsLookup[key] {
+                existing.skipped    += stat.skipped
+                existing.deleted    += stat.deleted
+                existing.favourited += stat.favourited
+            } else {
+                statsLookup[key] = stat
+            }
+        }
 
         return days.flatMap { day in [
             ChartPoint(date: day, count: sortedByDay[day] ?? 0,            series: "Sorted"),
