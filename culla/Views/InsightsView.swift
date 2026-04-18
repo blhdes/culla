@@ -145,9 +145,10 @@ struct InsightsView: View {
         )
 
         return days.flatMap { day in [
-            ChartPoint(date: day, count: sortedByDay[day] ?? 0,          series: "Sorted"),
-            ChartPoint(date: day, count: statsLookup[day]?.skipped ?? 0, series: "Skipped"),
-            ChartPoint(date: day, count: statsLookup[day]?.deleted ?? 0, series: "Deleted"),
+            ChartPoint(date: day, count: sortedByDay[day] ?? 0,            series: "Sorted"),
+            ChartPoint(date: day, count: statsLookup[day]?.skipped    ?? 0, series: "Skipped"),
+            ChartPoint(date: day, count: statsLookup[day]?.deleted    ?? 0, series: "Deleted"),
+            ChartPoint(date: day, count: statsLookup[day]?.favourited ?? 0, series: "Favourited"),
         ]}
     }
 
@@ -164,13 +165,12 @@ struct InsightsView: View {
                     y: .value("Count", point.count)
                 )
                 .foregroundStyle(by: .value("Series", point.series))
-                .symbol(by: .value("Series", point.series))
-                .interpolationMethod(.catmullRom)
             }
             .chartForegroundStyleScale([
-                "Sorted":  Color.blue,
-                "Skipped": Color.orange,
-                "Deleted": Color.red,
+                "Sorted":     Color.blue,
+                "Skipped":    Color.orange,
+                "Deleted":    Color.red,
+                "Favourited": Color.green,
             ])
             .chartXAxis {
                 AxisMarks(values: .stride(by: .day)) { value in

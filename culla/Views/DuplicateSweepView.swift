@@ -287,6 +287,7 @@ struct DuplicateSweepView: View {
                             let count = await viewModel.batchDelete()
                             if count > 0 {
                                 totalDeletedPhotos += count
+                                DailyStats.upsert(in: modelContext, deletedDelta: count)
                                 deleteMessage = DeleteFeedback(sessionCount: count, totalCount: totalDeletedPhotos)
                                 try? await Task.sleep(for: .seconds(2.5))
                                 deleteMessage = nil
