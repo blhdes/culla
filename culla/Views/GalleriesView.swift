@@ -114,33 +114,25 @@ struct GalleriesView: View {
                 newGalleryName = ""
             }
         }
-        .confirmationDialog(
-            "Delete \(galleryToDelete?.name ?? "Gallery")?",
-            isPresented: Binding(
-                get: { galleryToDelete != nil },
-                set: { if !$0 { galleryToDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
+        .overlay {
             if let gallery = galleryToDelete {
-                Button("Delete Gallery & Photos", role: .destructive) {
-                    viewModel?.deleteGalleryAndPhotos(gallery)
-                    galleryToDelete = nil
-                }
-                Button("Delete Gallery, Keep Photos") {
-                    viewModel?.deleteGallery(gallery)
-                    galleryToDelete = nil
-                }
-                Button("Remove from Culla") {
-                    viewModel?.unlinkGallery(gallery)
-                    galleryToDelete = nil
-                }
-                Button("Cancel", role: .cancel) {
-                    galleryToDelete = nil
-                }
+                DeleteGalleryDialog(
+                    gallery: gallery,
+                    onDeleteAndPhotos: {
+                        viewModel?.deleteGalleryAndPhotos(gallery)
+                        galleryToDelete = nil
+                    },
+                    onDeleteKeepPhotos: {
+                        viewModel?.deleteGallery(gallery)
+                        galleryToDelete = nil
+                    },
+                    onUnlink: {
+                        viewModel?.unlinkGallery(gallery)
+                        galleryToDelete = nil
+                    },
+                    onCancel: { galleryToDelete = nil }
+                )
             }
-        } message: {
-            Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
         }
         .sheet(isPresented: $showInsights) {
             InsightsView()
@@ -238,5 +230,76 @@ struct GalleriesView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Delete Gallery Dialog
+
+private struct DeleteGalleryDialog: View {
+    let gallery: Gallery
+    let onDeleteAndPhotos: () -> Void
+    let onDeleteKeepPhotos: () -> Void
+    let onUnlink: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture { onCancel() }
+
+            VStack(spacing: 0) {
+                VStack(spacing: 8) {
+                    Text("Delete \"\(gallery.name)\"?")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+
+                    Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+
+                Divider()
+
+                Button(role: .destructive, action: onDeleteAndPhotos) {
+                    Text("Delete Gallery & Photos")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+                .foregroundStyle(.red)
+
+                Divider()
+
+                Button(action: onDeleteKeepPhotos) {
+                    Text("Delete Gallery, Keep Photos")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+
+                Divider()
+
+                Button(action: onUnlink) {
+                    Text("Remove from Culla")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+
+                Divider()
+
+                Button(action: onCancel) {
+                    Text("Cancel")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+            }
+            .background(.background)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal, 40)
+        }
     }
 }
