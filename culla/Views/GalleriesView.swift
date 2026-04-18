@@ -8,6 +8,7 @@ struct GalleriesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
     @Query private var allSortedPhotos: [SortedPhoto]
+    @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
     @State private var viewModel: GalleryViewModel?
     @State private var insightsViewModel = InsightsViewModel()
 
@@ -26,38 +27,37 @@ struct GalleriesView: View {
     @State private var namesBeforeEdit: [UUID: String] = [:]
 
     var body: some View {
-        Group {
-            if let viewModel {
-                List {
-                    // Stats header
-                    statsHeader
+        List {
+            // Stats header
+            statsHeader
 
-                    if viewModel.galleries.isEmpty {
-                        ContentUnavailableView(
-                            "No Galleries",
-                            systemImage: "rectangle.stack",
-                            description: Text("Galleries you create will appear here.")
-                        )
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                    } else {
-                        ForEach(viewModel.galleries) { gallery in
-                            NavigationLink(value: gallery) {
-                                galleryRow(gallery)
-                            }
-                        }
-                        .onMove { source, destination in
-                            viewModel.moveGallery(from: source, to: destination)
-                        }
-                        .onDelete { offsets in
-                            if let index = offsets.first {
-                                galleryToDelete = viewModel.galleries[index]
-                            }
-                        }
+            if galleries.isEmpty {
+                ContentUnavailableView(
+                    "No Galleries",
+                    systemImage: "rectangle.stack",
+                    description: Text("Galleries you create will appear here.")
+                )
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(galleries) { gallery in
+                    NavigationLink(value: gallery) {
+                        galleryRow(gallery)
                     }
                 }
-            } else {
-                ProgressView()
+                .onMove { source, destination in
+                    var reordered = galleries
+                    reordered.move(fromOffsets: source, toOffset: destination)
+                    for (index, gallery) in reordered.enumerated() {
+                        gallery.displayOrder = index
+                    }
+                    try? modelContext.save()
+                }
+                .onDelete { offsets in
+                    if let index = offsets.first {
+                        galleryToDelete = galleries[index]
+                    }
+                }
             }
         }
         .environment(\.editMode, $editMode)
@@ -67,7 +67,7 @@ struct GalleriesView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if viewModel?.galleries.isEmpty == false {
+                if !galleries.isEmpty {
                     Button(editMode == .active ? "Done" : "Edit") {
                         withAnimation {
                             editMode = editMode == .active ? .inactive : .active
@@ -93,9 +93,7 @@ struct GalleriesView: View {
                 }
             }
         }
-        .sheet(isPresented: $showAlbumImport, onDismiss: {
-            viewModel?.fetchGalleries()
-        }) {
+        .sheet(isPresented: $showAlbumImport) {
             AlbumImportSheet { newIDs in
                 for id in newIDs where sidebarGalleryIDs.count < maxSidebarGalleries {
                     sidebarGalleryIDs.insert(id)
@@ -157,12 +155,11 @@ struct GalleriesView: View {
             insightsViewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
         }
         .onChange(of: editMode) { _, newMode in
-            guard let viewModel else { return }
             if newMode == .active {
-                namesBeforeEdit = Dictionary(uniqueKeysWithValues: viewModel.galleries.map { ($0.id, $0.name) })
+                namesBeforeEdit = Dictionary(uniqueKeysWithValues: galleries.map { ($0.id, $0.name) })
             } else if newMode == .inactive {
                 try? modelContext.save()
-                for gallery in viewModel.galleries {
+                for gallery in galleries {
                     if let oldName = namesBeforeEdit[gallery.id],
                        gallery.name != oldName,
                        let albumID = gallery.albumIdentifier {

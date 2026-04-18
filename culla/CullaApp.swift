@@ -6,20 +6,33 @@ struct CullaApp: App {
     /// Fresh random neon picked once per cold launch — stable for the full session.
     private static let sessionRandomHex: String = Color.neonHexes.randomElement()!
 
+    /// Single container created once at launch — shared by every view, including sheets.
+    let container: ModelContainer
+
     @AppStorage("accentColorMode") private var accentMode = "random"
     @AppStorage("customAccentHex") private var customAccentHex = ""
     @AppStorage("appColorScheme") private var colorSchemeString = "system"
     @AppStorage("statusBarVisible") private var statusBarVisible = false
 
+    init() {
+        do {
+            container = try ModelContainer(
+                for: Gallery.self, SortedPhoto.self, DismissedPhoto.self, DailyStats.self
+            )
+        } catch {
+            fatalError("Failed to create ModelContainer: \(error)")
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             SplashGate()
+                .modelContainer(container)
                 .tint(.primary)
                 .environment(\.appAccent, currentAccent)
                 .preferredColorScheme(preferredScheme)
                 .statusBarHidden(!statusBarVisible)
         }
-        .modelContainer(for: [Gallery.self, SortedPhoto.self, DismissedPhoto.self, DailyStats.self])
     }
 
     private var currentAccent: Color {

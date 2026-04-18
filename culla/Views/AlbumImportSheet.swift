@@ -35,7 +35,17 @@ struct AlbumImportSheet: View {
                     ScrollView {
                         VStack(spacing: 12) {
                             HStack {
-                                Text("\(selectedAlbumIDs.count) selected")
+                                Button {
+                                    if selectedAlbumIDs.count == sortedAlbums.count {
+                                        selectedAlbumIDs.removeAll()
+                                    } else {
+                                        selectedAlbumIDs = Set(sortedAlbums.map(\.id))
+                                    }
+                                } label: {
+                                    Text(selectedAlbumIDs.count == sortedAlbums.count ? "Deselect All" : "Select All")
+                                        .font(.footnote)
+                                }
+                                Text("\(selectedAlbumIDs.count) of \(sortedAlbums.count) selected")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                                 Spacer()
@@ -147,6 +157,7 @@ struct AlbumImportSheet: View {
             }
         }
         .buttonStyle(.plain)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Filtering & Sorting

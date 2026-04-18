@@ -140,6 +140,10 @@ struct GallerySidebarItem: View {
 
     var body: some View {
         ZStack(alignment: .leading) {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .opacity(Double(dragProgress))
+
             neonColor
                 .opacity(backgroundOpacity)
 

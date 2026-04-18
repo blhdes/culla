@@ -6,13 +6,15 @@ struct InsightsView: View {
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
-    @Query private var allDailyStats: [DailyStats]
 
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
 
     @State private var viewModel = InsightsViewModel()
+    @State private var allDailyStats: [DailyStats] = []
+    @State private var isLoaded = false
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     /// Only photos the user actually sorted in the app — excludes imports.
@@ -23,7 +25,9 @@ struct InsightsView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if sortedPhotos.isEmpty && totalDeletedPhotos == 0 {
+                if !isLoaded {
+                    ProgressView()
+                } else if sortedPhotos.isEmpty && totalDeletedPhotos == 0 {
                     emptyState
                 } else {
                     statsContent
@@ -40,6 +44,8 @@ struct InsightsView: View {
             .task {
                 viewModel.loadLibraryCount()
                 viewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
+                fetchDailyStats()
+                isLoaded = true
             }
             .onChange(of: sortedPhotos.count) {
                 viewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
@@ -142,7 +148,7 @@ struct InsightsView: View {
         return days.flatMap { day in
             let stats = allDailyStats.filter { calendar.isDate($0.date, inSameDayAs: day) }
             let skipped    = stats.reduce(0) { $0 + $1.skipped }
-            let deleted    = stats.reduce(0) { $0 + $1.deleted }
+            let deleted    = stats.reduce(0) { $0 + $1.deletedCount }
             let favourited = stats.reduce(0) { $0 + $1.favourited }
             return [
                 ChartPoint(date: day, count: sortedByDay[day] ?? 0, series: "Sorted"),
@@ -220,6 +226,15 @@ struct InsightsView: View {
             return "—"
         }
         return "\(top.name) (\(top.count))"
+    }
+
+    // MARK: - Data
+
+    private func fetchDailyStats() {
+        // Use a fresh context to read directly from the persistent store,
+        // bypassing any stale state in the shared main context.
+        let ctx = ModelContext(modelContext.container)
+        allDailyStats = (try? ctx.fetch(FetchDescriptor<DailyStats>())) ?? []
     }
 
     // MARK: - Components
