@@ -548,11 +548,16 @@ final class PhotoLibraryService {
 
         // Disk cache hit — much faster than PHImageManager
         let diskPath = diskCachePath(for: assetIdentifier)
-        if let data = try? Data(contentsOf: diskPath),
-           let diskImage = UIImage(data: data) {
-            let decoded = diskImage.preparingForDisplay() ?? diskImage
-            thumbnailCache.setObject(decoded, forKey: cacheKey)
-            return decoded
+        do {
+            let data = try Data(contentsOf: diskPath)
+            if let diskImage = UIImage(data: data) {
+                let decoded = diskImage.preparingForDisplay() ?? diskImage
+                thumbnailCache.setObject(decoded, forKey: cacheKey)
+                return decoded
+            }
+        } catch {
+            // Disk read or decode failed — remove corrupted file and fall back to PHImageManager
+            try? FileManager.default.removeItem(at: diskPath)
         }
 
         guard let asset = PHAsset.fetchAssets(
@@ -586,8 +591,15 @@ final class PhotoLibraryService {
             // Write to disk in background — don't await, return immediately
             let pathForWrite = diskPath  // capture before escaping
             Task.detached(priority: .background) {
-                if let data = decoded.pngData() {
-                    try? data.write(to: pathForWrite, options: .atomic)
+                guard let data = decoded.pngData() else { return }
+
+                // Write to temp file, then atomic rename to avoid incomplete reads
+                let tempPath = pathForWrite.appendingPathExtension("tmp")
+                do {
+                    try data.write(to: tempPath, options: .atomic)
+                    try FileManager.default.moveItem(at: tempPath, to: pathForWrite)
+                } catch {
+                    try? FileManager.default.removeItem(at: tempPath)
                 }
             }
 
