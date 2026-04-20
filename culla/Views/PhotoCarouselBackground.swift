@@ -107,6 +107,7 @@ struct PhotoCarouselBackground: View {
 
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
     @AppStorage("monochromeBackground") private var monochrome = false
+    @Environment(\.colorScheme) private var colorScheme
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
 
@@ -127,7 +128,7 @@ struct PhotoCarouselBackground: View {
                     photoCanvas
                         .transition(.opacity)
                 }
-                Rectangle().fill(Color(.systemBackground).opacity(0.25))
+                Rectangle().fill(Color(.systemBackground).opacity(colorScheme == .light ? 0.55 : 0.25))
                 grainLayer
             }
         }

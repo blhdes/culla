@@ -24,6 +24,7 @@ struct DatePickerView: View {
     @AppStorage("lastSelectedDate") private var pickerDate = Date()
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
     @AppStorage("showCullaEyes") private var showCullaEyes = false
+    @AppStorage("duplicateTimeWindow") private var duplicateTimeWindowSeconds: Double = 3600
 
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
@@ -37,6 +38,7 @@ struct DatePickerView: View {
     @State private var showSettings = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
+    @State private var pickerIsToday = true
 
     @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
@@ -63,6 +65,9 @@ struct DatePickerView: View {
                         .datePickerStyle(.wheel)
                         .labelsHidden()
                         .onChange(of: pickerDate) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                pickerIsToday = Calendar.current.isDateInToday(pickerDate)
+                            }
                             Haptics.dateWheelTick()
                         }
                         .simultaneousGesture(
@@ -79,9 +84,9 @@ struct DatePickerView: View {
                             Label("Today", systemImage: "play.fill")
                                 .font(.subheadline)
                         }
-                        .opacity(Calendar.current.isDateInToday(pickerDate) ? 0 : 1)
-                        .allowsHitTesting(!Calendar.current.isDateInToday(pickerDate))
-                        .animation(.easeInOut(duration: 0.25), value: Calendar.current.isDateInToday(pickerDate))
+                        .opacity(pickerIsToday ? 0 : 1)
+                        .allowsHitTesting(!pickerIsToday)
+                        .animation(.easeInOut(duration: 0.25), value: pickerIsToday)
                     }
                     .transition(.opacity)
                 }
@@ -194,6 +199,9 @@ struct DatePickerView: View {
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
+        .onAppear {
+            pickerIsToday = Calendar.current.isDateInToday(pickerDate)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -439,6 +447,28 @@ struct DatePickerView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Duplicate Time Window Slider
+
+    private var duplicateTimeSlider: some View {
+        VStack(spacing: 6) {
+            Slider(value: $duplicateTimeWindowSeconds, in: 720...18000)
+                .tint(accent)
+            Text("Search window: \(formatTimeWindow(duplicateTimeWindowSeconds))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal)
+    }
+
+    private func formatTimeWindow(_ seconds: Double) -> String {
+        if seconds < 3600 {
+            return "\(Int(seconds / 60)) min"
+        } else {
+            let hours = seconds / 3600
+            return hours == hours.rounded() ? "\(Int(hours)) hr" : String(format: "%.1f hr", hours)
+        }
     }
 
     // MARK: - Album Filter Button
