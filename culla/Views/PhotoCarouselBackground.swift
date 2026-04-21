@@ -104,12 +104,15 @@ final class PhotoBackgroundManager {
 
 struct PhotoCarouselBackground: View {
     var albumIdentifier: String?
+    var isPaused: Bool = false
 
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
     @AppStorage("monochromeBackground") private var monochrome = false
     @Environment(\.colorScheme) private var colorScheme
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
+    @State private var pausedAt: Date? = nil
+    @State private var timeOffset: TimeInterval = 0
 
     // Rows scroll horizontally (alternating direction) while the whole wall drifts upward.
     // X and Y are completely independent so no row ever moves faster/slower than another.
@@ -134,13 +137,21 @@ struct PhotoCarouselBackground: View {
         }
         .ignoresSafeArea(.all)
         .animation(.easeIn(duration: 0.8), value: manager.images.isEmpty)
-        .task(id: "\(backgroundMode)-\(albumIdentifier ?? "")") {
+        .task(id: "\(backgroundMode)-\(backgroundMode == "favourites" ? "" : (albumIdentifier ?? ""))") {
             guard backgroundMode != "off" else { return }
             let showFavourites = backgroundMode == "favourites"
             await manager.load(albumIdentifier: albumIdentifier, showFavourites: showFavourites)
             noiseImage = await Task.detached(priority: .background) {
                 makeNoiseTexture()
             }.value
+        }
+        .onChange(of: isPaused) { _, paused in
+            if paused {
+                pausedAt = Date()
+            } else if let p = pausedAt {
+                timeOffset += Date().timeIntervalSince(p)
+                pausedAt = nil
+            }
         }
         .onDisappear { manager.stopCaching() }
     }
@@ -151,9 +162,9 @@ struct PhotoCarouselBackground: View {
     /// Y and X offsets are fully decoupled — no coupling between row speed and vertical speed.
     /// Each row uses a unique slice of the image pool so no photo repeats across visible rows.
     private var photoCanvas: some View {
-        TimelineView(.periodic(from: .now, by: 1.0 / 30)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: isPaused)) { timeline in
             Canvas { context, size in
-                let tRaw = timeline.date.timeIntervalSinceReferenceDate
+                let tRaw = timeline.date.timeIntervalSinceReferenceDate - timeOffset
 
                 // Vertical: whole wall drifts upward, resets seamlessly at tileSize
                 let verticalOffset = -CGFloat(tRaw * verticalSpeed)
