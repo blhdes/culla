@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var isOnThisDay = false
     @State private var showGalleries = false
     @State private var showDuplicateSweep = false
+    @AppStorage("duplicateTimeWindow") private var duplicateTimeWindowSeconds: Double = 3600
     @State private var sidebarGalleryIDs: Set<UUID> = {
         guard let data = UserDefaults.standard.data(forKey: "sidebarGalleryIDs"),
               let ids = try? JSONDecoder().decode(Set<UUID>.self, from: data)
@@ -23,7 +24,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             if showDuplicateSweep {
-                DuplicateSweepView(onClose: {
+                DuplicateSweepView(timeWindow: TimeInterval(duplicateTimeWindowSeconds), onClose: {
                     showDuplicateSweep = false
                 })
             } else if let startDate {

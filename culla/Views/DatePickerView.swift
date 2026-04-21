@@ -38,7 +38,7 @@ struct DatePickerView: View {
     @State private var showSettings = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
-    @State private var pickerIsToday = true
+    @State private var pickerIsToday: Bool = true
 
     @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
@@ -64,9 +64,10 @@ struct DatePickerView: View {
                         )
                         .datePickerStyle(.wheel)
                         .labelsHidden()
-                        .onChange(of: pickerDate) {
+                        .tint(accent)
+                        .onChange(of: pickerDate) { _, newDate in
                             withAnimation(.easeInOut(duration: 0.25)) {
-                                pickerIsToday = Calendar.current.isDateInToday(pickerDate)
+                                pickerIsToday = Calendar.current.isDateInToday(newDate)
                             }
                             Haptics.dateWheelTick()
                         }
@@ -177,9 +178,6 @@ struct DatePickerView: View {
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
-        .onAppear {
-            pickerIsToday = Calendar.current.isDateInToday(pickerDate)
-        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -286,6 +284,7 @@ struct DatePickerView: View {
                 await service.warmCalendarCache(from: warmEarliest, to: warmLatest)
             }
 
+            pickerIsToday = Calendar.current.isDateInToday(pickerDate)
             isReady = true
         }
         .onChange(of: selectedAlbum?.collectionIdentifier) { _, newID in

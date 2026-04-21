@@ -44,7 +44,7 @@ final class DuplicateSweepViewModel {
     // MARK: - Search
 
     @MainActor
-    func startSearch(for assetIdentifier: String) async {
+    func startSearch(for assetIdentifier: String, timeWindow: TimeInterval = 3600) async {
         phase = .scanning
         referenceIdentifier = assetIdentifier
         lastAction = nil
@@ -53,6 +53,7 @@ final class DuplicateSweepViewModel {
 
         let matches = await scanner.findDuplicates(
             of: assetIdentifier,
+            timeWindow: timeWindow,
             excluding: []
         )
 

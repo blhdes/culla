@@ -3,6 +3,7 @@ import SwiftData
 import PhotosUI
 
 struct DuplicateSweepView: View {
+    var timeWindow: TimeInterval = 3600
     var onClose: () -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -76,7 +77,7 @@ struct DuplicateSweepView: View {
                 showPicker = false
                 guard let viewModel else { return }
                 Task {
-                    await viewModel.startSearch(for: identifier)
+                    await viewModel.startSearch(for: identifier, timeWindow: timeWindow)
                 }
             }
         }
