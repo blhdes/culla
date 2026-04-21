@@ -115,29 +115,7 @@ struct DatePickerView: View {
                     }
 
                     if selectedMode != .duplicates {
-                        HStack(spacing: 12) {
-                            if selectedMode == .cullaing {
-                                timerMenu
-                            }
-
-                            Button {
-                                startAction()
-                            } label: {
-                                HStack(spacing: 8) {
-                                    if let icon = actionButtonIcon {
-                                        Image(systemName: icon)
-                                            .imageScale(.medium)
-                                    }
-                                    Text(actionButtonLabel)
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                            .animation(.easeInOut(duration: 0.2), value: selectedMode)
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 12)
+                        actionButtonRow
                     }
                 }
                 .tint(accent)
@@ -195,7 +173,7 @@ struct DatePickerView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier) }
+        .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier, isPaused: showFullCalendar) }
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
@@ -355,6 +333,45 @@ struct DatePickerView: View {
         }
     }
 
+    @ViewBuilder
+    private var actionButtonRow: some View {
+        if #available(iOS 26, *) {
+            GlassEffectContainer {
+                actionButtonsContent
+                    .buttonStyle(.glass)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 12)
+        } else {
+            actionButtonsContent
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
+                .padding(.bottom, 12)
+        }
+    }
+
+    private var actionButtonsContent: some View {
+        HStack(spacing: 12) {
+            if selectedMode == .cullaing {
+                timerMenu
+            }
+            Button {
+                startAction()
+            } label: {
+                HStack(spacing: 8) {
+                    if let icon = actionButtonIcon {
+                        Image(systemName: icon).imageScale(.medium)
+                    }
+                    Text(actionButtonLabel)
+                }
+                .frame(maxWidth: .infinity)
+                .foregroundStyle(.primary)
+            }
+            .controlSize(.large)
+            .animation(.easeInOut(duration: 0.2), value: selectedMode)
+        }
+    }
+
     // MARK: - Focus Timer Menu
 
     private var timerMenu: some View {
@@ -438,9 +455,9 @@ struct DatePickerView: View {
             startAction()
         } label: {
             ZStack {
-                Circle()
-                    .fill(.ultraThinMaterial)
+                Color.clear
                     .frame(width: 120, height: 120)
+                    .modifier(GlassOrMaterialCircle())
                 Image(systemName: "plus")
                     .font(.system(size: 44, weight: .light))
                     .foregroundStyle(accent)
@@ -499,10 +516,30 @@ struct DatePickerView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+            .modifier(GlassOrQuaternaryRounded())
         }
         .buttonStyle(.plain)
         .padding(.horizontal)
     }
 
+}
+
+private struct GlassOrMaterialCircle: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(in: Circle())
+        } else {
+            content.background(Circle().fill(.ultraThinMaterial))
+        }
+    }
+}
+
+private struct GlassOrQuaternaryRounded: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(in: RoundedRectangle(cornerRadius: 10))
+        } else {
+            content.background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
 }
