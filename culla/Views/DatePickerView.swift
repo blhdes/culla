@@ -38,7 +38,11 @@ struct DatePickerView: View {
     @State private var showSettings = false
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
-    @State private var pickerIsToday: Bool = true
+    private var pickerIsToday: Bool {
+        guard let earliest = earliestDate, let latest = latestDate else { return true }
+        let target = min(max(Date.now, earliest), latest)
+        return Calendar.current.isDate(pickerDate, inSameDayAs: target)
+    }
 
     @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query private var dismissedPhotos: [DismissedPhoto]
@@ -65,6 +69,7 @@ struct DatePickerView: View {
                         .datePickerStyle(.wheel)
                         .labelsHidden()
                         .tint(accent)
+                        .foregroundStyle(accent)
                         .onChange(of: pickerDate) { Haptics.dateWheelTick() }
                         .simultaneousGesture(
                             TapGesture()
@@ -76,9 +81,6 @@ struct DatePickerView: View {
                         Button {
                             let today = Date.now
                             pickerDate = min(max(today, earliestDate), latestDate)
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                pickerIsToday = true
-                            }
                         } label: {
                             Label("Today", systemImage: "play.fill")
                                 .font(.subheadline)
@@ -173,15 +175,6 @@ struct DatePickerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier, isPaused: showFullCalendar) }
-        .onAppear {
-            pickerIsToday = Calendar.current.isDateInToday(pickerDate)
-        }
-        .onChange(of: pickerDate) { oldDate, newDate in
-            guard !Calendar.current.isDate(oldDate, inSameDayAs: newDate) else { return }
-            withAnimation(.easeInOut(duration: 0.25)) {
-                pickerIsToday = Calendar.current.isDateInToday(newDate)
-            }
-        }
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
@@ -291,12 +284,11 @@ struct DatePickerView: View {
                 await service.warmCalendarCache(from: warmEarliest, to: warmLatest)
             }
 
-            pickerIsToday = Calendar.current.isDateInToday(pickerDate)
             isReady = true
         }
         .onChange(of: selectedAlbum?.collectionIdentifier) { _, newID in
             if newID != lastSelectedAlbumID {
-                pickerDate = Date()
+                pickerDate = newID == nil ? (latestDate ?? Date()) : Date()
                 lastSelectedAlbumID = newID ?? ""
             }
         }
