@@ -58,7 +58,7 @@ struct DatePickerView: View {
 
                 Spacer()
 
-                if selectedMode != .duplicates {
+                ZStack {
                     VStack(spacing: 12) {
                         DatePicker(
                             "Date",
@@ -88,13 +88,14 @@ struct DatePickerView: View {
                         .allowsHitTesting(!pickerIsToday)
                         .animation(.easeInOut(duration: 0.25), value: pickerIsToday)
                     }
-                    .transition(.opacity)
-                }
+                    .opacity(selectedMode != .duplicates ? 1 : 0)
+                    .allowsHitTesting(selectedMode != .duplicates)
 
-                if selectedMode == .duplicates {
                     duplicateEntryButton
-                        .transition(.opacity)
+                        .opacity(selectedMode == .duplicates ? 1 : 0)
+                        .allowsHitTesting(selectedMode == .duplicates)
                 }
+                .animation(.easeInOut(duration: 0.25), value: selectedMode)
 
                 Spacer()
 
@@ -173,7 +174,7 @@ struct DatePickerView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier, isPaused: showFullCalendar) }
+        .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier, isPaused: showFullCalendar, isSharpened: selectedMode == .duplicates) }
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)

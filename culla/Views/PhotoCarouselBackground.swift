@@ -105,6 +105,7 @@ final class PhotoBackgroundManager {
 struct PhotoCarouselBackground: View {
     var albumIdentifier: String?
     var isPaused: Bool = false
+    var isSharpened: Bool = false
 
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
     @AppStorage("monochromeBackground") private var monochrome = false
@@ -222,7 +223,8 @@ struct PhotoCarouselBackground: View {
                     }
                 }
             }
-            .blur(radius: 6)
+            .blur(radius: isSharpened ? 1 : 7)
+            .animation(.easeInOut(duration: 0.4), value: isSharpened)
             .opacity(0.9)
             .saturation(monochrome ? 0 : 1)
             .contrast(monochrome ? 1.3 : 1)

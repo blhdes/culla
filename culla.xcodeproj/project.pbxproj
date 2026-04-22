@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8946B9C62F98FA780052269A /* FreemiumKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8946B9C52F98FA780052269A /* FreemiumKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		8975AEE72F7861CD00A3BC95 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -60,6 +64,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8946B9C62F98FA780052269A /* FreemiumKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +133,7 @@
 			);
 			name = culla;
 			packageProductDependencies = (
+				8946B9C52F98FA780052269A /* FreemiumKit */,
 			);
 			productName = culla;
 			productReference = 89D59CC52F6F360300965721 /* culla.app */;
@@ -161,6 +167,9 @@
 			);
 			mainGroup = 89D59CBC2F6F360300965721;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8946B9C42F98FA780052269A /* XCRemoteSwiftPackageReference "FreemiumKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 89D59CC62F6F360300965721 /* Products */;
 			projectDirPath = "";
@@ -491,6 +500,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8946B9C42F98FA780052269A /* XCRemoteSwiftPackageReference "FreemiumKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/FlineDev/FreemiumKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.19.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8946B9C52F98FA780052269A /* FreemiumKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8946B9C42F98FA780052269A /* XCRemoteSwiftPackageReference "FreemiumKit" */;
+			productName = FreemiumKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 89D59CBD2F6F360300965721 /* Project object */;
 }
