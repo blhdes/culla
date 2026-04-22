@@ -45,7 +45,7 @@ final class PhotoLibraryService {
     /// PHAsset identifiers contain "/" — replace with "-" to make filename-safe.
     private func diskCachePath(for id: String) -> URL {
         let safe = id.replacingOccurrences(of: "/", with: "-")
-        return Self.diskCacheDir.appendingPathComponent("\(safe).png")
+        return Self.diskCacheDir.appendingPathComponent("\(safe).jpg")
     }
 
     // MARK: - Authorization
@@ -591,7 +591,7 @@ final class PhotoLibraryService {
             // Write to disk in background — don't await, return immediately
             let pathForWrite = diskPath  // capture before escaping
             Task.detached(priority: .background) {
-                guard let data = decoded.pngData() else { return }
+                guard let data = decoded.jpegData(compressionQuality: 0.85) else { return }
 
                 // Write to temp file, then atomic rename to avoid incomplete reads
                 let tempPath = pathForWrite.appendingPathExtension("tmp")
@@ -710,10 +710,16 @@ final class PhotoLibraryService {
         startCachingCalendarThumbnails(allIDs)
 
         await withTaskGroup(of: Void.self) { group in
+            var inFlight = 0
             for id in allIDs {
+                if inFlight >= 50 {
+                    await group.next()
+                    inFlight -= 1
+                }
                 group.addTask(priority: .background) { [self] in
                     _ = await self.loadThumbnail(for: id)
                 }
+                inFlight += 1
             }
         }
     }
