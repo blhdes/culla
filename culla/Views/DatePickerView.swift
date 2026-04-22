@@ -65,12 +65,7 @@ struct DatePickerView: View {
                         .datePickerStyle(.wheel)
                         .labelsHidden()
                         .tint(accent)
-                        .onChange(of: pickerDate) { _, newDate in
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                pickerIsToday = Calendar.current.isDateInToday(newDate)
-                            }
-                            Haptics.dateWheelTick()
-                        }
+                        .onChange(of: pickerDate) { Haptics.dateWheelTick() }
                         .simultaneousGesture(
                             TapGesture()
                                 .onEnded { _ in
@@ -81,6 +76,9 @@ struct DatePickerView: View {
                         Button {
                             let today = Date.now
                             pickerDate = min(max(today, earliestDate), latestDate)
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                pickerIsToday = true
+                            }
                         } label: {
                             Label("Today", systemImage: "play.fill")
                                 .font(.subheadline)
@@ -175,6 +173,15 @@ struct DatePickerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier, isPaused: showFullCalendar) }
+        .onAppear {
+            pickerIsToday = Calendar.current.isDateInToday(pickerDate)
+        }
+        .onChange(of: pickerDate) { oldDate, newDate in
+            guard !Calendar.current.isDate(oldDate, inSameDayAs: newDate) else { return }
+            withAnimation(.easeInOut(duration: 0.25)) {
+                pickerIsToday = Calendar.current.isDateInToday(newDate)
+            }
+        }
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)
