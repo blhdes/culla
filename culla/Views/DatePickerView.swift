@@ -69,7 +69,6 @@ struct DatePickerView: View {
                         .datePickerStyle(.wheel)
                         .labelsHidden()
                         .tint(accent)
-                        .foregroundStyle(accent)
                         .onChange(of: pickerDate) { Haptics.dateWheelTick() }
                         .simultaneousGesture(
                             TapGesture()
