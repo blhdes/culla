@@ -41,6 +41,7 @@ struct CalendarView: View {
     var latest: Date = .distantFuture
     var albumIdentifier: String? = nil
 
+    @AppStorage("monochromeBackground") private var monochrome = false
     @State private var viewData: CalendarViewData?
     private let calendar = Calendar.current
 
@@ -56,6 +57,7 @@ struct CalendarView: View {
                 ProgressView()
             }
         }
+        .saturation(monochrome ? 0 : 1)
         .task {
             let albumID = albumIdentifier
             let service = PhotoLibraryService.shared
