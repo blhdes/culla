@@ -20,7 +20,10 @@ final class PhotoBackgroundManager {
     var images: [UIImage] = []
 
     private let cacheManager = PHCachingImageManager()
-    private static let thumbSize = CGSize(width: 150, height: 150)
+    private static let thumbSize: CGSize = {
+        let side = ceil(110 * UIScreen.main.scale)
+        return CGSize(width: side, height: side)
+    }()
 
     func load(albumIdentifier: String? = nil, showFavourites: Bool = false) async {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
