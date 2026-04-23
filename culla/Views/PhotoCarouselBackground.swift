@@ -231,7 +231,7 @@ struct PhotoCarouselBackground: View {
                     }
                 }
             }
-            .blur(radius: isSharpened ? 0 : 7)
+            .blur(radius: isSharpened ? 1 : 7)
             .animation(.easeInOut(duration: 0.4), value: isSharpened)
             .opacity(0.9)
             .saturation(monochrome ? 0 : 1)
