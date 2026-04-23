@@ -108,7 +108,7 @@ struct PhotoCarouselBackground: View {
     var isPaused: Bool = false
     var isSharpened: Bool = false
 
-    @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
+    @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
     @Environment(\.colorScheme) private var colorScheme
     @State private var manager = PhotoBackgroundManager()

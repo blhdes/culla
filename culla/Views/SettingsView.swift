@@ -1,5 +1,5 @@
 import SwiftUI
-import RevenueCatUI
+import StoreKit
 
 struct SettingsView: View {
     @AppStorage("appColorScheme") private var colorSchemeString = "system"
@@ -9,7 +9,7 @@ struct SettingsView: View {
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
-    @AppStorage("dynamicBackgroundMode") private var backgroundMode = "gallery"
+    @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
 
     @Environment(\.dismiss) private var dismiss
@@ -137,9 +137,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(onClose: { showPaywall = false })
         }
-        .sheet(isPresented: $showCustomerCenter) {
-            CustomerCenterView()
-        }
+        .manageSubscriptionsSheet(isPresented: $showCustomerCenter)
         .alert("Restore failed", isPresented: $showRestoreError, presenting: restoreError) { _ in
             Button("OK", role: .cancel) {}
         } message: { error in
