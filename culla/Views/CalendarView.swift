@@ -77,9 +77,6 @@ struct CalendarView: View {
                 thumbnailIDs: data.thumbnailIDs
             )
         }
-        .onDisappear {
-            PhotoLibraryService.shared.stopCachingAll()
-        }
     }
 
     private nonisolated static func buildMonths(calendar cal: Calendar, earliest: Date, latest: Date) -> [CalendarMonth] {

@@ -11,7 +11,7 @@ let CalendarThumbnailSize = CGSize(width: 160, height: 160)
 // Session-scoped cache — avoids re-enumerating PHFetchResult every time CalendarView opens.
 // nonisolated(unsafe) because calendarData() is nonisolated and this is only written
 // from one Task.detached at a time (safe in practice).
-private nonisolated(unsafe) var _calendarDataCache: [String?: (counts: [Date: Int], thumbnailIDs: [Date: [String]])] = [:]
+private nonisolated(unsafe) var _calendarDataCache: [String: (counts: [Date: Int], thumbnailIDs: [Date: [String]])] = [:]
 
 @Observable
 final class PhotoLibraryService {
@@ -616,7 +616,8 @@ final class PhotoLibraryService {
     /// Respects album filtering: pass a collectionIdentifier to scope to an album,
     /// PhoneAlbum.favoritesIdentifier for favorites, or nil for all photos.
     nonisolated func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
-        if let cached = _calendarDataCache[albumIdentifier] {
+        let cacheKey = "\(albumIdentifier ?? "")|\(earliest.timeIntervalSince1970)|\(latest.timeIntervalSince1970)"
+        if let cached = _calendarDataCache[cacheKey] {
             return cached
         }
 
@@ -666,7 +667,7 @@ final class PhotoLibraryService {
         }
 
         let calendarResult = (counts, thumbnailIDs)
-        _calendarDataCache[albumIdentifier] = calendarResult
+        _calendarDataCache[cacheKey] = calendarResult
         return calendarResult
     }
 
@@ -694,9 +695,6 @@ final class PhotoLibraryService {
         )
     }
 
-    func stopCachingAll() {
-        imageManager.stopCachingImagesForAllAssets()
-    }
 
     /// Pre-loads all calendar thumbnails into NSCache and disk for a given date range.
     /// Runs concurrent background tasks to populate memory cache from disk (or PHImageManager on first load).
