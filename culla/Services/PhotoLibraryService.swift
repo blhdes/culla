@@ -157,6 +157,7 @@ final class PhotoLibraryService {
                 let request = PHAssetChangeRequest(for: asset)
                 request.isFavorite = newValue
             }
+            invalidateCalendarDataCache()
             return newValue
         } catch {
             print("culla: Failed to toggle favorite: \(error)")
@@ -209,6 +210,7 @@ final class PhotoLibraryService {
                 guard let request = PHAssetCollectionChangeRequest(for: album) else { return }
                 request.addAssets([asset] as NSFastEnumeration)
             }
+            invalidateCalendarDataCache()
         } catch {
             print("culla: Failed to add photo to album: \(error)")
         }
@@ -227,6 +229,8 @@ final class PhotoLibraryService {
             try await PHPhotoLibrary.shared().performChanges {
                 PHAssetChangeRequest.deleteAssets(assets as NSFastEnumeration)
             }
+            invalidateCalendarDataCache()
+            evictThumbnails(for: identifiers)
             return count
         } catch {
             print("culla: Failed to delete photos: \(error)")
@@ -248,6 +252,7 @@ final class PhotoLibraryService {
                 guard let request = PHAssetCollectionChangeRequest(for: album) else { return }
                 request.removeAssets([asset] as NSFastEnumeration)
             }
+            invalidateCalendarDataCache()
         } catch {
             print("culla: Failed to remove photo from album: \(error)")
         }
@@ -321,6 +326,12 @@ final class PhotoLibraryService {
     func fetchCreationDate(for identifier: String) -> Date? {
         let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
         return result.firstObject?.creationDate
+    }
+
+    /// Returns whether a single photo asset is marked as favourite.
+    func fetchIsFavorite(for identifier: String) -> Bool {
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
+        return result.firstObject?.isFavorite ?? false
     }
 
     // MARK: - Fetching
@@ -741,6 +752,17 @@ final class PhotoLibraryService {
     }
 
     // MARK: - Private
+
+    private func invalidateCalendarDataCache() {
+        _calendarDataCache = [:]
+    }
+
+    private func evictThumbnails(for identifiers: [String]) {
+        for id in identifiers {
+            thumbnailCache.removeObject(forKey: id as NSString)
+            try? FileManager.default.removeItem(at: diskCachePath(for: id))
+        }
+    }
 
     /// Picks `count` evenly-distributed items from `ids` in O(1) — no full-array copy.
     /// Gives a representative spread across the day (first, middle, last-ish photos)

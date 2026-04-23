@@ -19,6 +19,7 @@ final class SwipeViewModel {
 
     // Current photo metadata
     var currentPhotoDate: Date?
+    var currentPhotoIsFavorite: Bool = false
 
     // Focus Session tracking
     private(set) var sessionSortedCount: Int = 0
@@ -114,6 +115,7 @@ final class SwipeViewModel {
         var queue = batch
         currentIdentifier = queue.removeFirst()
         currentPhotoDate = photoService.fetchCreationDate(for: currentIdentifier!)
+        currentPhotoIsFavorite = photoService.fetchIsFavorite(for: currentIdentifier!)
 
         if !queue.isEmpty {
             nextIdentifier = queue.removeFirst()
@@ -265,8 +267,10 @@ final class SwipeViewModel {
 
         if let current = currentIdentifier {
             currentPhotoDate = photoService.fetchCreationDate(for: current)
+            currentPhotoIsFavorite = photoService.fetchIsFavorite(for: current)
         } else {
             currentPhotoDate = nil
+            currentPhotoIsFavorite = false
         }
 
         if identifierQueue.isEmpty {
@@ -300,6 +304,7 @@ final class SwipeViewModel {
         nextIdentifier = currentIdentifier
         currentIdentifier = identifier
         currentPhotoDate = photoService.fetchCreationDate(for: identifier)
+        currentPhotoIsFavorite = photoService.fetchIsFavorite(for: identifier)
         isEmpty = false
     }
 

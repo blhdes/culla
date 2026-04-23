@@ -274,12 +274,19 @@ struct SwipeView: View {
                         guard viewModel.canUndo else { return }
                         flashUndo()
                     } label: {
-                        Text(date, format: .dateTime.month(.wide).day().year())
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(.ultraThinMaterial, in: Capsule())
+                        HStack(spacing: 4) {
+                            Text(date, format: .dateTime.month(.wide).day().year())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if viewModel.currentPhotoIsFavorite {
+                                Image(systemName: "heart.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.pink)
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial, in: Capsule())
                     }
                     .buttonStyle(.plain)
                 }
@@ -398,6 +405,7 @@ struct SwipeView: View {
                 Task {
                     guard let identifier = viewModel.currentIdentifier else { return }
                     let isFavorite = await photoService.toggleFavorite(identifier: identifier)
+                    viewModel.currentPhotoIsFavorite = isFavorite
                     Haptics.swipeUp()
                     if isFavorite {
                         totalFavouritedPhotos += 1
