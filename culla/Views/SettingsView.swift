@@ -1,4 +1,5 @@
 import SwiftUI
+import RevenueCatUI
 
 struct SettingsView: View {
     @AppStorage("appColorScheme") private var colorSchemeString = "system"
@@ -12,8 +13,13 @@ struct SettingsView: View {
     @AppStorage("monochromeBackground") private var monochrome = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(SubscriptionManager.self) private var subscriptions
 
     @State private var selectedSwatchIndex: Int = 0
+    @State private var showPaywall = false
+    @State private var showCustomerCenter = false
+    @State private var showRestoreError = false
+    @State private var restoreError: Error?
 
     private let swatchColumns = Array(repeating: GridItem(.flexible()), count: 6)
 
@@ -104,6 +110,20 @@ struct SettingsView: View {
                         Toggle("Monochrome", isOn: $monochrome)
                     }
                 }
+
+                Section("Subscription") {
+                    if subscriptions.isPro {
+                        Button("Manage subscription") { showCustomerCenter = true }
+                            .foregroundStyle(.primary)
+                    } else {
+                        Button("Upgrade to Culla Pro") { showPaywall = true }
+                            .foregroundStyle(.primary)
+                    }
+                    Button("Restore purchases") {
+                        Task { await restore() }
+                    }
+                    .foregroundStyle(.primary)
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -113,6 +133,17 @@ struct SettingsView: View {
                         .fontWeight(.semibold)
                 }
             }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(onClose: { showPaywall = false })
+        }
+        .sheet(isPresented: $showCustomerCenter) {
+            CustomerCenterView()
+        }
+        .alert("Restore failed", isPresented: $showRestoreError, presenting: restoreError) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { error in
+            Text(error.localizedDescription)
         }
         .onChange(of: accentMode) { _, newMode in
             guard newMode == "custom" else { return }
@@ -127,6 +158,15 @@ struct SettingsView: View {
             if accentMode == "custom" && !customAccentHex.isEmpty {
                 selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
             }
+        }
+    }
+
+    private func restore() async {
+        do {
+            try await SubscriptionManager.shared.restorePurchases()
+        } catch {
+            restoreError = error
+            showRestoreError = true
         }
     }
 

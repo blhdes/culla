@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8946B9C62F98FA780052269A /* FreemiumKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8946B9C52F98FA780052269A /* FreemiumKit */; };
+		8946BA2F2F9919E80052269A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 8946BA2E2F9919E80052269A /* RevenueCat */; };
+		8946BA312F9919E80052269A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8946BA302F9919E80052269A /* RevenueCatUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,7 +65,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8946B9C62F98FA780052269A /* FreemiumKit in Frameworks */,
+				8946BA312F9919E80052269A /* RevenueCatUI in Frameworks */,
+				8946BA2F2F9919E80052269A /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,7 +135,8 @@
 			);
 			name = culla;
 			packageProductDependencies = (
-				8946B9C52F98FA780052269A /* FreemiumKit */,
+				8946BA2E2F9919E80052269A /* RevenueCat */,
+				8946BA302F9919E80052269A /* RevenueCatUI */,
 			);
 			productName = culla;
 			productReference = 89D59CC52F6F360300965721 /* culla.app */;
@@ -168,7 +171,7 @@
 			mainGroup = 89D59CBC2F6F360300965721;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				8946B9C42F98FA780052269A /* XCRemoteSwiftPackageReference "FreemiumKit" */,
+				8946BA2D2F9919E80052269A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 89D59CC62F6F360300965721 /* Products */;
@@ -502,21 +505,26 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8946B9C42F98FA780052269A /* XCRemoteSwiftPackageReference "FreemiumKit" */ = {
+		8946BA2D2F9919E80052269A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/FlineDev/FreemiumKit.git";
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.19.0;
+				minimumVersion = 5.68.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		8946B9C52F98FA780052269A /* FreemiumKit */ = {
+		8946BA2E2F9919E80052269A /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8946B9C42F98FA780052269A /* XCRemoteSwiftPackageReference "FreemiumKit" */;
-			productName = FreemiumKit;
+			package = 8946BA2D2F9919E80052269A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		8946BA302F9919E80052269A /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8946BA2D2F9919E80052269A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

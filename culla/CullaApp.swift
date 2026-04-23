@@ -22,6 +22,7 @@ struct CullaApp: App {
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")
         }
+        SubscriptionManager.shared.configure()
     }
 
     var body: some Scene {
@@ -30,6 +31,7 @@ struct CullaApp: App {
                 .modelContainer(container)
                 .tint(.primary)
                 .environment(\.appAccent, currentAccent)
+                .environment(SubscriptionManager.shared)
                 .preferredColorScheme(preferredScheme)
                 .statusBarHidden(!statusBarVisible)
         }
@@ -54,6 +56,11 @@ struct CullaApp: App {
 /// Shows the app icon until the content is ready, then fades in.
 private struct SplashGate: View {
     @State private var isReady = false
+    @AppStorage("hasSeenPaywall") private var hasSeenPaywall = false
+    @State private var showPaywall = false
+    @State private var paywallDismissible = true
+
+    @Environment(SubscriptionManager.self) private var subscriptions
 
     var body: some View {
         ZStack {
@@ -66,6 +73,34 @@ private struct SplashGate: View {
             }
         }
         .animation(.easeOut(duration: 0.4), value: isReady)
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(
+                onClose: {
+                    hasSeenPaywall = true
+                    showPaywall = false
+                },
+                dismissible: paywallDismissible
+            )
+            .interactiveDismissDisabled(!paywallDismissible)
+        }
+        .onChange(of: isReady) { _, ready in
+            guard ready else { return }
+            if subscriptions.trialExpired {
+                // Trial has ended — force the paywall, no way out
+                paywallDismissible = false
+                showPaywall = true
+            } else if !hasSeenPaywall {
+                // First launch — soft paywall, user can dismiss
+                paywallDismissible = true
+                showPaywall = true
+            }
+        }
+        .onChange(of: subscriptions.trialExpired) { _, expired in
+            if expired && !showPaywall {
+                paywallDismissible = false
+                showPaywall = true
+            }
+        }
     }
 
     private var splashView: some View {
