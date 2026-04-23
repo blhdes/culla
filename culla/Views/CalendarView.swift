@@ -58,6 +58,7 @@ struct CalendarView: View {
             }
         }
         .saturation(monochrome ? 0 : 1)
+        .onDisappear { viewData = nil }
         .task {
             let albumID = albumIdentifier
             let service = PhotoLibraryService.shared
@@ -271,12 +272,7 @@ extension CalendarCollectionView {
                 currentSelectedDate = selectedDate
                 lastAppliedSelectedDate = selectedDate
                 collectionView?.reloadData()
-                let target = selectedDate
-                DispatchQueue.main.async { [weak self] in
-                    guard let self, !self.hasScrolledToInitial else { return }
-                    self.hasScrolledToInitial = true
-                    self.scrollToMonth(for: target, animated: false)
-                }
+                scrollWhenReady(for: selectedDate)
                 return
             }
 
@@ -308,6 +304,16 @@ extension CalendarCollectionView {
                   let slotIndex = viewData.months[sectionIndex].days.firstIndex(where: { $0?.id == day })
             else { return nil }
             return IndexPath(item: slotIndex, section: sectionIndex)
+        }
+
+        private func scrollWhenReady(for date: Date) {
+            guard !hasScrolledToInitial else { return }
+            guard let cv = collectionView, cv.bounds.height > 0 else {
+                DispatchQueue.main.async { [weak self] in self?.scrollWhenReady(for: date) }
+                return
+            }
+            hasScrolledToInitial = true
+            scrollToMonth(for: date, animated: false)
         }
 
         private func scrollToMonth(for date: Date, animated: Bool) {
