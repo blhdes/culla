@@ -271,6 +271,7 @@ extension CalendarCollectionView {
             if isFirstLoad {
                 currentSelectedDate = selectedDate
                 lastAppliedSelectedDate = selectedDate
+                collectionView?.alpha = 0
                 collectionView?.reloadData()
                 scrollWhenReady(for: selectedDate)
                 return
@@ -314,6 +315,7 @@ extension CalendarCollectionView {
             }
             hasScrolledToInitial = true
             scrollToMonth(for: date, animated: false)
+            cv.alpha = 1
         }
 
         private func scrollToMonth(for date: Date, animated: Bool) {
