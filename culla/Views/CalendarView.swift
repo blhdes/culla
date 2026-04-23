@@ -51,13 +51,13 @@ struct CalendarView: View {
                 CalendarCollectionView(
                     viewData: viewData,
                     selectedDate: $selectedDate,
-                    calendar: calendar
+                    calendar: calendar,
+                    monochrome: monochrome
                 )
             } else {
                 ProgressView()
             }
         }
-        .saturation(monochrome ? 0 : 1)
         .onDisappear { viewData = nil }
         .task {
             let albumID = albumIdentifier
@@ -136,6 +136,7 @@ private struct CalendarCollectionView: UIViewRepresentable {
     let viewData: CalendarViewData
     @Binding var selectedDate: Date
     let calendar: Calendar
+    let monochrome: Bool
 
     func makeCoordinator() -> Coordinator {
         Coordinator(selectedDate: $selectedDate, calendar: calendar)
@@ -173,7 +174,7 @@ private struct CalendarCollectionView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        context.coordinator.update(viewData: viewData, selectedDate: selectedDate)
+        context.coordinator.update(viewData: viewData, selectedDate: selectedDate, monochrome: monochrome)
     }
 
     private func makeWeekdayHeader() -> UIStackView {
@@ -247,6 +248,7 @@ extension CalendarCollectionView {
         private var currentSelectedDate: Date
         private var lastAppliedSelectedDate: Date?
         private var hasScrolledToInitial = false
+        private var currentMonochrome = false
 
         init(selectedDate: Binding<Date>, calendar: Calendar) {
             self.selectedDate = selectedDate
@@ -264,7 +266,10 @@ extension CalendarCollectionView {
             )
         }
 
-        func update(viewData: CalendarViewData, selectedDate: Date) {
+        func update(viewData: CalendarViewData, selectedDate: Date, monochrome: Bool) {
+            let monochromeChanged = monochrome != currentMonochrome
+            currentMonochrome = monochrome
+
             let isFirstLoad = (currentViewData == nil)
             currentViewData = viewData
 
@@ -275,6 +280,10 @@ extension CalendarCollectionView {
                 collectionView?.reloadData()
                 scrollWhenReady(for: selectedDate)
                 return
+            }
+
+            if monochromeChanged {
+                collectionView?.reloadItems(at: collectionView?.indexPathsForVisibleItems ?? [])
             }
 
             if lastAppliedSelectedDate != selectedDate {
@@ -315,7 +324,9 @@ extension CalendarCollectionView {
             }
             hasScrolledToInitial = true
             scrollToMonth(for: date, animated: false)
-            cv.alpha = 1
+            UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
+                cv.alpha = 1
+            }
         }
 
         private func scrollToMonth(for date: Date, animated: Bool) {
@@ -358,7 +369,7 @@ extension CalendarCollectionView {
             let isSelected = day?.id == calendar.startOfDay(for: currentSelectedDate)
             let photoCount = day.flatMap { vd.photoCounts[$0.id] } ?? 0
             let thumbnailIDs = Array((day.flatMap { vd.thumbnailIDs[$0.id] } ?? []).prefix(4))
-            cell.configure(day: day, isSelected: isSelected, photoCount: photoCount, thumbnailIDs: thumbnailIDs)
+            cell.configure(day: day, isSelected: isSelected, photoCount: photoCount, thumbnailIDs: thumbnailIDs, monochrome: currentMonochrome)
             return cell
         }
 
@@ -391,6 +402,20 @@ extension CalendarCollectionView {
             selectedDate.wrappedValue = day.id
         }
     }
+}
+
+private func toGrayscale(_ image: UIImage) -> UIImage {
+    guard let cgImage = image.cgImage else { return image }
+    let w = cgImage.width, h = cgImage.height
+    guard let ctx = CGContext(
+        data: nil, width: w, height: h,
+        bitsPerComponent: 8, bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceGray(),
+        bitmapInfo: CGImageAlphaInfo.none.rawValue
+    ) else { return image }
+    ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: w, height: h))
+    guard let result = ctx.makeImage() else { return image }
+    return UIImage(cgImage: result, scale: image.scale, orientation: image.imageOrientation)
 }
 
 // MARK: - Day Cell
@@ -432,7 +457,7 @@ private final class CalendarDayCell: UICollectionViewCell {
         mosaicView.frame = CGRect(x: 0, y: 34, width: w, height: 44)
     }
 
-    func configure(day: DayInfo?, isSelected: Bool, photoCount: Int, thumbnailIDs: [String]) {
+    func configure(day: DayInfo?, isSelected: Bool, photoCount: Int, thumbnailIDs: [String], monochrome: Bool) {
         mosaicView.reset()
 
         guard let day else {
@@ -461,7 +486,7 @@ private final class CalendarDayCell: UICollectionViewCell {
         todayRingView.layer.borderColor = UIColor.tintColor.cgColor
 
         if !thumbnailIDs.isEmpty {
-            mosaicView.configure(thumbnailIDs: thumbnailIDs, photoCount: photoCount)
+            mosaicView.configure(thumbnailIDs: thumbnailIDs, photoCount: photoCount, monochrome: monochrome)
         }
     }
 
@@ -532,7 +557,7 @@ private final class MosaicView: UIView {
         backgroundColor = .clear
     }
 
-    func configure(thumbnailIDs: [String], photoCount: Int) {
+    func configure(thumbnailIDs: [String], photoCount: Int, monochrome: Bool) {
         let count = min(thumbnailIDs.count, 4)
         guard count > 0 else { return }
 
@@ -559,7 +584,8 @@ private final class MosaicView: UIView {
         for (i, assetID) in thumbnailIDs.prefix(4).enumerated() {
             let task = Task { @MainActor [weak self] in
                 guard let self, !Task.isCancelled else { return }
-                let image = await service.loadThumbnail(for: assetID)
+                var image = await service.loadThumbnail(for: assetID)
+                if monochrome, let img = image { image = toGrayscale(img) }
                 guard !Task.isCancelled, i < self.imageViews.count else { return }
                 self.imageViews[i].image = image
             }
