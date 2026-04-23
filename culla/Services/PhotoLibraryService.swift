@@ -602,7 +602,15 @@ final class PhotoLibraryService {
             // Write to disk in background — don't await, return immediately
             let pathForWrite = diskPath  // capture before escaping
             Task.detached(priority: .background) {
-                guard let data = decoded.jpegData(compressionQuality: 0.85) else { return }
+                // PHImageManager delivers images with AlphaLast pixel format even for opaque
+                // photos. JPEG has no alpha channel, so redraw into an opaque context first
+                // to avoid doubled decode memory and bloated file sizes.
+                let format = UIGraphicsImageRendererFormat()
+                format.opaque = true
+                format.scale = 1
+                let opaque = UIGraphicsImageRenderer(size: decoded.size, format: format)
+                    .image { _ in decoded.draw(at: .zero) }
+                guard let data = opaque.jpegData(compressionQuality: 0.85) else { return }
 
                 // Write to temp file, then atomic rename to avoid incomplete reads
                 let tempPath = pathForWrite.appendingPathExtension("tmp")
