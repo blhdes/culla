@@ -74,8 +74,6 @@ final class PhotoBackgroundManager {
             if let img = await fetch(asset) {
                 loaded.append(img)
             }
-            // Show first batch immediately so the carousel starts early
-            if loaded.count == 18 { images = loaded }
         }
         images = loaded
     }
@@ -114,6 +112,7 @@ struct PhotoCarouselBackground: View {
     @State private var noiseImage: UIImage?
     @State private var pausedAt: Date? = nil
     @State private var timeOffset: TimeInterval = 0
+    @State private var revealOpacity: Double = 0
 
     // Rows scroll horizontally (alternating direction) while the whole wall drifts upward.
     // X and Y are completely independent so no row ever moves faster/slower than another.
@@ -128,23 +127,29 @@ struct PhotoCarouselBackground: View {
             // Fallback gradient is always the base — never a dark void during loading or when disabled
             fallbackGradient
             if backgroundMode != "off" {
-                if !manager.images.isEmpty {
-                    photoCanvas
-                        .transition(.opacity)
+                Group {
+                    if !manager.images.isEmpty {
+                        photoCanvas
+                    }
+                    Rectangle().fill(Color(.systemBackground).opacity(colorScheme == .light ? 0.55 : 0.25))
+                    grainLayer
                 }
-                Rectangle().fill(Color(.systemBackground).opacity(colorScheme == .light ? 0.55 : 0.25))
-                grainLayer
+                .opacity(revealOpacity)
             }
         }
         .ignoresSafeArea(.all)
-        .animation(.easeIn(duration: 0.8), value: manager.images.isEmpty)
         .task(id: "\(backgroundMode)-\(backgroundMode == "favourites" ? "" : (albumIdentifier ?? ""))") {
+            revealOpacity = 0
             guard backgroundMode != "off" else { return }
             let showFavourites = backgroundMode == "favourites"
             await manager.load(albumIdentifier: albumIdentifier, showFavourites: showFavourites)
             noiseImage = await Task.detached(priority: .background) {
                 makeNoiseTexture()
             }.value
+            // Reveal everything in one slow fade once both photos and grain are ready
+            withAnimation(.easeIn(duration: 1.5)) {
+                revealOpacity = 1
+            }
         }
         .onChange(of: isPaused) { _, paused in
             if paused {
