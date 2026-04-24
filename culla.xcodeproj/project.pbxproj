@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		8946BA2F2F9919E80052269A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 8946BA2E2F9919E80052269A /* RevenueCat */; };
-		8946BA312F9919E80052269A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8946BA302F9919E80052269A /* RevenueCatUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,7 +64,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8946BA312F9919E80052269A /* RevenueCatUI in Frameworks */,
 				8946BA2F2F9919E80052269A /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -136,7 +134,6 @@
 			name = culla;
 			packageProductDependencies = (
 				8946BA2E2F9919E80052269A /* RevenueCat */,
-				8946BA302F9919E80052269A /* RevenueCatUI */,
 			);
 			productName = culla;
 			productReference = 89D59CC52F6F360300965721 /* culla.app */;
@@ -520,11 +517,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8946BA2D2F9919E80052269A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
-		};
-		8946BA302F9919E80052269A /* RevenueCatUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8946BA2D2F9919E80052269A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
-			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -20,6 +20,9 @@ final class SubscriptionManager {
     }
 
     private var streamTask: Task<Void, Never>?
+    /// The expiration date we've already scheduled a reminder for — prevents re-prompting
+    /// the user every time the customerInfo stream emits.
+    private var scheduledReminderFor: Date?
 
     private init() {}
 
@@ -33,8 +36,26 @@ final class SubscriptionManager {
                     self?.customerInfo = info
                     self?.isPro = info.entitlements[Self.entitlementID]?.isActive == true
                 }
+                await self?.reconcileTrialReminder(info: info)
             }
         }
+    }
+
+    private func reconcileTrialReminder(info: CustomerInfo) async {
+        guard
+            let entitlement = info.entitlements[Self.entitlementID],
+            entitlement.isActive,
+            entitlement.periodType == .trial,
+            let expires = entitlement.expirationDate
+        else {
+            TrialReminderService.cancelReminder()
+            scheduledReminderFor = nil
+            return
+        }
+
+        guard scheduledReminderFor != expires else { return }
+        scheduledReminderFor = expires
+        await TrialReminderService.scheduleReminder(for: expires)
     }
 
     @MainActor
