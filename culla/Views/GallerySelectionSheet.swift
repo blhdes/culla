@@ -8,11 +8,13 @@ struct GallerySelectionSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(SubscriptionManager.self) private var subscriptions
 
     @State private var searchText = ""
     @State private var newGalleryName = ""
     @State private var showCreateField = false
     @State private var showAlbumImport = false
+    @State private var showPaywall = false
     @State private var sortOption: GallerySortOption = .custom
     @FocusState private var isFieldFocused: Bool
 
@@ -103,6 +105,9 @@ struct GallerySelectionSheet: View {
                 }
             }
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(onClose: { showPaywall = false })
+        }
     }
 
     // MARK: - Row
@@ -115,8 +120,10 @@ struct GallerySelectionSheet: View {
         Button {
             if isSelected {
                 selectedIDs.remove(gallery.id)
-            } else {
+            } else if !atLimit {
                 selectedIDs.insert(gallery.id)
+            } else if !subscriptions.isPro {
+                showPaywall = true
             }
         } label: {
             HStack(spacing: 12) {
@@ -140,7 +147,7 @@ struct GallerySelectionSheet: View {
             }
             .padding(.vertical, 2)
         }
-        .disabled(!isSelected && atLimit)
+        .disabled(!isSelected && atLimit && subscriptions.isPro)
         .opacity(!isSelected && atLimit ? 0.35 : 1.0)
     }
 

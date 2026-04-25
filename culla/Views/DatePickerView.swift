@@ -20,6 +20,9 @@ struct DatePickerView: View {
     @Binding var selectedMode: CullaMode
 
     @Environment(\.appAccent) private var accent
+    @Environment(SubscriptionManager.self) private var subscriptions
+
+    @State private var showPaywall = false
 
     @AppStorage("lastSelectedDate") private var pickerDate = Date()
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
@@ -254,6 +257,9 @@ struct DatePickerView: View {
                 DismissedPhotosView()
             }
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(onClose: { showPaywall = false })
+        }
         .task {
             let status = await photoService.requestAuthorization()
             guard status == .authorized || status == .limited else {
@@ -450,15 +456,30 @@ struct DatePickerView: View {
 
     private var duplicateEntryButton: some View {
         Button {
-            startAction()
+            if subscriptions.isPro {
+                startAction()
+            } else {
+                showPaywall = true
+            }
         } label: {
             ZStack {
                 Color.clear
                     .frame(width: 120, height: 120)
                     .modifier(GlassOrMaterialCircle())
-                Image(systemName: "plus")
-                    .font(.system(size: 44, weight: .light))
-                    .foregroundStyle(accent)
+                if subscriptions.isPro {
+                    Image(systemName: "plus")
+                        .font(.system(size: 44, weight: .light))
+                        .foregroundStyle(accent)
+                } else {
+                    VStack(spacing: 8) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 32, weight: .light))
+                            .foregroundStyle(accent)
+                        Text("Pro")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(accent)
+                    }
+                }
             }
         }
         .buttonStyle(.plain)

@@ -7,6 +7,7 @@ struct GalleriesView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
+    @Environment(SubscriptionManager.self) private var subscriptions
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
     @State private var viewModel: GalleryViewModel?
@@ -23,6 +24,7 @@ struct GalleriesView: View {
     @State private var showCreateAlert = false
     @State private var showAlbumImport = false
     @State private var showInsights = false
+    @State private var showPaywall = false
     @State private var galleryToDelete: Gallery?
     @State private var namesBeforeEdit: [UUID: String] = [:]
 
@@ -137,6 +139,9 @@ struct GalleriesView: View {
         .sheet(isPresented: $showInsights) {
             InsightsView()
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(onClose: { showPaywall = false })
+        }
         .task {
             if viewModel == nil {
                 viewModel = GalleryViewModel(modelContext: modelContext)
@@ -167,7 +172,11 @@ struct GalleriesView: View {
 
     private var statsHeader: some View {
         Button {
-            showInsights = true
+            if subscriptions.isPro {
+                showInsights = true
+            } else {
+                showPaywall = true
+            }
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -192,7 +201,7 @@ struct GalleriesView: View {
                     }
                 }
 
-                Image(systemName: "chevron.right")
+                Image(systemName: subscriptions.isPro ? "chevron.right" : "lock.fill")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }

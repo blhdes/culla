@@ -7,16 +7,28 @@ final class SubscriptionManager {
     static let shared = SubscriptionManager()
 
     static let entitlementID = "Culla Pro"
-    private static let apiKey = "test_GjXIFqeHrLYHRHwcQHMhqeZgOPZ"
+    private static let apiKey = "appl_qkEOEHhjiUplXNbPkjEwMTflFDQ"
+
+    static let dailySwipeLimit = 20
+    static let freeGalleryLimit = 3
+
+    private static let swipeCountKey = "dailySwipeCount"
+    private static let swipeDateKey  = "dailySwipeDate"
 
     private(set) var customerInfo: CustomerInfo?
     private(set) var isPro: Bool = false
+    private(set) var todaySwipeCount: Int = 0
 
     /// True if the user has ever activated Culla Pro (trial or paid) but it is now inactive.
     /// This signals that the trial has expired and a hard gate should be shown.
     var trialExpired: Bool {
         guard let entitlement = customerInfo?.entitlements[Self.entitlementID] else { return false }
         return !entitlement.isActive
+    }
+
+    /// True when a free user has used all 20 swipes for today.
+    var hasReachedDailyLimit: Bool {
+        !isPro && todaySwipeCount >= Self.dailySwipeLimit
     }
 
     private var streamTask: Task<Void, Never>?
@@ -29,6 +41,7 @@ final class SubscriptionManager {
     func configure() {
         Purchases.logLevel = .info
         Purchases.configure(withAPIKey: Self.apiKey)
+        refreshDailyCount()
 
         streamTask = Task { [weak self] in
             for await info in Purchases.shared.customerInfoStream {
@@ -39,6 +52,40 @@ final class SubscriptionManager {
                 await self?.reconcileTrialReminder(info: info)
             }
         }
+    }
+
+    /// Syncs `todaySwipeCount` with UserDefaults, resetting it if the calendar day has rolled over.
+    func refreshDailyCount() {
+        todaySwipeCount = liveSwipeCount()
+    }
+
+    /// Increments the daily swipe counter. No-op for Pro users.
+    func recordSwipe() {
+        guard !isPro else { return }
+        let today = Self.todayString()
+        let stored = UserDefaults.standard.string(forKey: Self.swipeDateKey) ?? ""
+        if stored != today {
+            UserDefaults.standard.set(today, forKey: Self.swipeDateKey)
+            UserDefaults.standard.set(1, forKey: Self.swipeCountKey)
+            todaySwipeCount = 1
+        } else {
+            let newCount = UserDefaults.standard.integer(forKey: Self.swipeCountKey) + 1
+            UserDefaults.standard.set(newCount, forKey: Self.swipeCountKey)
+            todaySwipeCount = newCount
+        }
+    }
+
+    private func liveSwipeCount() -> Int {
+        let today = Self.todayString()
+        let stored = UserDefaults.standard.string(forKey: Self.swipeDateKey) ?? ""
+        guard stored == today else { return 0 }
+        return UserDefaults.standard.integer(forKey: Self.swipeCountKey)
+    }
+
+    private static func todayString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
     }
 
     private func reconcileTrialReminder(info: CustomerInfo) async {

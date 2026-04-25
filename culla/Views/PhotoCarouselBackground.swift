@@ -111,11 +111,14 @@ struct PhotoCarouselBackground: View {
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(SubscriptionManager.self) private var subscriptions
     @State private var manager = PhotoBackgroundManager()
     @State private var noiseImage: UIImage?
     @State private var pausedAt: Date? = nil
     @State private var timeOffset: TimeInterval = 0
     @State private var revealOpacity: Double = 0
+
+    private var effectiveMode: String { subscriptions.isPro ? backgroundMode : "off" }
 
     // Rows scroll horizontally (alternating direction) while the whole wall drifts upward.
     // X and Y are completely independent so no row ever moves faster/slower than another.
@@ -129,7 +132,7 @@ struct PhotoCarouselBackground: View {
         ZStack {
             // Fallback gradient is always the base — never a dark void during loading or when disabled
             fallbackGradient
-            if backgroundMode != "off" {
+            if effectiveMode != "off" {
                 Group {
                     if !manager.images.isEmpty {
                         photoCanvas
@@ -141,10 +144,10 @@ struct PhotoCarouselBackground: View {
             }
         }
         .ignoresSafeArea(.all)
-        .task(id: "\(backgroundMode)-\(backgroundMode == "favourites" ? "" : (albumIdentifier ?? ""))") {
+        .task(id: "\(effectiveMode)-\(effectiveMode == "favourites" ? "" : (albumIdentifier ?? ""))") {
             revealOpacity = 0
-            guard backgroundMode != "off" else { return }
-            let showFavourites = backgroundMode == "favourites"
+            guard effectiveMode != "off" else { return }
+            let showFavourites = effectiveMode == "favourites"
             await manager.load(albumIdentifier: albumIdentifier, showFavourites: showFavourites)
             noiseImage = await Task.detached(priority: .background) {
                 makeNoiseTexture()

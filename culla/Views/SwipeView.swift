@@ -16,6 +16,7 @@ struct SwipeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
+    @Environment(SubscriptionManager.self) private var subscriptions
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     @State private var viewModel: SwipeViewModel?
@@ -46,6 +47,9 @@ struct SwipeView: View {
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
 
+    // Paywall
+    @State private var showPaywall = false
+
     // Pinch-to-zoom full screen
     @State private var isPhotoZoomed = false
 
@@ -61,7 +65,9 @@ struct SwipeView: View {
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
 
     private let swipeThreshold: CGFloat = 100
-    private let maxSidebarGalleries = 10
+    private var maxSidebarGalleries: Int {
+        subscriptions.isPro ? 10 : SubscriptionManager.freeGalleryLimit
+    }
 
     /// Only galleries the user has selected, in display order.
     private var sidebarGalleries: [Gallery] {
@@ -99,7 +105,11 @@ struct SwipeView: View {
                 ShareSheet(items: [shareImage])
             }
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(onClose: { showPaywall = false })
+        }
         .task {
+            subscriptions.refreshDailyCount()
             if viewModel == nil {
                 let vm = SwipeViewModel(
                     photoService: photoService,
@@ -237,6 +247,15 @@ struct SwipeView: View {
                 }
                 if viewModel.totalCount > 0 {
                     Text("\(viewModel.processedCount + 1) / \(viewModel.totalCount)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                if !subscriptions.isPro {
+                    Text("\(subscriptions.todaySwipeCount) / \(SubscriptionManager.dailySwipeLimit) today")
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
@@ -389,8 +408,14 @@ struct SwipeView: View {
         if tx > swipeThreshold || ptx > swipeThreshold,
            let id = highlightedGalleryID,
            let gallery = sidebarGalleries.first(where: { $0.id == id }) {
+            if subscriptions.hasReachedDailyLimit {
+                snapBack()
+                showPaywall = true
+                return
+            }
             flyOff(x: 500) {
                 viewModel.assignToGallery(gallery)
+                subscriptions.recordSwipe()
                 Haptics.swipeRight()
                 showToast("\u{2192} \(gallery.name)")
             }
@@ -437,8 +462,14 @@ struct SwipeView: View {
 
         // Left swipe: dismiss if actual OR predicted distance exceeds threshold
         if tx < -swipeThreshold || ptx < -swipeThreshold {
+            if subscriptions.hasReachedDailyLimit {
+                snapBack()
+                showPaywall = true
+                return
+            }
             flyOff(x: -500) {
                 viewModel.dismissCurrent()
+                subscriptions.recordSwipe()
                 Haptics.swipeLeft()
                 showToast("Dismissed")
             }

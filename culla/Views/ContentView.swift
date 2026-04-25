@@ -19,7 +19,11 @@ struct ContentView: View {
         return ids
     }()
 
-    private let maxSidebarGalleries = 10
+    @Environment(SubscriptionManager.self) private var subscriptions
+
+    private var maxSidebarGalleries: Int {
+        subscriptions.isPro ? 10 : SubscriptionManager.freeGalleryLimit
+    }
 
     var body: some View {
         NavigationStack {

@@ -145,12 +145,22 @@ struct SettingsView: View {
         }
         .onChange(of: accentMode) { _, newMode in
             guard newMode == "custom" else { return }
+            guard subscriptions.isPro else {
+                accentMode = "random"
+                showPaywall = true
+                return
+            }
             if customAccentHex.isEmpty {
                 selectedSwatchIndex = 0
                 customAccentHex = paletteHexes[0]
             } else {
                 selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
             }
+        }
+        .onChange(of: backgroundMode) { _, newMode in
+            guard newMode != "off" && !subscriptions.isPro else { return }
+            backgroundMode = "off"
+            showPaywall = true
         }
         .onAppear {
             if accentMode == "custom" && !customAccentHex.isEmpty {
