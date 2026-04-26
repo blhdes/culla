@@ -8,6 +8,8 @@ struct PaywallSheet: View {
     @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
 
+    @AppStorage("showCullaEyes") private var showCullaEyes = false
+
     @State private var offering: Offering?
     @State private var selectedPackage: Package?
     @State private var eligibility: [String: IntroEligibilityStatus] = [:]
@@ -16,12 +18,22 @@ struct PaywallSheet: View {
     @State private var isPurchasing = false
     @State private var isRestoring = false
     @State private var purchaseError: String?
+    @State private var heroGlow = false
+    @State private var hasAppeared = false
+
+    /// White text fails on bright neons (#FFE600, #CCFF00, #39FF14).
+    /// Luminance threshold 0.72 flips those to black for readability.
+    private var ctaForeground: Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(accent).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (0.299 * r + 0.587 * g + 0.114 * b) > 0.72 ? .black : .white
+    }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemBackground).ignoresSafeArea())
+                .background(backdrop)
 
             if dismissible {
                 Button {
@@ -102,23 +114,25 @@ struct PaywallSheet: View {
     private func paywallBody(offering: Offering) -> some View {
         ScrollView {
             VStack(spacing: 32) {
-                hero
+                staggered(0) { hero }
 
-                features
+                staggered(1) { features }
 
-                VStack(spacing: 12) {
-                    ForEach(offering.availablePackages, id: \.identifier) { package in
-                        packageCard(package)
+                staggered(2) {
+                    VStack(spacing: 12) {
+                        ForEach(offering.availablePackages, id: \.identifier) { package in
+                            packageCard(package)
+                        }
                     }
+                    .padding(.horizontal, 16)
                 }
-                .padding(.horizontal, 16)
 
                 VStack(spacing: 12) {
-                    ctaButton
+                    staggered(3) { ctaButton }
                     if let package = selectedPackage, introductoryTrialDays(package) != nil {
-                        trialDisclosure(for: package)
+                        staggered(4) { trialDisclosure(for: package) }
                     }
-                    footerLinks
+                    staggered(4) { footerLinks }
                 }
                 .padding(.horizontal, 16)
             }
@@ -127,17 +141,62 @@ struct PaywallSheet: View {
         }
     }
 
+    @ViewBuilder
+    private func staggered<V: View>(_ index: Int, @ViewBuilder _ content: () -> V) -> some View {
+        content()
+            .opacity(hasAppeared ? 1 : 0)
+            .offset(y: hasAppeared ? 0 : 12)
+            .animation(
+                .spring(response: 0.45, dampingFraction: 0.85)
+                    .delay(Double(index) * 0.06),
+                value: hasAppeared
+            )
+    }
+
+    private var backdrop: some View {
+        ZStack {
+            Color(.systemBackground)
+            RadialGradient(
+                colors: [accent.opacity(0.18), accent.opacity(0.06), .clear],
+                center: .top,
+                startRadius: 40,
+                endRadius: 520
+            )
+            .blur(radius: 40)
+        }
+        .ignoresSafeArea()
+    }
+
     private var hero: some View {
         VStack(spacing: 12) {
-            Image("LaunchIcon")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 72, height: 72)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(accent.opacity(heroGlow ? 0.35 : 0.18))
+                    .blur(radius: 22)
+                    .frame(width: 110, height: 110)
+
+                Image("LaunchIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 72, height: 72)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+            .onAppear {
+                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                    heroGlow = true
+                }
+            }
+
+            if showCullaEyes {
+                CullaEyes()
+                    .tint(accent)
+                    .scaleEffect(0.55)
+                    .frame(height: 22)
+            }
 
             Text("culla Pro")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
-                .tracking(1.5)
+                .tracking(2)
 
             Text("Sort smarter. Keep what matters.")
                 .font(.subheadline)
@@ -164,9 +223,10 @@ struct PaywallSheet: View {
     private func featureRow(icon: String, title: String, detail: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(accent)
-                .frame(width: 24, height: 24)
+                .frame(width: 32, height: 32)
+                .background(accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -175,6 +235,7 @@ struct PaywallSheet: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .padding(.top, 4)
         }
     }
 
@@ -182,17 +243,23 @@ struct PaywallSheet: View {
 
     private func packageCard(_ package: Package) -> some View {
         let isSelected = selectedPackage?.identifier == package.identifier
+        let primaryText: Color = isSelected ? ctaForeground : .primary
+        let secondaryText: Color = isSelected ? ctaForeground.opacity(0.85) : .secondary
+
         return Button {
+            if selectedPackage?.identifier != package.identifier {
+                Haptics.swipeRight()
+            }
             selectedPackage = package
         } label: {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? accent : Color.secondary.opacity(0.4), lineWidth: 2)
+                        .stroke(isSelected ? ctaForeground : Color.secondary.opacity(0.4), lineWidth: 2)
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(accent)
+                            .fill(ctaForeground)
                             .frame(width: 12, height: 12)
                     }
                 }
@@ -200,11 +267,11 @@ struct PaywallSheet: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(packageTitle(package))
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(primaryText)
                     if let subtitle = packageSubtitle(package) {
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(secondaryText)
                     }
                 }
 
@@ -213,48 +280,56 @@ struct PaywallSheet: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(package.storeProduct.localizedPriceString)
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(primaryText)
                     if let perUnit = pricePerUnit(package) {
                         Text(perUnit)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(secondaryText)
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .background {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.ultraThinMaterial))
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? accent : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? accent : .clear, lineWidth: 2)
             )
+            .shadow(
+                color: isSelected ? accent.opacity(0.35) : .clear,
+                radius: isSelected ? 14 : 0,
+                x: 0,
+                y: 4
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
         }
         .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isSelected)
     }
 
     // MARK: - CTA & Footer
 
     private var ctaButton: some View {
         Button {
+            Haptics.startCullaing()
             Task { await purchase() }
         } label: {
             ZStack {
                 if isPurchasing {
                     ProgressView()
-                        .tint(.white)
+                        .tint(ctaForeground)
                 } else {
                     Text(ctaTitle)
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
                 }
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(accent, in: RoundedRectangle(cornerRadius: 16))
         }
+        .buttonStyle(PaywallCTAButtonStyle(accent: accent, foreground: ctaForeground))
         .disabled(isPurchasing || isRestoring || selectedPackage == nil)
-        .opacity(selectedPackage == nil ? 0.6 : 1)
+        .opacity(selectedPackage == nil ? 0.55 : 1)
     }
 
     private var ctaTitle: String {
@@ -267,11 +342,25 @@ struct PaywallSheet: View {
 
     private func trialDisclosure(for package: Package) -> some View {
         let priceSuffix = pricePerUnit(package).map { " \($0)" } ?? ""
-        return Text("Free for 7 days, then \(package.storeProduct.localizedPriceString)\(priceSuffix). Cancel anytime in Settings before the trial ends — you won't be charged if you cancel in time.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 4)
+        return HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "shield.lefthalf.filled")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(accent)
+                .padding(.top, 1)
+
+            Text("Free for 7 days, then \(package.storeProduct.localizedPriceString)\(priceSuffix). Cancel anytime in Settings before the trial ends — you won't be charged if you cancel in time.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(accent.opacity(0.35), lineWidth: 1)
+        )
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     private var footerLinks: some View {
@@ -284,6 +373,7 @@ struct PaywallSheet: View {
                 } else {
                     Text("Restore")
                         .font(.caption.weight(.semibold))
+                        .foregroundStyle(accent)
                 }
             }
             .disabled(isPurchasing || isRestoring)
@@ -293,14 +383,15 @@ struct PaywallSheet: View {
 
             Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                 .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
 
             Text("·")
                 .foregroundStyle(.secondary)
 
             Link("Privacy", destination: URL(string: "https://www.revenuecat.com/privacy")!)
                 .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
         }
-        .foregroundStyle(.secondary)
         .padding(.top, 4)
     }
 
@@ -312,16 +403,29 @@ struct PaywallSheet: View {
         do {
             let offerings = try await Purchases.shared.offerings()
             let current = offerings.current
+            #if DEBUG
+            print("🟣 [Paywall] offerings.current = \(current?.identifier ?? "nil")")
+            for package in current?.availablePackages ?? [] {
+                let p = package.storeProduct
+                print("— \(package.identifier) [\(p.productIdentifier)]")
+                print("  intro:", p.introductoryDiscount as Any)
+            }
+            #endif
             await MainActor.run {
                 offering = current
                 selectedPackage = defaultPackage(for: current)
                 isLoading = false
+                hasAppeared = true
             }
             await fetchEligibility(for: current)
+            #if DEBUG
+            print("🟣 [Paywall] eligibility:", eligibility)
+            #endif
         } catch {
             await MainActor.run {
                 loadError = error.localizedDescription
                 isLoading = false
+                hasAppeared = true
             }
         }
     }
@@ -429,5 +533,30 @@ struct PaywallSheet: View {
         case .year: return period.value * 365
         @unknown default: return nil
         }
+    }
+}
+
+// MARK: - CTA Button Style
+
+private struct PaywallCTAButtonStyle: SwiftUI.ButtonStyle {
+    let accent: Color
+    let foreground: Color
+
+    func makeBody(configuration: ButtonStyleConfiguration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .foregroundStyle(foreground)
+            .background(
+                LinearGradient(
+                    colors: [accent, accent.opacity(0.78)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                ),
+                in: RoundedRectangle(cornerRadius: 16)
+            )
+            .shadow(color: accent.opacity(0.4), radius: 16, x: 0, y: 6)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
