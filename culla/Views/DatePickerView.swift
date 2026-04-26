@@ -310,7 +310,7 @@ struct DatePickerView: View {
             lastSelectedAlbumID = selectedAlbum?.collectionIdentifier ?? ""
         case .thisDay:
             isOnThisDay = true
-            selectedDate = .now
+            selectedDate = pickerDate
         case .duplicates:
             showDuplicateSweep = true
         }
