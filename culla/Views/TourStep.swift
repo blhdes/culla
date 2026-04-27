@@ -57,74 +57,63 @@ enum TourStep: Int, CaseIterable {
     var isSkippable: Bool { self == .changeColor }
     var isGated: Bool     { self == .setupGallery || self == .activateGallery }
 
-    // MARK: - Layout
+    // MARK: - Spotlight
 
-    struct Spotlight {
-        let rect: CGRect
-        let cornerRadius: CGFloat
-    }
-
-    func spotlightRect(geo: GeometryProxy, safeTop: CGFloat, safeBottom: CGFloat) -> Spotlight? {
-        let w = geo.size.width
-        let h = geo.size.height
-
+    /// Which on-screen element this step's spotlight should highlight.
+    /// Nil = no spotlight (e.g. the welcome step).
+    var spotlightTarget: TourTarget? {
         switch self {
-        case .welcome:
-            return nil
-
-        case .pickDate:
-            let spotW = w * 0.82
-            let spotH = h * 0.29
-            let spotY = h * 0.24
-            return Spotlight(
-                rect: CGRect(x: (w - spotW) / 2, y: spotY, width: spotW, height: spotH),
-                cornerRadius: 16
-            )
-
+        case .welcome:          return nil
+        case .pickDate:         return .datePicker
         case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
-            // +4pt y nudge so the expanded glow ring doesn't clip into the status bar
-            let size: CGFloat = 44
-            return Spotlight(
-                rect: CGRect(x: w - size - 8, y: safeTop + 4, width: size, height: size),
-                cornerRadius: 22
-            )
-
-        case .readyToSwipe:
-            // Navigation bottom toolbar (44pt) sits above the home-indicator safe area.
-            // actionButtonRow adds 12pt bottom padding; button is ~50pt tall with controlSize(.large).
-            let toolbarH: CGFloat = 44
-            let buttonH: CGFloat = 50
-            let padH: CGFloat = 12
-            let y = h - safeBottom - toolbarH - padH - buttonH
-            return Spotlight(
-                rect: CGRect(x: 12, y: y, width: w - 24, height: buttonH),
-                cornerRadius: 14
-            )
+            return .galleriesButton
+        case .readyToSwipe:     return .startButton
         }
     }
 
-    func bubbleCenter(geo: GeometryProxy, safeTop: CGFloat, safeBottom: CGFloat) -> CGPoint {
+    var spotlightCornerRadius: CGFloat {
+        switch self {
+        case .pickDate:         return 16
+        case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
+            return 22
+        case .readyToSwipe:     return 14
+        default:                return 12
+        }
+    }
+
+    // MARK: - Bubble layout
+
+    /// Bubble center, computed from the resolved spotlight rect when available.
+    func bubbleCenter(geo: GeometryProxy, spotlight: CGRect?) -> CGPoint {
         let w = geo.size.width
         let h = geo.size.height
+        let bw = min(320, w - 40)
+        // Rough half-height of the bubble; the bubble shrinks/grows with text but
+        // 100pt keeps a reasonable gap between the arrow tip and the spotlight.
+        let halfBubble: CGFloat = 100
 
         switch self {
         case .welcome:
             return CGPoint(x: w / 2, y: h / 2)
 
         case .pickDate:
-            let spotBottom = h * 0.24 + h * 0.29
-            return CGPoint(x: w / 2, y: min(spotBottom + 140, h - safeBottom - 49 - 90))
+            guard let spot = spotlight else { return CGPoint(x: w / 2, y: h / 2) }
+            return CGPoint(x: w / 2, y: spot.maxY + halfBubble + 16)
 
         case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
-            let bw = min(320, w - 40)
-            return CGPoint(x: w - bw / 2 - 16, y: safeTop + 44 + 155)
+            guard let spot = spotlight else { return CGPoint(x: w - bw / 2 - 16, y: 200) }
+            // Arrow sits at the trailing edge of the bubble: 14pt trailing padding +
+            // 11pt to the arrow's center. Align the arrow tip with the spotlight center.
+            let desiredRight = spot.midX + 25
+            let minRight = bw / 2 + 16   // keep bubble on screen (left edge >= 16)
+            let maxRight = w - 16        // keep bubble on screen (right edge <= w-16)
+            let bubbleRight = min(maxRight, max(minRight + bw / 2, desiredRight))
+            let centerX = bubbleRight - bw / 2
+            return CGPoint(x: centerX, y: spot.maxY + halfBubble + 16)
 
         case .readyToSwipe:
-            let toolbarH: CGFloat = 44
-            let buttonH: CGFloat = 50
-            let padH: CGFloat = 12
-            let buttonTop = h - safeBottom - toolbarH - padH - buttonH
-            return CGPoint(x: w / 2, y: buttonTop - 155)
+            guard let spot = spotlight else { return CGPoint(x: w / 2, y: h / 2) }
+            return CGPoint(x: w / 2, y: spot.minY - halfBubble - 16)
         }
     }
 
@@ -135,7 +124,7 @@ enum TourStep: Int, CaseIterable {
         }
     }
 
-    // Arrow edge on the bubble pointing toward the spotlight
+    /// Arrow edge on the bubble pointing toward the spotlight.
     var arrowEdge: Edge? {
         switch self {
         case .welcome:          return nil

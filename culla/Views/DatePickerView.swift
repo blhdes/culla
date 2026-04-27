@@ -79,6 +79,7 @@ struct DatePickerView: View {
                                     showFullCalendar = true
                                 }
                         )
+                        .tourTarget(.datePicker)
 
                         Button {
                             let today = Date.now
@@ -196,6 +197,7 @@ struct DatePickerView: View {
                     Image(systemName: "rectangle.stack")
                 }
                 .tint(accent)
+                .tourTarget(.galleriesButton)
             }
             ToolbarItem(placement: .bottomBar) {
                 Picker("Mode", selection: $selectedMode) {
@@ -346,11 +348,13 @@ struct DatePickerView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 12)
+            .tourTarget(.startButton)
         } else {
             actionButtonsContent
                 .buttonStyle(.borderedProminent)
                 .padding(.horizontal)
                 .padding(.bottom, 12)
+                .tourTarget(.startButton)
         }
     }
 

@@ -99,17 +99,22 @@ private struct SplashGate: View {
             hasSeenPaywall = true
             scheduleWalkthroughIfNeeded()
         }
-        .overlay {
-            if showWalkthrough {
-                TourContainer(
-                    currentStep: $currentTourStep,
-                    sidebarGalleryIDs: $sidebarGalleryIDs,
-                    maxSidebarGalleries: maxSidebarGalleries,
-                    onComplete: {
-                        hasCompletedWalkthrough = true
-                        showWalkthrough = false
-                    }
-                )
+        .overlayPreferenceValue(TourAnchorsKey.self) { anchors in
+            GeometryReader { proxy in
+                if showWalkthrough {
+                    TourContainer(
+                        currentStep: $currentTourStep,
+                        sidebarGalleryIDs: $sidebarGalleryIDs,
+                        maxSidebarGalleries: maxSidebarGalleries,
+                        targetFrame: { target in
+                            anchors[target].map { proxy[$0] }
+                        },
+                        onComplete: {
+                            hasCompletedWalkthrough = true
+                            showWalkthrough = false
+                        }
+                    )
+                }
             }
         }
         .environment(\.activeTourStep, showWalkthrough ? currentTourStep : nil)
