@@ -56,6 +56,9 @@ struct GalleryDetailView: View {
                                         Button {
                                             gallery.colorHex = hex
                                             try? modelContext.save()
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                showColorPicker = false
+                                            }
                                         } label: {
                                             Circle()
                                                 .fill(Color.adaptiveNeon(hex: hex))
@@ -77,6 +80,9 @@ struct GalleryDetailView: View {
                                         set: { newColor in
                                             gallery.colorHex = newColor.hexString
                                             try? modelContext.save()
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                showColorPicker = false
+                                            }
                                         }
                                     ),
                                     supportsOpacity: false
