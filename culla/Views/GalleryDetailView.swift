@@ -18,13 +18,7 @@ struct GalleryDetailView: View {
 
     var body: some View {
         Group {
-            if allIdentifiers.isEmpty && hasSynced {
-                ContentUnavailableView(
-                    "No Photos Yet",
-                    systemImage: "photo",
-                    description: Text("Swipe photos into this gallery to see them here.")
-                )
-            } else if allIdentifiers.isEmpty {
+            if !hasSynced {
                 ProgressView()
             } else {
                 VStack(spacing: 0) {
@@ -96,16 +90,24 @@ struct GalleryDetailView: View {
                     .padding(.vertical, 8)
                     .background(Color(.systemBackground))
 
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 1.5) {
-                            ForEach(allIdentifiers, id: \.self) { identifier in
-                                PhotoThumbnailView(
-                                    assetIdentifier: identifier,
-                                    photoService: photoService
-                                )
-                                .matchedTransitionSource(id: identifier, in: heroNamespace)
-                                .onLongPressGesture {
-                                    previewIdentifier = identifier
+                    if allIdentifiers.isEmpty {
+                        ContentUnavailableView(
+                            "No Photos Yet",
+                            systemImage: "photo",
+                            description: Text("Swipe photos into this gallery to see them here.")
+                        )
+                    } else {
+                        ScrollView {
+                            LazyVGrid(columns: columns, spacing: 1.5) {
+                                ForEach(allIdentifiers, id: \.self) { identifier in
+                                    PhotoThumbnailView(
+                                        assetIdentifier: identifier,
+                                        photoService: photoService
+                                    )
+                                    .matchedTransitionSource(id: identifier, in: heroNamespace)
+                                    .onLongPressGesture {
+                                        previewIdentifier = identifier
+                                    }
                                 }
                             }
                         }

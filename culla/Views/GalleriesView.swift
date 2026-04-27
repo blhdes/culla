@@ -54,29 +54,29 @@ struct GalleriesView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             } else {
-                Text(selectionStatusText)
-                    .font(.caption)
-                    .foregroundStyle(activeGalleryCount == 0 ? .orange : .secondary)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-
-                ForEach(galleries) { gallery in
-                    NavigationLink(value: gallery) {
-                        galleryRow(gallery)
+                Section {
+                    ForEach(galleries) { gallery in
+                        NavigationLink(value: gallery) {
+                            galleryRow(gallery)
+                        }
                     }
-                }
-                .onMove { source, destination in
-                    var reordered = galleries
-                    reordered.move(fromOffsets: source, toOffset: destination)
-                    for (index, gallery) in reordered.enumerated() {
-                        gallery.displayOrder = index
+                    .onMove { source, destination in
+                        var reordered = galleries
+                        reordered.move(fromOffsets: source, toOffset: destination)
+                        for (index, gallery) in reordered.enumerated() {
+                            gallery.displayOrder = index
+                        }
+                        try? modelContext.save()
                     }
-                    try? modelContext.save()
-                }
-                .onDelete { offsets in
-                    if let index = offsets.first {
-                        galleryToDelete = galleries[index]
+                    .onDelete { offsets in
+                        if let index = offsets.first {
+                            galleryToDelete = galleries[index]
+                        }
                     }
+                } header: {
+                    Text(selectionStatusText)
+                        .foregroundStyle(activeGalleryCount == 0 ? Color.orange : Color.secondary)
+                        .textCase(nil)
                 }
             }
         }

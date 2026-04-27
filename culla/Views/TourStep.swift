@@ -67,8 +67,6 @@ enum TourStep: Int, CaseIterable {
     func spotlightRect(geo: GeometryProxy) -> Spotlight? {
         let w = geo.size.width
         let h = geo.size.height
-        let safeTop = geo.safeAreaInsets.top
-        let safeBottom = geo.safeAreaInsets.bottom
 
         switch self {
         case .welcome:
@@ -84,21 +82,10 @@ enum TourStep: Int, CaseIterable {
             )
 
         case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
-            let size: CGFloat = 46
-            return Spotlight(
-                rect: CGRect(x: w - size - 8, y: safeTop, width: size, height: 44),
-                cornerRadius: 23
-            )
+            return nil  // toolbar button frame can't be reliably pinned without a coordinate pass
 
         case .readyToSwipe:
-            let btnH: CGFloat = 54
-            let btnW = w - 32
-            let bottomBarH: CGFloat = 49
-            let y = h - safeBottom - bottomBarH - btnH - 16
-            return Spotlight(
-                rect: CGRect(x: 16, y: y, width: btnW, height: btnH),
-                cornerRadius: 14
-            )
+            return nil  // button is inside a VStack with dynamic content above it — position can't be reliably approximated
         }
     }
 
@@ -117,11 +104,20 @@ enum TourStep: Int, CaseIterable {
             return CGPoint(x: w / 2, y: min(spotBottom + 140, h - safeBottom - 49 - 90))
 
         case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
-            return CGPoint(x: w / 2, y: safeTop + 44 + 155)
+            // Right-align the bubble so the trailing arrow tip lands over the toolbar icon
+            let bw = min(320, w - 40)
+            return CGPoint(x: w - bw / 2 - 16, y: safeTop + 44 + 155)
 
         case .readyToSwipe:
             let btnTop = h - safeBottom - 49 - 54 - 16
             return CGPoint(x: w / 2, y: btnTop - 160)
+        }
+    }
+
+    var arrowIsTrailing: Bool {
+        switch self {
+        case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery: return true
+        default: return false
         }
     }
 

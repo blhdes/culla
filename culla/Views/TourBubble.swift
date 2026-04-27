@@ -14,7 +14,11 @@ struct TourBubble: View {
     var body: some View {
         VStack(spacing: 0) {
             if step.arrowEdge == .top {
-                TourArrow().fill(.background).frame(width: 22, height: 11)
+                TourArrow()
+                    .fill(.background)
+                    .frame(width: 22, height: 11)
+                    .frame(maxWidth: .infinity, alignment: step.arrowIsTrailing ? .trailing : .center)
+                    .padding(.trailing, step.arrowIsTrailing ? 14 : 0)
             }
 
             cardContent
