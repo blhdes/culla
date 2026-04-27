@@ -14,7 +14,7 @@ struct TooltipBubble: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(.ultraThickMaterial)
+                    .fill(.ultraThinMaterial)
                     .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
             )
             .scaleEffect(isVisible ? 1 : 0.88)
