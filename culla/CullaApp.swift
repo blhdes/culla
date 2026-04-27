@@ -57,14 +57,16 @@ struct CullaApp: App {
 private struct SplashGate: View {
     @State private var isReady = false
     @AppStorage("hasSeenPaywall") private var hasSeenPaywall = false
+    @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
     @State private var showPaywall = false
+    @State private var showWalkthrough = false
     @State private var paywallDismissible = true
 
     @Environment(SubscriptionManager.self) private var subscriptions
 
     var body: some View {
         ZStack {
-            ContentView(isReady: $isReady)
+            ContentView(isReady: $isReady, showWalkthrough: $showWalkthrough)
                 .opacity(isReady ? 1 : 0)
 
             if !isReady {
@@ -78,6 +80,7 @@ private struct SplashGate: View {
                 onClose: {
                     hasSeenPaywall = true
                     showPaywall = false
+                    scheduleWalkthroughIfNeeded(delay: 600)
                 },
                 dismissible: paywallDismissible
             )
@@ -86,13 +89,14 @@ private struct SplashGate: View {
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
             if subscriptions.trialExpired {
-                // Trial has ended — force the paywall, no way out
                 paywallDismissible = false
                 showPaywall = true
             } else if !hasSeenPaywall {
-                // First launch — soft paywall, user can dismiss
                 paywallDismissible = true
                 showPaywall = true
+            } else {
+                // Returning user (e.g. app update) who hasn't seen the walkthrough yet
+                scheduleWalkthroughIfNeeded(delay: 600)
             }
         }
         .onChange(of: subscriptions.trialExpired) { _, expired in
@@ -100,6 +104,14 @@ private struct SplashGate: View {
                 paywallDismissible = false
                 showPaywall = true
             }
+        }
+    }
+
+    private func scheduleWalkthroughIfNeeded(delay: UInt64) {
+        guard !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
+        Task {
+            try? await Task.sleep(nanoseconds: delay * 1_000_000)
+            showWalkthrough = true
         }
     }
 

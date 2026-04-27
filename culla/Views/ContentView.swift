@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Binding var isReady: Bool
+    @Binding var showWalkthrough: Bool
 
     @State private var startDate: Date?
     @State private var selectedCullaMode: CullaMode = .cullaing
@@ -20,8 +21,6 @@ struct ContentView: View {
     }()
 
     @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
-    @AppStorage("hasSeenPaywall") private var hasSeenPaywall = false
-    @State private var showWalkthrough = false
 
     @Environment(SubscriptionManager.self) private var subscriptions
 
@@ -91,20 +90,6 @@ struct ContentView: View {
         .onChange(of: sidebarGalleryIDs) { _, newValue in
             if let data = try? JSONEncoder().encode(newValue) {
                 UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
-            }
-        }
-        .onChange(of: isReady) { _, ready in
-            guard ready, hasSeenPaywall, !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
-            Task {
-                try? await Task.sleep(for: .milliseconds(600))
-                showWalkthrough = true
-            }
-        }
-        .onChange(of: hasSeenPaywall) { _, seen in
-            guard seen, !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
-            Task {
-                try? await Task.sleep(for: .milliseconds(500))
-                showWalkthrough = true
             }
         }
     }
