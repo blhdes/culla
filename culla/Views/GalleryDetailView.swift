@@ -5,6 +5,7 @@ struct GalleryDetailView: View {
     @Bindable var gallery: Gallery
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.activeTourStep) private var tourStep
     private let photoService = PhotoLibraryService.shared
 
     @State private var allIdentifiers: [String] = []
@@ -44,6 +45,11 @@ struct GalleryDetailView: View {
                                 .foregroundStyle(.secondary)
 
                             Spacer()
+                        }
+
+                        if tourStep == .changeColor && !showColorPicker {
+                            TourColorHint()
+                                .animation(.easeInOut, value: showColorPicker)
                         }
 
                         if showColorPicker {

@@ -8,6 +8,7 @@ struct GalleriesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
+    @Environment(\.activeTourStep) private var tourStep
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
     @State private var viewModel: GalleryViewModel?
@@ -30,6 +31,17 @@ struct GalleriesView: View {
 
     var body: some View {
         List {
+            if let step = tourStep, step == .setupGallery || step == .activateGallery {
+                TourSheetBanner(
+                    step: step,
+                    galleriesCount: galleries.count,
+                    activeCount: activeGalleryCount
+                )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 4, trailing: 0))
+            }
+
             // Stats header
             statsHeader
 

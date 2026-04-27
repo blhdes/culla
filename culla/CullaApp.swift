@@ -60,6 +60,7 @@ private struct SplashGate: View {
     @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
     @State private var showPaywall = false
     @State private var showWalkthrough = false
+    @State private var currentTourStep: TourStep = .welcome
     @State private var paywallDismissible = true
     @State private var sidebarGalleryIDs: Set<UUID> = {
         guard let data = UserDefaults.standard.data(forKey: "sidebarGalleryIDs"),
@@ -98,17 +99,20 @@ private struct SplashGate: View {
             hasSeenPaywall = true
             scheduleWalkthroughIfNeeded()
         }
-        .fullScreenCover(isPresented: $showWalkthrough) {
-            WalkthroughView(
-                sidebarGalleryIDs: $sidebarGalleryIDs,
-                maxSidebarGalleries: maxSidebarGalleries,
-                onComplete: {
-                    hasCompletedWalkthrough = true
-                    showWalkthrough = false
-                }
-            )
-            .interactiveDismissDisabled(true)
+        .overlay {
+            if showWalkthrough {
+                TourContainer(
+                    currentStep: $currentTourStep,
+                    sidebarGalleryIDs: $sidebarGalleryIDs,
+                    maxSidebarGalleries: maxSidebarGalleries,
+                    onComplete: {
+                        hasCompletedWalkthrough = true
+                        showWalkthrough = false
+                    }
+                )
+            }
         }
+        .environment(\.activeTourStep, showWalkthrough ? currentTourStep : nil)
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
             if subscriptions.trialExpired {
@@ -139,6 +143,7 @@ private struct SplashGate: View {
         guard !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
         Task {
             try? await Task.sleep(for: .seconds(0.6))
+            currentTourStep = .welcome
             showWalkthrough = true
         }
     }
