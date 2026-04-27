@@ -14,6 +14,10 @@ struct TourContainer: View {
     @Environment(\.appAccent) private var accent
 
     @State private var glowing = false
+    // geo.safeAreaInsets returns 0 inside an ignoresSafeArea GeometryReader,
+    // so we grab both values from UIKit once on appear.
+    @State private var realSafeTop: CGFloat = 0
+    @State private var realSafeBottom: CGFloat = 0
 
     private var activeCount: Int {
         sidebarGalleryIDs.filter { id in galleries.contains { $0.id == id } }.count
@@ -36,7 +40,7 @@ struct TourContainer: View {
                         Path(CGRect(origin: .zero, size: size)),
                         with: .color(.black.opacity(0.58))
                     )
-                    if let spot = currentStep.spotlightRect(geo: geo) {
+                    if let spot = currentStep.spotlightRect(geo: geo, safeTop: realSafeTop, safeBottom: realSafeBottom) {
                         var ctx = context
                         ctx.blendMode = .destinationOut
                         let expanded = spot.rect.insetBy(dx: -6, dy: -6)
@@ -51,7 +55,7 @@ struct TourContainer: View {
                 .ignoresSafeArea()
 
                 // Layer 2: pulsing glow ring around spotlight (no hit testing)
-                if let spot = currentStep.spotlightRect(geo: geo) {
+                if let spot = currentStep.spotlightRect(geo: geo, safeTop: realSafeTop, safeBottom: realSafeBottom) {
                     let expanded = spot.rect.insetBy(dx: -6, dy: -6)
                     RoundedRectangle(cornerRadius: spot.cornerRadius + 6)
                         .strokeBorder(accent.opacity(glowing ? 0.75 : 0.25), lineWidth: 2)
@@ -73,7 +77,7 @@ struct TourContainer: View {
                     onComplete: onComplete
                 )
                 .frame(maxWidth: min(320, geo.size.width - 40))
-                .position(currentStep.bubbleCenter(geo: geo))
+                .position(currentStep.bubbleCenter(geo: geo, safeTop: realSafeTop, safeBottom: realSafeBottom))
                 .id(currentStep)
                 .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .center)))
                 .animation(.easeInOut(duration: 0.25), value: currentStep)
@@ -81,6 +85,13 @@ struct TourContainer: View {
         }
         .ignoresSafeArea()
         .task(id: currentStep) {
+            if realSafeTop == 0 {
+                let insets = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .first?.windows.first?.safeAreaInsets
+                realSafeTop    = insets?.top    ?? 47
+                realSafeBottom = insets?.bottom ?? 34
+            }
             glowing = false
             try? await Task.sleep(for: .milliseconds(120))
             glowing = true

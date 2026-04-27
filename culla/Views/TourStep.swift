@@ -64,7 +64,7 @@ enum TourStep: Int, CaseIterable {
         let cornerRadius: CGFloat
     }
 
-    func spotlightRect(geo: GeometryProxy) -> Spotlight? {
+    func spotlightRect(geo: GeometryProxy, safeTop: CGFloat, safeBottom: CGFloat) -> Spotlight? {
         let w = geo.size.width
         let h = geo.size.height
 
@@ -82,18 +82,30 @@ enum TourStep: Int, CaseIterable {
             )
 
         case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
-            return nil  // toolbar button frame can't be reliably pinned without a coordinate pass
+            // +4pt y nudge so the expanded glow ring doesn't clip into the status bar
+            let size: CGFloat = 44
+            return Spotlight(
+                rect: CGRect(x: w - size - 8, y: safeTop + 4, width: size, height: size),
+                cornerRadius: 22
+            )
 
         case .readyToSwipe:
-            return nil  // button is inside a VStack with dynamic content above it — position can't be reliably approximated
+            // Navigation bottom toolbar (44pt) sits above the home-indicator safe area.
+            // actionButtonRow adds 12pt bottom padding; button is ~50pt tall with controlSize(.large).
+            let toolbarH: CGFloat = 44
+            let buttonH: CGFloat = 50
+            let padH: CGFloat = 12
+            let y = h - safeBottom - toolbarH - padH - buttonH
+            return Spotlight(
+                rect: CGRect(x: 12, y: y, width: w - 24, height: buttonH),
+                cornerRadius: 14
+            )
         }
     }
 
-    func bubbleCenter(geo: GeometryProxy) -> CGPoint {
+    func bubbleCenter(geo: GeometryProxy, safeTop: CGFloat, safeBottom: CGFloat) -> CGPoint {
         let w = geo.size.width
         let h = geo.size.height
-        let safeTop = geo.safeAreaInsets.top
-        let safeBottom = geo.safeAreaInsets.bottom
 
         switch self {
         case .welcome:
@@ -104,13 +116,15 @@ enum TourStep: Int, CaseIterable {
             return CGPoint(x: w / 2, y: min(spotBottom + 140, h - safeBottom - 49 - 90))
 
         case .whatAreGalleries, .setupGallery, .changeColor, .activateGallery:
-            // Right-align the bubble so the trailing arrow tip lands over the toolbar icon
             let bw = min(320, w - 40)
             return CGPoint(x: w - bw / 2 - 16, y: safeTop + 44 + 155)
 
         case .readyToSwipe:
-            let btnTop = h - safeBottom - 49 - 54 - 16
-            return CGPoint(x: w / 2, y: btnTop - 160)
+            let toolbarH: CGFloat = 44
+            let buttonH: CGFloat = 50
+            let padH: CGFloat = 12
+            let buttonTop = h - safeBottom - toolbarH - padH - buttonH
+            return CGPoint(x: w / 2, y: buttonTop - 155)
         }
     }
 
