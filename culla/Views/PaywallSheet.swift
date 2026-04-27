@@ -170,24 +170,17 @@ struct PaywallSheet: View {
 
     private var hero: some View {
         VStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(accent.opacity(heroGlow ? 0.35 : 0.18))
-                    .blur(radius: 22)
-                    .frame(width: 100, height: 100)
-
-                Image("LaunchIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 64, height: 64)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .drawingGroup()
-            .onAppear {
-                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
-                    heroGlow = true
+            Image("LaunchIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .shadow(color: accent.opacity(heroGlow ? 0.55 : 0.2), radius: 22, x: 0, y: 4)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                        heroGlow = true
+                    }
                 }
-            }
 
             if showCullaEyes {
                 CullaEyes()
@@ -210,10 +203,10 @@ struct PaywallSheet: View {
 
     private var features: some View {
         VStack(alignment: .leading, spacing: 14) {
-            featureRow(icon: "infinity", title: "Unlimited sorting", detail: "No daily limits on your photo library")
+            featureRow(icon: "infinity", title: "Unlimited sorting", detail: "No daily limits or gallery restrictions")
             featureRow(icon: "sparkles", title: "Duplicate sweep", detail: "Find and remove duplicate photos instantly")
             featureRow(icon: "chart.bar.fill", title: "Insights & streaks", detail: "Track your cleanup progress over time")
-            featureRow(icon: "paintpalette.fill", title: "Custom accents", detail: "Personalise colours and backgrounds")
+            featureRow(icon: "paintpalette.fill", title: "Custom accents", detail: "Personalise colours, themes & backgrounds")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
