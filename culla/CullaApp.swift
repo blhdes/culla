@@ -87,14 +87,16 @@ private struct SplashGate: View {
         .animation(.easeOut(duration: 0.4), value: isReady)
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(
-                onClose: {
-                    hasSeenPaywall = true
-                    showPaywall = false
-                    scheduleWalkthroughIfNeeded()
-                },
+                onClose: { showPaywall = false },
                 dismissible: paywallDismissible
             )
             .interactiveDismissDisabled(!paywallDismissible)
+        }
+        .onChange(of: showPaywall) { _, isShowing in
+            guard !isShowing else { return }
+            // Fires for every dismiss path: X button, swipe, purchase, restore
+            hasSeenPaywall = true
+            scheduleWalkthroughIfNeeded()
         }
         .fullScreenCover(isPresented: $showWalkthrough) {
             WalkthroughView(
