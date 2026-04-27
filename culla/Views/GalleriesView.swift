@@ -42,6 +42,12 @@ struct GalleriesView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             } else {
+                Text(selectionStatusText)
+                    .font(.caption)
+                    .foregroundStyle(activeGalleryCount == 0 ? .orange : .secondary)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+
                 ForEach(galleries) { gallery in
                     NavigationLink(value: gallery) {
                         galleryRow(gallery)
@@ -211,15 +217,69 @@ struct GalleriesView: View {
         .listRowSeparator(.hidden, edges: .top)
     }
 
+    // MARK: - Selection
+
+    private func toggleSelection(_ gallery: Gallery) {
+        if sidebarGalleryIDs.contains(gallery.id) {
+            sidebarGalleryIDs.remove(gallery.id)
+        } else if sidebarGalleryIDs.count >= maxSidebarGalleries {
+            if !subscriptions.isPro { showPaywall = true }
+        } else {
+            sidebarGalleryIDs.insert(gallery.id)
+        }
+    }
+
+    private var activeGalleryCount: Int {
+        sidebarGalleryIDs.filter { id in galleries.contains { $0.id == id } }.count
+    }
+
+    private var selectionStatusText: String {
+        let active = activeGalleryCount
+        if active == 0 {
+            return "Tap a circle to activate galleries for swiping"
+        }
+        if !subscriptions.isPro && active >= maxSidebarGalleries {
+            return "\(active) active · Upgrade to select more"
+        }
+        return "\(active) of \(galleries.count) active for swiping"
+    }
+
+    @ViewBuilder
+    private func selectionCircle(for gallery: Gallery) -> some View {
+        let isSelected = sidebarGalleryIDs.contains(gallery.id)
+        ZStack {
+            Circle()
+                .fill(isSelected ? gallery.color : Color.clear)
+                .overlay(
+                    Circle().strokeBorder(gallery.color.opacity(isSelected ? 0 : 0.45), lineWidth: 1.5)
+                )
+                .frame(width: 24, height: 24)
+                .shadow(color: isSelected ? gallery.color.opacity(0.45) : .clear, radius: 5)
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: isSelected)
+    }
+
     // MARK: - Row
 
     @ViewBuilder
     private func galleryRow(_ gallery: Gallery) -> some View {
         @Bindable var gallery = gallery
         HStack(spacing: 12) {
-            Circle()
-                .fill(gallery.color)
-                .frame(width: 10, height: 10)
+            if editMode == .active {
+                Circle()
+                    .fill(gallery.color)
+                    .frame(width: 10, height: 10)
+            } else {
+                Button { toggleSelection(gallery) } label: {
+                    selectionCircle(for: gallery)
+                }
+                .buttonStyle(.plain)
+            }
 
             if editMode == .active {
                 TextField("Gallery name", text: $gallery.name)

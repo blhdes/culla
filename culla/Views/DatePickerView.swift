@@ -28,6 +28,9 @@ struct DatePickerView: View {
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("duplicateTimeWindow") private var duplicateTimeWindowSeconds: Double = 3600
+    @AppStorage(OnboardingKey.calendarTooltipSeen) private var hasSeenCalendarTooltip = false
+    @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
+    @State private var showCalendarTooltip = false
 
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
@@ -99,6 +102,21 @@ struct DatePickerView: View {
                         .allowsHitTesting(selectedMode == .duplicates)
                 }
                 .animation(.easeInOut(duration: 0.25), value: selectedMode)
+                .overlay(alignment: .bottom) {
+                    if showCalendarTooltip && selectedMode != .duplicates {
+                        TooltipBubble(text: "Tap the wheel to open a full calendar") {
+                            hasSeenCalendarTooltip = true
+                            showCalendarTooltip = false
+                        }
+                        .padding(.bottom, -44)
+                        .transition(.opacity)
+                    }
+                }
+                .task(id: hasCompletedWalkthrough) {
+                    guard hasCompletedWalkthrough, !hasSeenCalendarTooltip else { return }
+                    try? await Task.sleep(for: .seconds(1.5))
+                    withAnimation { showCalendarTooltip = true }
+                }
 
                 Spacer()
 

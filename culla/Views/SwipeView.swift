@@ -53,6 +53,10 @@ struct SwipeView: View {
     // Pinch-to-zoom full screen
     @State private var isPhotoZoomed = false
 
+    // Zoom tooltip
+    @AppStorage(OnboardingKey.zoomTooltipSeen) private var hasSeenZoomTooltip = false
+    @State private var showZoomTooltip = false
+
     // Undo auto-hide
     @State private var showUndo = false
     @State private var undoHideTask: Task<Void, Never>?
@@ -126,6 +130,11 @@ struct SwipeView: View {
                     remainingSeconds = Int(duration)
                     timerActive = true
                 }
+
+                if !vm.isEmpty && !hasSeenZoomTooltip {
+                    try? await Task.sleep(for: .seconds(2))
+                    withAnimation { showZoomTooltip = true }
+                }
             }
         }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
@@ -192,6 +201,19 @@ struct SwipeView: View {
                     .allowsHitTesting(false)
                     .onPreferenceChange(GalleryFramePreferenceKey.self) { frames in
                         galleryFrames = frames
+                    }
+                }
+
+                // Zoom tooltip — shown once after first photos load
+                .overlay(alignment: .top) {
+                    if showZoomTooltip {
+                        TooltipBubble(text: "Pinch to zoom in or out on any photo") {
+                            hasSeenZoomTooltip = true
+                            showZoomTooltip = false
+                        }
+                        .padding(.top, 16)
+                        .padding(.horizontal, 40)
+                        .transition(.opacity)
                     }
                 }
 

@@ -19,6 +19,10 @@ struct ContentView: View {
         return ids
     }()
 
+    @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
+    @AppStorage("hasSeenPaywall") private var hasSeenPaywall = false
+    @State private var showWalkthrough = false
+
     @Environment(SubscriptionManager.self) private var subscriptions
 
     private var maxSidebarGalleries: Int {
@@ -73,9 +77,34 @@ struct ContentView: View {
                 GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
             }
         }
+        .fullScreenCover(isPresented: $showWalkthrough) {
+            WalkthroughView(
+                sidebarGalleryIDs: $sidebarGalleryIDs,
+                maxSidebarGalleries: maxSidebarGalleries,
+                onComplete: {
+                    hasCompletedWalkthrough = true
+                    showWalkthrough = false
+                }
+            )
+            .interactiveDismissDisabled(true)
+        }
         .onChange(of: sidebarGalleryIDs) { _, newValue in
             if let data = try? JSONEncoder().encode(newValue) {
                 UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
+            }
+        }
+        .onChange(of: isReady) { _, ready in
+            guard ready, hasSeenPaywall, !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                showWalkthrough = true
+            }
+        }
+        .onChange(of: hasSeenPaywall) { _, seen in
+            guard seen, !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
+                showWalkthrough = true
             }
         }
     }
