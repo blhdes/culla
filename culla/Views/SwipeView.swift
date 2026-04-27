@@ -205,14 +205,13 @@ struct SwipeView: View {
                 }
 
                 // Zoom tooltip — shown once after first photos load
-                .overlay(alignment: .top) {
+                .overlay {
                     if showZoomTooltip {
                         TooltipBubble(text: "Pinch to zoom in or out on any photo") {
                             hasSeenZoomTooltip = true
                             showZoomTooltip = false
                         }
-                        .padding(.top, 16)
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, 48)
                         .transition(.opacity)
                     }
                 }
