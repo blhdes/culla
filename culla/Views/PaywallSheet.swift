@@ -113,13 +113,13 @@ struct PaywallSheet: View {
 
     private func paywallBody(offering: Offering) -> some View {
         ScrollView {
-            VStack(spacing: 32) {
+            VStack(spacing: 20) {
                 staggered(0) { hero }
 
                 staggered(1) { features }
 
                 staggered(2) {
-                    VStack(spacing: 12) {
+                    VStack(spacing: 10) {
                         ForEach(offering.availablePackages, id: \.identifier) { package in
                             packageCard(package)
                         }
@@ -136,9 +136,10 @@ struct PaywallSheet: View {
                 }
                 .padding(.horizontal, 16)
             }
-            .padding(.top, 56)
-            .padding(.bottom, 32)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
         }
+        .scrollBounceBehavior(.basedOnSize)
     }
 
     @ViewBuilder
@@ -168,19 +169,20 @@ struct PaywallSheet: View {
     }
 
     private var hero: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(accent.opacity(heroGlow ? 0.35 : 0.18))
                     .blur(radius: 22)
-                    .frame(width: 110, height: 110)
+                    .frame(width: 100, height: 100)
 
                 Image("LaunchIcon")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 72, height: 72)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            .drawingGroup()
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
                     heroGlow = true
@@ -195,7 +197,7 @@ struct PaywallSheet: View {
             }
 
             Text("culla Pro")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 24, weight: .bold, design: .rounded))
                 .tracking(2)
 
             Text("Sort smarter. Keep what matters.")
