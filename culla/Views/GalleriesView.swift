@@ -9,6 +9,8 @@ struct GalleriesView: View {
     @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
     @Environment(\.activeTourStep) private var tourStep
+    @Environment(\.tourAdvance) private var tourAdvance
+    @Environment(\.dismiss) private var dismiss
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
     @State private var viewModel: GalleryViewModel?
@@ -19,6 +21,7 @@ struct GalleriesView: View {
         allSortedPhotos.filter { !$0.isImported }
     }
 
+    @State private var navPath: [Gallery] = []
     @State private var editMode: EditMode = .inactive
 
     @State private var newGalleryName = ""
@@ -30,6 +33,7 @@ struct GalleriesView: View {
     @State private var namesBeforeEdit: [UUID: String] = [:]
 
     var body: some View {
+        NavigationStack(path: $navPath) {
         List {
             if let step = tourStep, step == .setupGallery || step == .activateGallery {
                 TourSheetBanner(
@@ -188,6 +192,27 @@ struct GalleriesView: View {
                     }
                 }
                 namesBeforeEdit = [:]
+            }
+        }
+        } // NavigationStack
+        .onChange(of: tourStep) { _, newStep in
+            switch newStep {
+            case .changeColor:
+                // Auto-push the first gallery so the user can colour it without reopening
+                if let first = galleries.first {
+                    navPath = [first]
+                }
+            case .activateGallery:
+                // Pop back to the gallery list for the activation step
+                navPath = []
+            case .readyToSwipe:
+                // All gallery setup steps done — close the sheet
+                Task {
+                    try? await Task.sleep(for: .milliseconds(300))
+                    dismiss()
+                }
+            default:
+                break
             }
         }
     }

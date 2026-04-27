@@ -59,9 +59,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showGalleries) {
-            NavigationStack {
-                GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
-            }
+            GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
         }
     }
 }

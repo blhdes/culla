@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// In-sheet guidance banner shown inside GalleriesView and GalleryDetailView
-/// when the tour is active on a step that requires action there.
+/// In-sheet guidance banner shown inside GalleriesView when the tour is active.
 struct TourSheetBanner: View {
     let step: TourStep
     let galleriesCount: Int
     let activeCount: Int
 
     @Environment(\.appAccent) private var accent
+    @Environment(\.tourAdvance) private var tourAdvance
 
     private var isDone: Bool {
         switch step {
@@ -26,13 +26,30 @@ struct TourSheetBanner: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(isDone ? "Done!" : step.title)
                     .font(.subheadline.weight(.semibold))
-                Text(isDone ? "Close this sheet to continue the tour." : guidanceText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !isDone {
+                    Text(guidanceText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Spacer()
+
+            if isDone {
+                Button { tourAdvance?() } label: {
+                    HStack(spacing: 4) {
+                        Text("Continue")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.green, in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(14)
         .background(
@@ -61,17 +78,35 @@ struct TourSheetBanner: View {
 /// Compact hint shown inside GalleryDetailView when the tour is on the changeColor step.
 struct TourColorHint: View {
     @Environment(\.appAccent) private var accent
+    @Environment(\.tourAdvance) private var tourAdvance
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "arrow.up")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(accent)
-            Text("Tap the color circle above to pick a neon color. Close to skip this step.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer()
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.up")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(accent)
+                Text("Tap the color circle above to give this gallery a neon color (optional).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+            }
+            HStack {
+                Spacer()
+                Button { tourAdvance?() } label: {
+                    HStack(spacing: 4) {
+                        Text("Continue")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(accent, in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

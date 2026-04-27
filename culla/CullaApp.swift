@@ -113,6 +113,7 @@ private struct SplashGate: View {
             }
         }
         .environment(\.activeTourStep, showWalkthrough ? currentTourStep : nil)
+        .environment(\.tourAdvance, showWalkthrough ? { advanceTour() } : nil)
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
             if subscriptions.trialExpired {
@@ -136,6 +137,18 @@ private struct SplashGate: View {
             if let data = try? JSONEncoder().encode(newValue) {
                 UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
             }
+        }
+    }
+
+    private func advanceTour() {
+        let all = TourStep.allCases
+        guard let i = all.firstIndex(of: currentTourStep), i + 1 < all.count else {
+            hasCompletedWalkthrough = true
+            showWalkthrough = false
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            currentTourStep = all[i + 1]
         }
     }
 
