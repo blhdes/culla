@@ -2,7 +2,8 @@ import SwiftUI
 
 struct ContentView: View {
     @Binding var isReady: Bool
-    @Binding var showWalkthrough: Bool
+    @Binding var sidebarGalleryIDs: Set<UUID>
+    let maxSidebarGalleries: Int
 
     @State private var startDate: Date?
     @State private var selectedCullaMode: CullaMode = .cullaing
@@ -13,20 +14,6 @@ struct ContentView: View {
     @State private var showGalleries = false
     @State private var showDuplicateSweep = false
     @AppStorage("duplicateTimeWindow") private var duplicateTimeWindowSeconds: Double = 3600
-    @State private var sidebarGalleryIDs: Set<UUID> = {
-        guard let data = UserDefaults.standard.data(forKey: "sidebarGalleryIDs"),
-              let ids = try? JSONDecoder().decode(Set<UUID>.self, from: data)
-        else { return [] }
-        return ids
-    }()
-
-    @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
-
-    @Environment(SubscriptionManager.self) private var subscriptions
-
-    private var maxSidebarGalleries: Int {
-        subscriptions.isPro ? 10 : SubscriptionManager.freeGalleryLimit
-    }
 
     var body: some View {
         NavigationStack {
@@ -74,22 +61,6 @@ struct ContentView: View {
         .sheet(isPresented: $showGalleries) {
             NavigationStack {
                 GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
-            }
-        }
-        .fullScreenCover(isPresented: $showWalkthrough) {
-            WalkthroughView(
-                sidebarGalleryIDs: $sidebarGalleryIDs,
-                maxSidebarGalleries: maxSidebarGalleries,
-                onComplete: {
-                    hasCompletedWalkthrough = true
-                    showWalkthrough = false
-                }
-            )
-            .interactiveDismissDisabled(true)
-        }
-        .onChange(of: sidebarGalleryIDs) { _, newValue in
-            if let data = try? JSONEncoder().encode(newValue) {
-                UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
             }
         }
     }

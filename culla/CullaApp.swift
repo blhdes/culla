@@ -53,7 +53,7 @@ struct CullaApp: App {
     }
 }
 
-/// Shows the app icon until the content is ready, then fades in.
+/// Shows the app icon until the content is ready, then gates paywall and walkthrough.
 private struct SplashGate: View {
     @State private var isReady = false
     @AppStorage("hasSeenPaywall") private var hasSeenPaywall = false
@@ -61,12 +61,22 @@ private struct SplashGate: View {
     @State private var showPaywall = false
     @State private var showWalkthrough = false
     @State private var paywallDismissible = true
+    @State private var sidebarGalleryIDs: Set<UUID> = {
+        guard let data = UserDefaults.standard.data(forKey: "sidebarGalleryIDs"),
+              let ids = try? JSONDecoder().decode(Set<UUID>.self, from: data)
+        else { return [] }
+        return ids
+    }()
 
     @Environment(SubscriptionManager.self) private var subscriptions
 
+    private var maxSidebarGalleries: Int {
+        subscriptions.isPro ? 10 : SubscriptionManager.freeGalleryLimit
+    }
+
     var body: some View {
         ZStack {
-            ContentView(isReady: $isReady, showWalkthrough: $showWalkthrough)
+            ContentView(isReady: $isReady, sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
                 .opacity(isReady ? 1 : 0)
 
             if !isReady {
@@ -80,11 +90,22 @@ private struct SplashGate: View {
                 onClose: {
                     hasSeenPaywall = true
                     showPaywall = false
-                    scheduleWalkthroughIfNeeded(delay: 600)
+                    scheduleWalkthroughIfNeeded()
                 },
                 dismissible: paywallDismissible
             )
             .interactiveDismissDisabled(!paywallDismissible)
+        }
+        .fullScreenCover(isPresented: $showWalkthrough) {
+            WalkthroughView(
+                sidebarGalleryIDs: $sidebarGalleryIDs,
+                maxSidebarGalleries: maxSidebarGalleries,
+                onComplete: {
+                    hasCompletedWalkthrough = true
+                    showWalkthrough = false
+                }
+            )
+            .interactiveDismissDisabled(true)
         }
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
@@ -95,8 +116,8 @@ private struct SplashGate: View {
                 paywallDismissible = true
                 showPaywall = true
             } else {
-                // Returning user (e.g. app update) who hasn't seen the walkthrough yet
-                scheduleWalkthroughIfNeeded(delay: 600)
+                // App update: paywall already seen but walkthrough not yet done
+                scheduleWalkthroughIfNeeded()
             }
         }
         .onChange(of: subscriptions.trialExpired) { _, expired in
@@ -105,12 +126,17 @@ private struct SplashGate: View {
                 showPaywall = true
             }
         }
+        .onChange(of: sidebarGalleryIDs) { _, newValue in
+            if let data = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
+            }
+        }
     }
 
-    private func scheduleWalkthroughIfNeeded(delay: UInt64) {
+    private func scheduleWalkthroughIfNeeded() {
         guard !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
         Task {
-            try? await Task.sleep(nanoseconds: delay * 1_000_000)
+            try? await Task.sleep(for: .seconds(0.6))
             showWalkthrough = true
         }
     }
