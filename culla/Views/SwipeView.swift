@@ -53,9 +53,11 @@ struct SwipeView: View {
     // Pinch-to-zoom full screen
     @State private var isPhotoZoomed = false
 
-    // Zoom tooltip
+    // Onboarding hints
     @AppStorage(OnboardingKey.zoomTooltipSeen) private var hasSeenZoomTooltip = false
+    @AppStorage(OnboardingKey.swipeHintSeen) private var hasSeenSwipeHint = false
     @State private var showZoomTooltip = false
+    @State private var showSwipeHint = false
 
     // Undo auto-hide
     @State private var showUndo = false
@@ -145,8 +147,11 @@ struct SwipeView: View {
                 showSessionSummary = true
             }
         }
-        .onChange(of: viewModel?.actionHistory.count) { _, _ in
+        .onChange(of: viewModel?.actionHistory.count) { old, new in
             flashUndo()
+            if (old ?? 0) == 0, (new ?? 0) > 0 {
+                dismissHints()
+            }
         }
         .onChange(of: galleries.count) {
             // On first gallery creation, auto-add to sidebar (skip if already populated)
@@ -204,15 +209,22 @@ struct SwipeView: View {
                     }
                 }
 
-                // Zoom tooltip — shown once after first photos load
+                // Onboarding hints — both disappear on first swipe action
                 .overlay {
                     if showZoomTooltip {
                         TooltipBubble(text: "Pinch to zoom in or out on any photo") {
                             hasSeenZoomTooltip = true
                             showZoomTooltip = false
+                            scheduleSwipeHint()
                         }
                         .padding(.horizontal, 48)
                         .transition(.opacity)
+                    } else if showSwipeHint {
+                        SwipeDirectionsHint {
+                            hasSeenSwipeHint = true
+                            showSwipeHint = false
+                        }
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     }
                 }
 
@@ -603,6 +615,23 @@ struct SwipeView: View {
     }
 
     /// Shows the undo button briefly, then auto-hides after 2 seconds.
+    private func scheduleSwipeHint() {
+        guard !hasSeenSwipeHint else { return }
+        Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            withAnimation { showSwipeHint = true }
+        }
+    }
+
+    private func dismissHints() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showZoomTooltip = false
+            showSwipeHint = false
+        }
+        hasSeenZoomTooltip = true
+        hasSeenSwipeHint = true
+    }
+
     private func flashUndo() {
         undoHideTask?.cancel()
         withAnimation(.spring) { showUndo = true }
