@@ -15,6 +15,7 @@ struct TourBubble: View {
                     .frame(width: 22, height: 11)
                     .frame(maxWidth: .infinity, alignment: step.arrowIsTrailing ? .trailing : .center)
                     .padding(.trailing, step.arrowIsTrailing ? 14 : 0)
+                    .padding(.bottom, -1)
             }
 
             cardContent
@@ -25,6 +26,7 @@ struct TourBubble: View {
                     .fill(.background)
                     .rotationEffect(.degrees(180))
                     .frame(width: 22, height: 11)
+                    .padding(.top, -1)
             }
         }
         .shadow(color: .black.opacity(0.16), radius: 24, y: 8)

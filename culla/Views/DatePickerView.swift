@@ -294,6 +294,9 @@ struct DatePickerView: View {
 
             isReady = true
         }
+        .onAppear {
+            ReviewManager.shared.checkAndRequestReview(sortedCount: sortedPhotos.count)
+        }
         .onChange(of: selectedAlbum?.collectionIdentifier) { _, newID in
             if newID != lastSelectedAlbumID {
                 pickerDate = newID == nil ? (latestDate ?? Date()) : Date()

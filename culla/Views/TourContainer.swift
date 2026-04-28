@@ -47,9 +47,8 @@ struct TourContainer: View {
                 if let spot = spotlightRect {
                     let expanded = spot.insetBy(dx: -6, dy: -6)
                     RoundedRectangle(cornerRadius: currentStep.spotlightCornerRadius + 6)
-                        .strokeBorder(accent.opacity(glowing ? 0.75 : 0.25), lineWidth: 2)
+                        .strokeBorder(accent.opacity(glowing ? 0.85 : 0.3), lineWidth: glowing ? 2.5 : 1.5)
                         .frame(width: expanded.width, height: expanded.height)
-                        .shadow(color: accent.opacity(glowing ? 0.5 : 0.1), radius: glowing ? 10 : 3)
                         .position(x: expanded.midX, y: expanded.midY)
                         .allowsHitTesting(false)
                         .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: glowing)
