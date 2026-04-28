@@ -119,6 +119,6 @@ struct TourColorHint: View {
                 .fill(accent.opacity(0.18))
                 .frame(height: 1)
         }
-        .transition(.opacity.combined(with: .move(edge: .top)))
+        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
     }
 }

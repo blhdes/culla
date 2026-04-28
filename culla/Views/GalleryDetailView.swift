@@ -13,6 +13,7 @@ struct GalleryDetailView: View {
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
     @State private var showColorPicker = false
+    @State private var tourHintDismissed = false
     @State private var previewIdentifier: String?
     @Namespace private var heroNamespace
 
@@ -95,9 +96,8 @@ struct GalleryDetailView: View {
                     .padding(.vertical, 8)
                     .background(Color(.systemBackground))
 
-                    if tourStep == .changeColor && !showColorPicker {
+                    if tourStep == .changeColor && !showColorPicker && !tourHintDismissed {
                         TourColorHint()
-                            .animation(.easeInOut, value: showColorPicker)
                     }
 
                     if allIdentifiers.isEmpty {
@@ -148,6 +148,9 @@ struct GalleryDetailView: View {
     /// making them tap Continue twice and navigate back manually.
     private func handleTourColorPicked() {
         guard tourStep == .changeColor else { return }
+        withAnimation(.easeOut(duration: 0.3)) {
+            tourHintDismissed = true
+        }
         tourActivateGallery?(gallery)
         Task {
             try? await Task.sleep(for: .milliseconds(500))
