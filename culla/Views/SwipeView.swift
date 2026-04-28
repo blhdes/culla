@@ -133,9 +133,14 @@ struct SwipeView: View {
                     timerActive = true
                 }
 
-                if !vm.isEmpty && !hasSeenZoomTooltip {
-                    try? await Task.sleep(for: .seconds(2))
-                    withAnimation { showZoomTooltip = true }
+                if !vm.isEmpty {
+                    if !hasSeenSwipeHint {
+                        try? await Task.sleep(for: .seconds(1))
+                        withAnimation { showSwipeHint = true }
+                    } else if !hasSeenZoomTooltip {
+                        try? await Task.sleep(for: .seconds(2))
+                        withAnimation { showZoomTooltip = true }
+                    }
                 }
             }
         }
@@ -211,20 +216,20 @@ struct SwipeView: View {
 
                 // Onboarding hints — both disappear on first swipe action
                 .overlay {
-                    if showZoomTooltip {
-                        TooltipBubble(text: "Pinch to zoom in or out on any photo") {
-                            hasSeenZoomTooltip = true
-                            showZoomTooltip = false
-                            scheduleSwipeHint()
-                        }
-                        .padding(.horizontal, 48)
-                        .transition(.opacity)
-                    } else if showSwipeHint {
+                    if showSwipeHint {
                         SwipeDirectionsHint {
                             hasSeenSwipeHint = true
                             showSwipeHint = false
+                            scheduleZoomTooltip()
                         }
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    } else if showZoomTooltip {
+                        TooltipBubble(text: "Pinch to zoom in or out on any photo") {
+                            hasSeenZoomTooltip = true
+                            showZoomTooltip = false
+                        }
+                        .padding(.horizontal, 48)
+                        .transition(.opacity)
                     }
                 }
 
@@ -404,6 +409,7 @@ struct SwipeView: View {
     private func dragGesture(viewModel: SwipeViewModel) -> some Gesture {
         DragGesture(coordinateSpace: .global)
             .onChanged { value in
+                if showSwipeHint || showZoomTooltip { dismissHints() }
                 cardOffset = value.translation
                 updateHighlight(
                     translation: value.translation,
@@ -614,12 +620,11 @@ struct SwipeView: View {
         }
     }
 
-    /// Shows the undo button briefly, then auto-hides after 2 seconds.
-    private func scheduleSwipeHint() {
-        guard !hasSeenSwipeHint else { return }
+    private func scheduleZoomTooltip() {
+        guard !hasSeenZoomTooltip else { return }
         Task {
             try? await Task.sleep(for: .milliseconds(400))
-            withAnimation { showSwipeHint = true }
+            withAnimation { showZoomTooltip = true }
         }
     }
 
