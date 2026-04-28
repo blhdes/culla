@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Photos
 
 @main
 struct CullaApp: App {
@@ -146,6 +147,11 @@ private struct SplashGate: View {
                 showPaywall = true
             }
         }
+        .onChange(of: PhotoLibraryService.shared.authorizationStatus) { _, newStatus in
+            if newStatus == .authorized || newStatus == .limited {
+                scheduleWalkthroughIfNeeded()
+            }
+        }
         .onChange(of: sidebarGalleryIDs) { _, newValue in
             if let data = try? JSONEncoder().encode(newValue) {
                 UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")
@@ -166,7 +172,10 @@ private struct SplashGate: View {
     }
 
     private func scheduleWalkthroughIfNeeded() {
-        guard !hasCompletedWalkthrough, !subscriptions.trialExpired else { return }
+        let photoStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        guard !hasCompletedWalkthrough,
+              !subscriptions.trialExpired,
+              photoStatus == .authorized || photoStatus == .limited else { return }
         Task {
             try? await Task.sleep(for: .seconds(0.6))
             currentTourStep = .welcome
