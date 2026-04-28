@@ -100,6 +100,10 @@ private struct SplashGate: View {
             scheduleWalkthroughIfNeeded()
         }
         .overlayPreferenceValue(TourAnchorsKey.self) { anchors in
+            // ignoresSafeArea is critical: the GeometryReader's origin must sit at
+            // screen-(0,0) so that `proxy[anchor]` returns rects in the same
+            // full-screen coordinate space the TourContainer renders into.
+            // Otherwise spotlights drift up by safeTop and down by safeBottom.
             GeometryReader { proxy in
                 if showWalkthrough {
                     TourContainer(
@@ -116,9 +120,15 @@ private struct SplashGate: View {
                     )
                 }
             }
+            .ignoresSafeArea()
         }
         .environment(\.activeTourStep, showWalkthrough ? currentTourStep : nil)
         .environment(\.tourAdvance, showWalkthrough ? { advanceTour() } : nil)
+        .environment(\.tourSetStep, showWalkthrough ? { newStep in
+            withAnimation(.easeInOut(duration: 0.25)) {
+                currentTourStep = newStep
+            }
+        } : nil)
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
             if subscriptions.trialExpired {

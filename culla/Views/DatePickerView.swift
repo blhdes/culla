@@ -348,13 +348,11 @@ struct DatePickerView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 12)
-            .tourTarget(.startButton)
         } else {
             actionButtonsContent
                 .buttonStyle(.borderedProminent)
                 .padding(.horizontal)
                 .padding(.bottom, 12)
-                .tourTarget(.startButton)
         }
     }
 
@@ -378,6 +376,7 @@ struct DatePickerView: View {
             .controlSize(.large)
             .animation(.easeInOut(duration: 0.2), value: selectedMode)
         }
+        .tourTarget(.startButton)
     }
 
     // MARK: - Focus Timer Menu

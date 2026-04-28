@@ -195,6 +195,11 @@ struct GalleriesView: View {
             }
         }
         } // NavigationStack
+        .environment(\.tourActivateGallery) { gallery in
+            if sidebarGalleryIDs.count < maxSidebarGalleries {
+                sidebarGalleryIDs.insert(gallery.id)
+            }
+        }
         .onChange(of: tourStep) { _, newStep in
             switch newStep {
             case .changeColor:

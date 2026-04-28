@@ -76,6 +76,8 @@ struct TourSheetBanner: View {
 }
 
 /// Compact hint shown inside GalleryDetailView when the tour is on the changeColor step.
+/// Renders as a full-width flat strip so its leading edge aligns with the photo grid below
+/// and its arrow lines up with the color circle in the header above.
 struct TourColorHint: View {
     @Environment(\.appAccent) private var accent
     @Environment(\.tourAdvance) private var tourAdvance
@@ -110,13 +112,13 @@ struct TourColorHint: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(accent.opacity(0.18), lineWidth: 1)
-        )
-        .padding(.horizontal, 16)
-        .padding(.top, 4)
+        .frame(maxWidth: .infinity)
+        .background(accent.opacity(0.07))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(accent.opacity(0.18))
+                .frame(height: 1)
+        }
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 }

@@ -6,6 +6,8 @@ struct GalleryDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.activeTourStep) private var tourStep
+    @Environment(\.tourActivateGallery) private var tourActivateGallery
+    @Environment(\.tourSetStep) private var tourSetStep
     private let photoService = PhotoLibraryService.shared
 
     @State private var allIdentifiers: [String] = []
@@ -41,11 +43,6 @@ struct GalleryDetailView: View {
                             Spacer()
                         }
 
-                        if tourStep == .changeColor && !showColorPicker {
-                            TourColorHint()
-                                .animation(.easeInOut, value: showColorPicker)
-                        }
-
                         if showColorPicker {
                             VStack(spacing: 12) {
                                 LazyVGrid(
@@ -59,6 +56,7 @@ struct GalleryDetailView: View {
                                             withAnimation(.easeInOut(duration: 0.2)) {
                                                 showColorPicker = false
                                             }
+                                            handleTourColorPicked()
                                         } label: {
                                             Circle()
                                                 .fill(Color.adaptiveNeon(hex: hex))
@@ -83,6 +81,7 @@ struct GalleryDetailView: View {
                                             withAnimation(.easeInOut(duration: 0.2)) {
                                                 showColorPicker = false
                                             }
+                                            handleTourColorPicked()
                                         }
                                     ),
                                     supportsOpacity: false
@@ -95,6 +94,11 @@ struct GalleryDetailView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                     .background(Color(.systemBackground))
+
+                    if tourStep == .changeColor && !showColorPicker {
+                        TourColorHint()
+                            .animation(.easeInOut, value: showColorPicker)
+                    }
 
                     if allIdentifiers.isEmpty {
                         ContentUnavailableView(
@@ -136,6 +140,18 @@ struct GalleryDetailView: View {
         }
         .task {
             await syncAndLoad()
+        }
+    }
+
+    /// During the tour, picking a color implies the user is configuring this gallery
+    /// for swiping — auto-activate it and skip ahead to the final step instead of
+    /// making them tap Continue twice and navigate back manually.
+    private func handleTourColorPicked() {
+        guard tourStep == .changeColor else { return }
+        tourActivateGallery?(gallery)
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            tourSetStep?(.readyToSwipe)
         }
     }
 
