@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// In-sheet guidance banner shown inside GalleriesView when the tour is active.
+/// In-sheet guidance banner shown inside GalleriesView during the setupGallery step.
 struct TourSheetBanner: View {
     let step: TourStep
     let galleriesCount: Int
@@ -9,13 +9,7 @@ struct TourSheetBanner: View {
     @Environment(\.appAccent) private var accent
     @Environment(\.tourAdvance) private var tourAdvance
 
-    private var isDone: Bool {
-        switch step {
-        case .setupGallery:    return galleriesCount > 0
-        case .activateGallery: return activeCount > 0
-        default:               return false
-        }
-    }
+    private var isDone: Bool { galleriesCount > 0 }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -64,14 +58,7 @@ struct TourSheetBanner: View {
     }
 
     private var guidanceText: String {
-        switch step {
-        case .setupGallery:
-            return "Tap + to create a new gallery, or use the menu to import an existing iPhone album."
-        case .activateGallery:
-            return "Tap the colored circle next to any gallery to make it active for your swipe session."
-        default:
-            return ""
-        }
+        "Tap + to create a new gallery, or use the menu to import an existing iPhone album."
     }
 }
 

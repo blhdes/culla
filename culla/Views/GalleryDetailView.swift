@@ -97,7 +97,10 @@ struct GalleryDetailView: View {
                     .background(Color(.systemBackground))
 
                     if tourStep == .changeColor && !showColorPicker && !tourHintDismissed {
+                        // Override tourAdvance so the Continue button follows the same
+                        // path as picking a color (activate + jump to readyToSwipe).
                         TourColorHint()
+                            .environment(\.tourAdvance) { handleTourColorPicked() }
                     }
 
                     if allIdentifiers.isEmpty {

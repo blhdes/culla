@@ -108,8 +108,6 @@ private struct SplashGate: View {
                 if showWalkthrough {
                     TourContainer(
                         currentStep: $currentTourStep,
-                        sidebarGalleryIDs: $sidebarGalleryIDs,
-                        maxSidebarGalleries: maxSidebarGalleries,
                         targetFrame: { target in
                             anchors[target].map { proxy[$0] }
                         },

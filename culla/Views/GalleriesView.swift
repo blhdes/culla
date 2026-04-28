@@ -35,7 +35,7 @@ struct GalleriesView: View {
     var body: some View {
         NavigationStack(path: $navPath) {
         List {
-            if let step = tourStep, step == .setupGallery || step == .activateGallery {
+            if let step = tourStep, step == .setupGallery {
                 TourSheetBanner(
                     step: step,
                     galleriesCount: galleries.count,
@@ -207,9 +207,6 @@ struct GalleriesView: View {
                 if let first = galleries.first {
                     navPath = [first]
                 }
-            case .activateGallery:
-                // Pop back to the gallery list for the activation step
-                navPath = []
             case .readyToSwipe:
                 // All gallery setup steps done — close the sheet
                 Task {

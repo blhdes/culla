@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 /// Full-screen tour overlay: dim canvas with spotlight cutout + pulsing ring + floating bubble.
 /// The canvas has allowsHitTesting(false) so touches pass through to the app beneath.
@@ -10,27 +9,11 @@ import SwiftData
 /// regardless of iOS layout changes.
 struct TourContainer: View {
     @Binding var currentStep: TourStep
-    @Binding var sidebarGalleryIDs: Set<UUID>
-    let maxSidebarGalleries: Int
     let targetFrame: (TourTarget) -> CGRect?
     let onComplete: () -> Void
 
-    @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
     @Environment(\.appAccent) private var accent
-
     @State private var glowing = false
-
-    private var activeCount: Int {
-        sidebarGalleryIDs.filter { id in galleries.contains { $0.id == id } }.count
-    }
-
-    private var canContinue: Bool {
-        switch currentStep {
-        case .setupGallery:    return !galleries.isEmpty
-        case .activateGallery: return activeCount > 0
-        default:               return true
-        }
-    }
 
     private var spotlightRect: CGRect? {
         guard let target = currentStep.spotlightTarget else { return nil }
@@ -75,11 +58,7 @@ struct TourContainer: View {
                 // Layer 3: bubble (interactive)
                 TourBubble(
                     step: currentStep,
-                    canContinue: canContinue,
-                    galleriesCount: galleries.count,
-                    activeCount: activeCount,
                     onNext: advance,
-                    onSkip: advance,
                     onComplete: onComplete
                 )
                 .frame(maxWidth: min(320, geo.size.width - 40))
