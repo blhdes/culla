@@ -137,8 +137,12 @@ struct SwipeView: View {
                     if !hasSeenSwipeHint {
                         try? await Task.sleep(for: .seconds(1))
                         withAnimation { showSwipeHint = true }
+                        try? await Task.sleep(for: .seconds(7))
+                        if !hasSeenZoomTooltip {
+                            withAnimation { showZoomTooltip = true }
+                        }
                     } else if !hasSeenZoomTooltip {
-                        try? await Task.sleep(for: .seconds(2))
+                        try? await Task.sleep(for: .seconds(1))
                         withAnimation { showZoomTooltip = true }
                     }
                 }
@@ -220,16 +224,12 @@ struct SwipeView: View {
                         SwipeDirectionsHint {
                             hasSeenSwipeHint = true
                             showSwipeHint = false
-                            scheduleZoomTooltip()
                         }
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     } else if showZoomTooltip {
-                        TooltipBubble(text: "Pinch to zoom in or out on any photo") {
-                            hasSeenZoomTooltip = true
-                            showZoomTooltip = false
-                        }
-                        .padding(.horizontal, 48)
-                        .transition(.opacity)
+                        TooltipBubble(text: "Pinch to zoom in or out on any photo")
+                            .padding(.horizontal, 48)
+                            .transition(.opacity)
                     }
                 }
 
@@ -617,14 +617,6 @@ struct SwipeView: View {
                 .background(.ultraThinMaterial, in: Capsule())
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
-        }
-    }
-
-    private func scheduleZoomTooltip() {
-        guard !hasSeenZoomTooltip else { return }
-        Task {
-            try? await Task.sleep(for: .milliseconds(400))
-            withAnimation { showZoomTooltip = true }
         }
     }
 

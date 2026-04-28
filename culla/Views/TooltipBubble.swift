@@ -2,7 +2,6 @@ import SwiftUI
 
 struct TooltipBubble: View {
     let text: String
-    var onDismiss: () -> Void
 
     @State private var isVisible = false
 
@@ -24,18 +23,5 @@ struct TooltipBubble: View {
                     isVisible = true
                 }
             }
-            .onTapGesture { dismiss() }
-            .task {
-                try? await Task.sleep(for: .seconds(4))
-                dismiss()
-            }
-    }
-
-    private func dismiss() {
-        withAnimation(.easeOut(duration: 0.2)) { isVisible = false }
-        Task {
-            try? await Task.sleep(for: .milliseconds(250))
-            onDismiss()
-        }
     }
 }
