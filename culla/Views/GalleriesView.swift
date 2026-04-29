@@ -63,15 +63,22 @@ struct GalleriesView: View {
                     ForEach(galleries) { gallery in
                         NavigationLink(value: gallery) {
                             galleryRow(gallery)
-                        }
-                        .background(
-                            GeometryReader { proxy in
-                                Color.clear.preference(
-                                    key: GalleryRowFramesKey.self,
-                                    value: [gallery.id: proxy.frame(in: .named("galleriesRoot"))]
+                                .background(
+                                    GeometryReader { proxy in
+                                        Color.clear.preference(
+                                            key: GalleryRowFramesKey.self,
+                                            value: [gallery.id: proxy.frame(in: .named("galleriesRoot"))]
+                                        )
+                                    }
                                 )
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                galleryToDelete = gallery
+                            } label: {
+                                Image(systemName: "trash")
                             }
-                        )
+                        }
                     }
                     .onMove { source, destination in
                         var reordered = galleries
@@ -80,11 +87,6 @@ struct GalleriesView: View {
                             gallery.displayOrder = index
                         }
                         try? modelContext.save()
-                    }
-                    .onDelete { offsets in
-                        if let index = offsets.first {
-                            galleryToDelete = galleries[index]
-                        }
                     }
                 } header: {
                     Text(selectionStatusText)
@@ -151,36 +153,38 @@ struct GalleriesView: View {
         .onPreferenceChange(GalleryRowFramesKey.self) { rowFrames = $0 }
         .overlay {
             if let gallery = galleryToDelete, let frame = rowFrames[gallery.id] {
-                ZStack(alignment: .top) {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture { withAnimation(.easeOut(duration: 0.15)) { galleryToDelete = nil } }
+                GeometryReader { proxy in
+                    ZStack {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeOut(duration: 0.15)) { galleryToDelete = nil }
+                            }
 
-                    DeleteGalleryMenu(
-                        galleryName: gallery.name,
-                        onDeleteWithPhotos: {
-                            viewModel?.deleteGalleryAndPhotos(gallery)
-                            galleryToDelete = nil
-                        },
-                        onDeleteKeepPhotos: {
-                            viewModel?.deleteGallery(gallery)
-                            galleryToDelete = nil
-                        },
-                        onUnlink: {
-                            viewModel?.unlinkGallery(gallery)
-                            galleryToDelete = nil
-                        },
-                        onCancel: { galleryToDelete = nil }
-                    )
-                    .frame(maxWidth: 300)
-                    .padding(.horizontal, 16)
-                    .offset(y: max(8, frame.minY))
+                        DeleteGalleryMenu(
+                            galleryName: gallery.name,
+                            onDeleteWithPhotos: {
+                                viewModel?.deleteGalleryAndPhotos(gallery)
+                                galleryToDelete = nil
+                            },
+                            onDeleteKeepPhotos: {
+                                viewModel?.deleteGallery(gallery)
+                                galleryToDelete = nil
+                            },
+                            onUnlink: {
+                                viewModel?.unlinkGallery(gallery)
+                                galleryToDelete = nil
+                            },
+                            onCancel: { galleryToDelete = nil }
+                        )
+                        .frame(maxWidth: 300)
+                        .position(x: proxy.size.width / 2, y: frame.midY)
+                    }
                 }
                 .ignoresSafeArea()
-                .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
         }
-        .animation(.easeOut(duration: 0.15), value: galleryToDelete?.id)
         .sheet(isPresented: $showInsights) {
             InsightsView()
         }
