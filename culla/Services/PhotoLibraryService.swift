@@ -599,17 +599,31 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
 
         let options = PHImageRequestOptions()
         options.deliveryMode = .fastFormat
-        options.isNetworkAccessAllowed = false
+        // Allow iCloud fetch — devices with "Optimize Storage" have no full local copy,
+        // so isNetworkAccessAllowed = false returns nil and the mosaic stays gray.
+        options.isNetworkAccessAllowed = true
         options.resizeMode = .fast
 
         let image: UIImage? = await withCheckedContinuation { continuation in
+            var degradedFallback: UIImage? = nil
             imageManager.requestImage(
                 for: asset,
                 targetSize: CalendarThumbnailSize,
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
-                continuation.resume(returning: image)
+            ) { image, info in
+                // PHImageManager can call this block more than once (degraded preview
+                // followed by the final result). Only resume the continuation once.
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
+                let hasError = info?[PHImageErrorKey] != nil
+                if isDegraded {
+                    degradedFallback = image
+                } else if isCancelled || hasError {
+                    continuation.resume(returning: degradedFallback)
+                } else {
+                    continuation.resume(returning: image ?? degradedFallback)
+                }
             }
         }
 
@@ -766,7 +780,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         guard !identifiers.isEmpty else { return }
         let options = PHImageRequestOptions()
         options.deliveryMode = .fastFormat
-        options.isNetworkAccessAllowed = false
+        options.isNetworkAccessAllowed = true
         options.resizeMode = .fast
         let assets = fetchAssets(for: identifiers)
         guard !assets.isEmpty else { return }
