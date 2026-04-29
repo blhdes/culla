@@ -14,7 +14,7 @@ let CalendarThumbnailSize = CGSize(width: 160, height: 160)
 private nonisolated(unsafe) var _calendarDataCache: [String: (counts: [Date: Int], thumbnailIDs: [Date: [String]])] = [:]
 
 @Observable
-final class PhotoLibraryService {
+final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
 
     /// Shared instance — avoids creating multiple PHCachingImageManagers.
     static let shared = PhotoLibraryService()
@@ -22,6 +22,25 @@ final class PhotoLibraryService {
     var authorizationStatus: PHAuthorizationStatus = .notDetermined
 
     private let imageManager = PHCachingImageManager()
+
+    override private init() {
+        super.init()
+        // Observe library changes so the calendar cache is dropped whenever the
+        // user changes their limited selection (in-app picker or Settings) or
+        // the underlying photo set changes for any other reason. Without this,
+        // `_calendarDataCache` keeps stale identifiers and mosaic cells render
+        // as empty gray placeholders because `loadThumbnail` returns nil for
+        // assets the user no longer has access to.
+        PHPhotoLibrary.shared().register(self)
+    }
+
+    deinit {
+        PHPhotoLibrary.shared().unregisterChangeObserver(self)
+    }
+
+    nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
+        _calendarDataCache = [:]
+    }
 
     /// In-memory cache for calendar thumbnails — avoids re-fetching when scrolling back.
     /// NSCache auto-evicts under memory pressure, so this is safe.
