@@ -598,26 +598,44 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         guard !Task.isCancelled else { return nil }
 
         let options = PHImageRequestOptions()
-        options.deliveryMode = .fastFormat
-        // Allow iCloud fetch — devices with "Optimize Storage" have no full local copy,
-        // so isNetworkAccessAllowed = false returns nil and the mosaic stays gray.
+        // opportunistic: delivers the best locally-available thumbnail immediately,
+        // then a higher-quality version if needed. Works when fastFormat returns nil
+        // (e.g. limited-access assets whose preheating was cancelled by startCachingImages).
+        options.deliveryMode = .opportunistic
         options.isNetworkAccessAllowed = true
         options.resizeMode = .fast
+        options.isSynchronous = false
 
+        // Use PHImageManager.default() rather than the shared PHCachingImageManager.
+        // When startCachingImages and requestImage target the same limited-access asset
+        // simultaneously, PHCachingImageManager cancels its own preheat and can silently
+        // drop the callback. The default manager avoids that conflict entirely; pre-caching
+        // via startCachingImages still warms the shared system cache.
         let image: UIImage? = await withCheckedContinuation { continuation in
-            // fastFormat delivers exactly one callback (the first available thumbnail).
-            // Use a flag so that if the manager ever calls back twice (edge case with
-            // network-enabled requests), the CheckedContinuation is only resumed once.
             var resumed = false
-            imageManager.requestImage(
+            PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CalendarThumbnailSize,
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
-                guard !resumed else { return }
-                resumed = true
-                continuation.resume(returning: image)
+            ) { image, info in
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
+                let hasError = info?[PHImageErrorKey] != nil
+
+                if let image {
+                    // Accept first non-nil result (degraded or not) — good enough for
+                    // a calendar thumbnail; prevents waiting for a slow iCloud download.
+                    guard !resumed else { return }
+                    resumed = true
+                    continuation.resume(returning: image)
+                } else if !isDegraded || isCancelled || hasError {
+                    // Final callback with nil (truly unavailable) or an error.
+                    guard !resumed else { return }
+                    resumed = true
+                    continuation.resume(returning: nil)
+                }
+                // nil + isDegraded → still downloading; wait for the next callback.
             }
         }
 
