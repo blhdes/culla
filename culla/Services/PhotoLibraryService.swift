@@ -605,25 +605,19 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         options.resizeMode = .fast
 
         let image: UIImage? = await withCheckedContinuation { continuation in
-            var degradedFallback: UIImage? = nil
+            // fastFormat delivers exactly one callback (the first available thumbnail).
+            // Use a flag so that if the manager ever calls back twice (edge case with
+            // network-enabled requests), the CheckedContinuation is only resumed once.
+            var resumed = false
             imageManager.requestImage(
                 for: asset,
                 targetSize: CalendarThumbnailSize,
                 contentMode: .aspectFill,
                 options: options
-            ) { image, info in
-                // PHImageManager can call this block more than once (degraded preview
-                // followed by the final result). Only resume the continuation once.
-                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
-                let hasError = info?[PHImageErrorKey] != nil
-                if isDegraded {
-                    degradedFallback = image
-                } else if isCancelled || hasError {
-                    continuation.resume(returning: degradedFallback)
-                } else {
-                    continuation.resume(returning: image ?? degradedFallback)
-                }
+            ) { image, _ in
+                guard !resumed else { return }
+                resumed = true
+                continuation.resume(returning: image)
             }
         }
 
