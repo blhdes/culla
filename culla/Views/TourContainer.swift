@@ -63,7 +63,7 @@ struct TourContainer: View {
                 .frame(maxWidth: min(320, geo.size.width - 40))
                 .position(currentStep.bubbleCenter(geo: geo, spotlight: spotlightRect))
                 .id(currentStep)
-                .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .center)))
+                .transition(.opacity)
                 .animation(.easeInOut(duration: 0.25), value: currentStep)
             }
         }
