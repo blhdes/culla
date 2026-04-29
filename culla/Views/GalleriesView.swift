@@ -30,6 +30,7 @@ struct GalleriesView: View {
     @State private var showInsights = false
     @State private var showPaywall = false
     @State private var galleryToDelete: Gallery?
+    @State private var rowFrames: [UUID: CGRect] = [:]
     @State private var namesBeforeEdit: [UUID: String] = [:]
 
     var body: some View {
@@ -63,6 +64,14 @@ struct GalleriesView: View {
                         NavigationLink(value: gallery) {
                             galleryRow(gallery)
                         }
+                        .background(
+                            GeometryReader { proxy in
+                                Color.clear.preference(
+                                    key: GalleryRowFramesKey.self,
+                                    value: [gallery.id: proxy.frame(in: .named("galleriesRoot"))]
+                                )
+                            }
+                        )
                     }
                     .onMove { source, destination in
                         var reordered = galleries
@@ -138,32 +147,40 @@ struct GalleriesView: View {
                 newGalleryName = ""
             }
         }
-        .confirmationDialog(
-            "Delete \"\(galleryToDelete?.name ?? "")\"?",
-            isPresented: Binding(
-                get: { galleryToDelete != nil },
-                set: { if !$0 { galleryToDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Delete Gallery & Photos", role: .destructive) {
-                if let g = galleryToDelete { viewModel?.deleteGalleryAndPhotos(g) }
-                galleryToDelete = nil
+        .coordinateSpace(name: "galleriesRoot")
+        .onPreferenceChange(GalleryRowFramesKey.self) { rowFrames = $0 }
+        .overlay {
+            if let gallery = galleryToDelete, let frame = rowFrames[gallery.id] {
+                ZStack(alignment: .top) {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { withAnimation(.easeOut(duration: 0.15)) { galleryToDelete = nil } }
+
+                    DeleteGalleryMenu(
+                        galleryName: gallery.name,
+                        onDeleteWithPhotos: {
+                            viewModel?.deleteGalleryAndPhotos(gallery)
+                            galleryToDelete = nil
+                        },
+                        onDeleteKeepPhotos: {
+                            viewModel?.deleteGallery(gallery)
+                            galleryToDelete = nil
+                        },
+                        onUnlink: {
+                            viewModel?.unlinkGallery(gallery)
+                            galleryToDelete = nil
+                        },
+                        onCancel: { galleryToDelete = nil }
+                    )
+                    .frame(maxWidth: 300)
+                    .padding(.horizontal, 16)
+                    .offset(y: max(8, frame.minY))
+                }
+                .ignoresSafeArea()
+                .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             }
-            Button("Delete Gallery, Keep Photos", role: .destructive) {
-                if let g = galleryToDelete { viewModel?.deleteGallery(g) }
-                galleryToDelete = nil
-            }
-            Button("Remove from Culla") {
-                if let g = galleryToDelete { viewModel?.unlinkGallery(g) }
-                galleryToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                galleryToDelete = nil
-            }
-        } message: {
-            Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
         }
+        .animation(.easeOut(duration: 0.15), value: galleryToDelete?.id)
         .sheet(isPresented: $showInsights) {
             InsightsView()
         }
@@ -344,6 +361,58 @@ struct GalleriesView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct GalleryRowFramesKey: PreferenceKey {
+    static let defaultValue: [UUID: CGRect] = [:]
+    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
+
+private struct DeleteGalleryMenu: View {
+    let galleryName: String
+    let onDeleteWithPhotos: () -> Void
+    let onDeleteKeepPhotos: () -> Void
+    let onUnlink: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            VStack(spacing: 4) {
+                Text("Delete \"\(galleryName)\"?")
+                    .font(.subheadline.weight(.semibold))
+                Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 8)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
+
+            menuButton(title: "Delete Gallery & Photos", color: .red, action: onDeleteWithPhotos)
+            menuButton(title: "Delete Gallery, Keep Photos", color: .red, action: onDeleteKeepPhotos)
+            menuButton(title: "Remove from Culla", color: .primary, action: onUnlink)
+            menuButton(title: "Cancel", color: .primary, action: onCancel)
+        }
+        .padding(8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
+    }
+
+    @ViewBuilder
+    private func menuButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color(.tertiarySystemFill), in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 
