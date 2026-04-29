@@ -23,25 +23,25 @@ struct TourContainer: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // Layer 1: dim + spotlight cutout (no hit testing)
-                Canvas { context, size in
-                    context.fill(
-                        Path(CGRect(origin: .zero, size: size)),
-                        with: .color(.black.opacity(0.58))
-                    )
+                // Layer 1: animatable dim + spotlight cutout (no hit testing).
+                // Using ZStack + compositingGroup instead of Canvas so the cutout
+                // position/size interpolates with the same easing as the bubble,
+                // eliminating the ghost-frame mismatch during step transitions.
+                ZStack {
+                    Color.black.opacity(0.58)
                     if let spot = spotlightRect {
-                        var ctx = context
-                        ctx.blendMode = .destinationOut
                         let expanded = spot.insetBy(dx: -6, dy: -6)
-                        ctx.fill(
-                            Path(roundedRect: expanded, cornerRadius: currentStep.spotlightCornerRadius + 6),
-                            with: .color(.white.opacity(0.999))
-                        )
+                        RoundedRectangle(cornerRadius: currentStep.spotlightCornerRadius + 6)
+                            .frame(width: expanded.width, height: expanded.height)
+                            .position(x: expanded.midX, y: expanded.midY)
+                            .blendMode(.destinationOut)
+                            .transition(.opacity)
                     }
                 }
-                .drawingGroup()
-                .allowsHitTesting(false)
+                .compositingGroup()
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .animation(.easeInOut(duration: 0.25), value: currentStep)
 
                 // Layer 2: pulsing glow ring around spotlight (no hit testing)
                 if let spot = spotlightRect {
@@ -51,7 +51,9 @@ struct TourContainer: View {
                         .frame(width: expanded.width, height: expanded.height)
                         .position(x: expanded.midX, y: expanded.midY)
                         .allowsHitTesting(false)
+                        .transition(.opacity)
                         .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: glowing)
+                        .animation(.easeInOut(duration: 0.25), value: currentStep)
                 }
 
                 // Layer 3: bubble (interactive)
@@ -68,7 +70,9 @@ struct TourContainer: View {
             }
         }
         .ignoresSafeArea()
-        .task(id: currentStep) {
+        // Key on spotlightTarget so the glow only resets when the actual target
+        // changes — consecutive steps pointing at the same element stay still.
+        .task(id: currentStep.spotlightTarget) {
             glowing = false
             try? await Task.sleep(for: .milliseconds(120))
             glowing = true

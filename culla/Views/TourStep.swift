@@ -41,7 +41,7 @@ enum TourStep: Int, CaseIterable {
         case .whatAreGalleries:
             return "Tap that icon to open your Galleries — the destinations photos fly into when you swipe right."
         case .setupGallery:
-            return "Tap the stack icon at the top right to open Galleries. Create a new one or import an existing iPhone album."
+            return "Tap the icon above to open Galleries, then create a new one or import an existing iPhone album."
         case .changeColor:
             return "Open any gallery from the list. Inside, tap the small color circle at the top to give it a neon color."
         case .readyToSwipe:
@@ -55,8 +55,8 @@ enum TourStep: Int, CaseIterable {
         switch self {
         case .welcome:          return nil
         case .pickDate:         return .datePicker
-        case .whatAreGalleries: return .galleriesButton
-        case .setupGallery, .changeColor: return nil
+        case .whatAreGalleries, .setupGallery, .changeColor:
+            return .galleriesButton
         case .readyToSwipe:     return .startButton
         }
     }
@@ -87,7 +87,7 @@ enum TourStep: Int, CaseIterable {
             guard let spot = spotlight else { return CGPoint(x: w / 2, y: h / 2) }
             return CGPoint(x: w / 2, y: spot.maxY + halfBubble + 16)
 
-        case .whatAreGalleries:
+        case .whatAreGalleries, .setupGallery, .changeColor:
             guard let spot = spotlight else { return CGPoint(x: w - bw / 2 - 16, y: 200) }
             let desiredRight = spot.midX + 25
             let minRight = bw / 2 + 16
@@ -96,9 +96,6 @@ enum TourStep: Int, CaseIterable {
             let centerX = bubbleRight - bw / 2
             return CGPoint(x: centerX, y: spot.maxY + halfBubble + 16)
 
-        case .setupGallery, .changeColor:
-            return CGPoint(x: w / 2, y: h * 0.38)
-
         case .readyToSwipe:
             guard let spot = spotlight else { return CGPoint(x: w / 2, y: h / 2) }
             return CGPoint(x: w / 2, y: spot.minY - halfBubble - 16)
@@ -106,7 +103,10 @@ enum TourStep: Int, CaseIterable {
     }
 
     var arrowIsTrailing: Bool {
-        self == .whatAreGalleries
+        switch self {
+        case .whatAreGalleries, .setupGallery, .changeColor: return true
+        default: return false
+        }
     }
 
     /// Arrow edge on the bubble pointing toward the spotlight.
@@ -114,8 +114,7 @@ enum TourStep: Int, CaseIterable {
         switch self {
         case .welcome:          return nil
         case .pickDate:         return .top
-        case .whatAreGalleries: return .top
-        case .setupGallery, .changeColor: return nil
+        case .whatAreGalleries, .setupGallery, .changeColor: return .top
         case .readyToSwipe:     return .bottom
         }
     }
