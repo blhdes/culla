@@ -26,69 +26,13 @@ struct GallerySelectionSheet: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                if !filteredGalleries.isEmpty {
-                    Section {
-                        ForEach(sortedGalleries) { gallery in
-                            galleryRow(gallery)
-                        }
-                        .onMove { source, destination in
-                            guard sortOption == .custom else { return }
-                            reorderGalleries(from: source, to: destination)
-                        }
-                    } header: {
-                        HStack {
-                            Text("\(selectedIDs.count) of \(maxSelection) selected")
-                            Spacer()
-                            Menu {
-                                ForEach(GallerySortOption.allCases, id: \.self) { option in
-                                    Button {
-                                        sortOption = option
-                                    } label: {
-                                        HStack {
-                                            Text(option.rawValue)
-                                            if sortOption == option {
-                                                Image(systemName: "checkmark")
-                                            }
-                                        }
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text(sortOption.rawValue)
-                                    Image(systemName: "chevron.up.chevron.down")
-                                }
-                                .font(.caption)
-                            }
-                        }
-                    }
-                }
-
-                Section {
-                    if showCreateField {
-                        HStack {
-                            TextField("Gallery name", text: $newGalleryName)
-                                .focused($isFieldFocused)
-                                .onSubmit { createGallery() }
-
-                            Button("Add") { createGallery() }
-                                .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
-                        }
-                    } else {
-                        Button("Create New Gallery") {
-                            showCreateField = true
-                            isFieldFocused = true
-                        }
-                    }
-
-                    Button {
-                        showAlbumImport = true
-                    } label: {
-                        Label("Import from Phone", systemImage: "square.and.arrow.down")
-                    }
+            Group {
+                if galleries.isEmpty {
+                    emptyStateView
+                } else {
+                    galleryList
                 }
             }
-            .searchable(text: $searchText, prompt: "Search galleries")
             .navigationTitle("Select Galleries")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -108,6 +52,125 @@ struct GallerySelectionSheet: View {
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(onClose: { showPaywall = false })
         }
+    }
+
+    // MARK: - Empty State
+
+    /// Shown when the user has no galleries at all — guides them straight
+    /// to create or import instead of leaving the sheet looking broken.
+    @ViewBuilder
+    private var emptyStateView: some View {
+        ContentUnavailableView {
+            Label("No Galleries Yet", systemImage: "rectangle.stack.badge.plus")
+        } description: {
+            Text("Galleries are how you organize swiped photos. Create one or import an existing iPhone album.")
+        } actions: {
+            VStack(spacing: 10) {
+                if showCreateField {
+                    HStack {
+                        TextField("Gallery name", text: $newGalleryName)
+                            .focused($isFieldFocused)
+                            .textFieldStyle(.roundedBorder)
+                            .onSubmit { createGallery() }
+                        Button("Add") { createGallery() }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    .padding(.horizontal, 32)
+                } else {
+                    Button {
+                        showCreateField = true
+                        isFieldFocused = true
+                    } label: {
+                        Label("Create New Gallery", systemImage: "plus")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .padding(.horizontal, 32)
+                }
+
+                Button {
+                    showAlbumImport = true
+                } label: {
+                    Label("Import from Phone", systemImage: "square.and.arrow.down")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .padding(.horizontal, 32)
+            }
+            .padding(.top, 8)
+        }
+    }
+
+    // MARK: - Gallery List
+
+    @ViewBuilder
+    private var galleryList: some View {
+        List {
+            if !filteredGalleries.isEmpty {
+                Section {
+                    ForEach(sortedGalleries) { gallery in
+                        galleryRow(gallery)
+                    }
+                    .onMove { source, destination in
+                        guard sortOption == .custom else { return }
+                        reorderGalleries(from: source, to: destination)
+                    }
+                } header: {
+                    HStack {
+                        Text("\(selectedIDs.count) of \(maxSelection) selected")
+                        Spacer()
+                        Menu {
+                            ForEach(GallerySortOption.allCases, id: \.self) { option in
+                                Button {
+                                    sortOption = option
+                                } label: {
+                                    HStack {
+                                        Text(option.rawValue)
+                                        if sortOption == option {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(sortOption.rawValue)
+                                Image(systemName: "chevron.up.chevron.down")
+                            }
+                            .font(.caption)
+                        }
+                    }
+                }
+            }
+
+            Section {
+                if showCreateField {
+                    HStack {
+                        TextField("Gallery name", text: $newGalleryName)
+                            .focused($isFieldFocused)
+                            .onSubmit { createGallery() }
+
+                        Button("Add") { createGallery() }
+                            .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                } else {
+                    Button("Create New Gallery") {
+                        showCreateField = true
+                        isFieldFocused = true
+                    }
+                }
+
+                Button {
+                    showAlbumImport = true
+                } label: {
+                    Label("Import from Phone", systemImage: "square.and.arrow.down")
+                }
+            }
+        }
+        .searchable(text: $searchText, prompt: "Search galleries")
     }
 
     // MARK: - Row

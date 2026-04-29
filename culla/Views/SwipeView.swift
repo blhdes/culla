@@ -32,7 +32,9 @@ struct SwipeView: View {
 
     // Sidebar gallery selection (up to 10)
     @State private var showGallerySelector = false
-    @State private var hasInitializedSidebar = false
+    /// Persisted across SwipeView re-creations so an explicit deselect-all
+    /// in the Manage sheet doesn't get silently overwritten next session.
+    @AppStorage("hasInitializedSidebar") private var hasInitializedSidebar = false
 
     // Toast state
     @State private var toastMessage: String?
@@ -439,6 +441,15 @@ struct SwipeView: View {
         let ty = value.translation.height
         let ptx = value.predictedEndTranslation.width
         let pty = value.predictedEndTranslation.height
+
+        // Right swipe with no galleries set up — guide the user to Manage
+        // instead of letting the swipe silently fall through.
+        if (tx > swipeThreshold || ptx > swipeThreshold), sidebarGalleries.isEmpty {
+            snapBack()
+            showToast("Add a gallery first")
+            showGallerySelector = true
+            return
+        }
 
         // Right swipe with a highlighted gallery always wins —
         // even if the angle is steep (top/bottom galleries).

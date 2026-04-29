@@ -12,16 +12,27 @@ struct GallerySidebarView: View {
 
     var body: some View {
         if galleries.isEmpty {
-            VStack {
+            VStack(spacing: 10) {
                 Spacer()
-                Text("Tap Manage to\nadd galleries")
-                    .font(.body)
+                Image(systemName: "rectangle.stack.badge.plus")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                Text("Add a gallery\nto sort photos")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                HStack(spacing: 4) {
+                    Text("Tap Manage")
+                        .font(.caption)
+                    Image(systemName: "arrow.down.right")
+                        .font(.caption)
+                }
+                .foregroundStyle(.tertiary)
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .opacity(isDragging ? 0.4 + 0.6 * dragProgress : 0.4)
+            .opacity(isDragging ? 0.6 + 0.4 * dragProgress : 0.55)
         } else {
             VStack(spacing: 0) {
                 ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
