@@ -449,7 +449,7 @@ struct DatePickerView: View {
                         .fontWeight(.semibold)
                 }
             }
-            .sheet(isPresented: $showPhotoGrid) {
+            .fullScreenCover(isPresented: $showPhotoGrid) {
                 if let earliestDate, let latestDate {
                     PhotoGridPickerView(
                         albumIdentifier: selectedAlbum?.collectionIdentifier,

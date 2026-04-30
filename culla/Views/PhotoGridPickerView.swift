@@ -79,14 +79,14 @@ struct PhotoGridPickerView: View {
                 .map { GridPhoto(id: $0.id, creationDate: $0.creationDate) }
         }.value
 
-        items = loaded
+        items = loaded.reversed()
         isLoading = false
     }
 
     private func scrollToSelected(in proxy: ScrollViewProxy) {
-        // Items are newest-first, so the first item whose date is <= selectedDate
-        // is the closest match. If no older photo exists, fall back to the oldest.
-        let target = items.first(where: { $0.creationDate <= selectedDate }) ?? items.last
+        // Items are oldest-first; find the last photo at or before selectedDate
+        // so we land on the closest match from below.
+        let target = items.last(where: { $0.creationDate <= selectedDate }) ?? items.first
         guard let target else { return }
         DispatchQueue.main.async {
             proxy.scrollTo(target.id, anchor: .top)
