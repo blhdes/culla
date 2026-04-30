@@ -63,12 +63,13 @@ struct GalleriesView: View {
                         NavigationLink(value: gallery) {
                             galleryRow(gallery)
                         }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button {
                                 galleryToDelete = gallery
                             } label: {
                                 Image(systemName: "trash")
                             }
+                            .tint(.red)
                         }
                     }
                     .onMove { source, destination in
@@ -89,7 +90,7 @@ struct GalleriesView: View {
         .environment(\.editMode, $editMode)
         .navigationTitle("Galleries")
         .navigationDestination(for: Gallery.self) { gallery in
-            GalleryDetailView(gallery: gallery)
+            GalleryDetailView(gallery: gallery, viewModel: viewModel)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {

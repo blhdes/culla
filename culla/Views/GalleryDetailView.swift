@@ -3,16 +3,21 @@ import SwiftData
 
 struct GalleryDetailView: View {
     @Bindable var gallery: Gallery
+    var viewModel: GalleryViewModel?
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.activeTourStep) private var tourStep
     @Environment(\.tourActivateGallery) private var tourActivateGallery
     @Environment(\.tourSetStep) private var tourSetStep
     private let photoService = PhotoLibraryService.shared
 
+    @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
+
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
     @State private var showColorPicker = false
+    @State private var showDeleteAlert = false
     @State private var tourHintDismissed = false
     @State private var previewIdentifier: String?
     @Namespace private var heroNamespace
@@ -130,6 +135,37 @@ struct GalleryDetailView: View {
         }
         .navigationTitle(gallery.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showDeleteAlert = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+            }
+        }
+        .alert("Delete \"\(gallery.name)\"?", isPresented: $showDeleteAlert) {
+            Button("Delete Gallery & Photos", role: .destructive) {
+                let count = allIdentifiers.count
+                viewModel?.deleteGalleryAndPhotos(gallery)
+                if count > 0 {
+                    totalDeletedPhotos += count
+                    DailyStats.upsert(in: modelContext, deletedDelta: count)
+                }
+                dismiss()
+            }
+            Button("Delete Gallery, Keep Photos", role: .destructive) {
+                viewModel?.deleteGallery(gallery)
+                dismiss()
+            }
+            Button("Remove from Culla") {
+                viewModel?.unlinkGallery(gallery)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
+        }
         .fullScreenCover(item: Binding(
             get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
             set: { previewIdentifier = $0?.id }
