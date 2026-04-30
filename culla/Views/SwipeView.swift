@@ -208,7 +208,8 @@ struct SwipeView: View {
                         GallerySidebarView(
                             galleries: sidebarGalleries,
                             highlightedID: highlightedGalleryID,
-                            dragProgress: progress
+                            dragProgress: progress,
+                            isLongPress: isLongPressing
                         )
                         .frame(width: geo.size.width * 0.5)
                         .offset(x: (1.0 - progress) * 30)
@@ -587,8 +588,10 @@ struct SwipeView: View {
 
     /// Fade out UI chrome as the user drags toward galleries,
     /// so gallery names aren't blocked by buttons and labels.
+    /// On long-press, fully hide chrome to spotlight the sidebar.
     private var chromeOpacity: Double {
-        Double(1.0 - rightDragProgress)
+        if isLongPressing { return 0 }
+        return Double(1.0 - rightDragProgress)
     }
 
     private func findGallery(at point: CGPoint) -> UUID? {

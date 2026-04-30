@@ -6,6 +6,7 @@ struct GallerySidebarView: View {
     let galleries: [Gallery]
     let highlightedID: UUID?
     let dragProgress: CGFloat
+    var isLongPress: Bool = false
 
     /// Whether the user is actively dragging (any rightward movement).
     private var isDragging: Bool { dragProgress > 0 }
@@ -41,7 +42,8 @@ struct GallerySidebarView: View {
                         neonColor: gallery.color,
                         isHighlighted: gallery.id == highlightedID,
                         isDragging: isDragging,
-                        dragProgress: dragProgress
+                        dragProgress: dragProgress,
+                        isLongPress: isLongPress
                     )
                     .background(
                         GeometryReader { geo in
@@ -148,12 +150,13 @@ struct GallerySidebarItem: View {
     let isHighlighted: Bool
     let isDragging: Bool
     let dragProgress: CGFloat
+    var isLongPress: Bool = false
 
     var body: some View {
         ZStack(alignment: .leading) {
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .opacity(Double(dragProgress))
+                .opacity(materialOpacity)
 
             neonColor
                 .opacity(backgroundOpacity)
@@ -173,8 +176,16 @@ struct GallerySidebarItem: View {
         .animation(.easeInOut(duration: 0.2), value: isDragging)
     }
 
+    /// Swipe uses the full ultraThinMaterial to obscure the photo as the user
+    /// commits to a gallery. Long-press keeps the photo readable behind a
+    /// much lighter veil so the user can still see what they're sorting.
+    private var materialOpacity: Double {
+        isLongPress ? 0.35 : Double(dragProgress)
+    }
+
     private var backgroundOpacity: Double {
         guard isDragging else { return 0 }
+        if isLongPress, !isHighlighted { return 0.6 }
         return isHighlighted ? 0.85 : 0.2 + 0.4 * dragProgress
     }
 
