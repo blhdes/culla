@@ -30,7 +30,6 @@ struct GalleriesView: View {
     @State private var showInsights = false
     @State private var showPaywall = false
     @State private var galleryToDelete: Gallery?
-    @State private var rowFrames: [UUID: CGRect] = [:]
     @State private var namesBeforeEdit: [UUID: String] = [:]
 
     var body: some View {
@@ -63,14 +62,6 @@ struct GalleriesView: View {
                     ForEach(galleries) { gallery in
                         NavigationLink(value: gallery) {
                             galleryRow(gallery)
-                                .background(
-                                    GeometryReader { proxy in
-                                        Color.clear.preference(
-                                            key: GalleryRowFramesKey.self,
-                                            value: [gallery.id: proxy.frame(in: .named("galleriesRoot"))]
-                                        )
-                                    }
-                                )
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -149,40 +140,33 @@ struct GalleriesView: View {
                 newGalleryName = ""
             }
         }
-        .coordinateSpace(name: "galleriesRoot")
-        .onPreferenceChange(GalleryRowFramesKey.self) { rowFrames = $0 }
         .overlay {
-            if let gallery = galleryToDelete, let frame = rowFrames[gallery.id] {
-                GeometryReader { proxy in
-                    ZStack {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                withAnimation(.easeOut(duration: 0.15)) { galleryToDelete = nil }
-                            }
+            if let gallery = galleryToDelete {
+                ZStack {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .ignoresSafeArea()
+                        .onTapGesture { galleryToDelete = nil }
 
-                        DeleteGalleryMenu(
-                            galleryName: gallery.name,
-                            onDeleteWithPhotos: {
-                                viewModel?.deleteGalleryAndPhotos(gallery)
-                                galleryToDelete = nil
-                            },
-                            onDeleteKeepPhotos: {
-                                viewModel?.deleteGallery(gallery)
-                                galleryToDelete = nil
-                            },
-                            onUnlink: {
-                                viewModel?.unlinkGallery(gallery)
-                                galleryToDelete = nil
-                            },
-                            onCancel: { galleryToDelete = nil }
-                        )
-                        .frame(maxWidth: 300)
-                        .position(x: proxy.size.width / 2, y: frame.midY)
-                    }
+                    DeleteGalleryMenu(
+                        galleryName: gallery.name,
+                        onDeleteWithPhotos: {
+                            viewModel?.deleteGalleryAndPhotos(gallery)
+                            galleryToDelete = nil
+                        },
+                        onDeleteKeepPhotos: {
+                            viewModel?.deleteGallery(gallery)
+                            galleryToDelete = nil
+                        },
+                        onUnlink: {
+                            viewModel?.unlinkGallery(gallery)
+                            galleryToDelete = nil
+                        },
+                        onCancel: { galleryToDelete = nil }
+                    )
+                    .frame(maxWidth: 300)
+                    .padding(.horizontal, 16)
                 }
-                .ignoresSafeArea()
-                .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
         }
         .sheet(isPresented: $showInsights) {
@@ -365,13 +349,6 @@ struct GalleriesView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
-    }
-}
-
-private struct GalleryRowFramesKey: PreferenceKey {
-    static let defaultValue: [UUID: CGRect] = [:]
-    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
-        value.merge(nextValue(), uniquingKeysWith: { $1 })
     }
 }
 
