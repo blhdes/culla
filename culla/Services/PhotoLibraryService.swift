@@ -735,6 +735,48 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return calendarResult
     }
 
+    /// Returns every image asset in the album scope between `earliest` and `latest`,
+    /// newest first, as `(localIdentifier, creationDate)` pairs. Used by the photo
+    /// grid picker so taps can map straight to a date without a second PHAsset fetch.
+    nonisolated func gridAssets(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> [(id: String, creationDate: Date)] {
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+
+        let result: PHFetchResult<PHAsset>
+
+        if albumIdentifier == PhoneAlbum.favoritesIdentifier {
+            options.predicate = NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d AND isFavorite == YES",
+                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
+            )
+            result = PHAsset.fetchAssets(with: options)
+        } else if let albumIdentifier,
+                  albumIdentifier != PhoneAlbum.unsortedIdentifier,
+                  let collection = PHAssetCollection.fetchAssetCollections(
+                      withLocalIdentifiers: [albumIdentifier], options: nil
+                  ).firstObject {
+            options.predicate = NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
+                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
+            )
+            result = PHAsset.fetchAssets(in: collection, options: options)
+        } else {
+            options.predicate = NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
+                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
+            )
+            result = PHAsset.fetchAssets(with: options)
+        }
+
+        var items: [(id: String, creationDate: Date)] = []
+        items.reserveCapacity(result.count)
+        result.enumerateObjects { asset, _, _ in
+            guard let date = asset.creationDate else { return }
+            items.append((asset.localIdentifier, date))
+        }
+        return items
+    }
+
     // MARK: - Preloading
 
     /// Tells PHCachingImageManager to start caching images for upcoming identifiers.

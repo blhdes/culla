@@ -65,7 +65,9 @@ struct GalleriesView: View {
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button {
-                                galleryToDelete = gallery
+                                withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                                    galleryToDelete = gallery
+                                }
                             } label: {
                                 Image(systemName: "trash")
                             }
@@ -147,26 +149,33 @@ struct GalleriesView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .ignoresSafeArea()
-                        .onTapGesture { galleryToDelete = nil }
+                        .onTapGesture {
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                                galleryToDelete = nil
+                            }
+                        }
 
                     DeleteGalleryMenu(
                         galleryName: gallery.name,
                         onDeleteWithPhotos: {
                             viewModel?.deleteGalleryAndPhotos(gallery)
-                            galleryToDelete = nil
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
                         },
                         onDeleteKeepPhotos: {
                             viewModel?.deleteGallery(gallery)
-                            galleryToDelete = nil
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
                         },
                         onUnlink: {
                             viewModel?.unlinkGallery(gallery)
-                            galleryToDelete = nil
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
                         },
-                        onCancel: { galleryToDelete = nil }
+                        onCancel: {
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
+                        }
                     )
                     .frame(maxWidth: 300)
                     .padding(.horizontal, 16)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
                 }
             }
         }
@@ -353,7 +362,17 @@ struct GalleriesView: View {
     }
 }
 
-private struct DeleteGalleryMenu: View {
+private struct DeleteMenuGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        } else {
+            content.background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+    }
+}
+
+struct DeleteGalleryMenu: View {
     let galleryName: String
     let onDeleteWithPhotos: () -> Void
     let onDeleteKeepPhotos: () -> Void
@@ -380,8 +399,8 @@ private struct DeleteGalleryMenu: View {
             menuButton(title: "Cancel", color: .primary, action: onCancel)
         }
         .padding(8)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
+        .modifier(DeleteMenuGlass())
+        .shadow(color: .black.opacity(0.15), radius: 24, y: 6)
     }
 
     @ViewBuilder

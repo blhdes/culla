@@ -38,6 +38,7 @@ struct DatePickerView: View {
     @State private var favoritesCount: Int = 0
     @State private var showAlbumPicker = false
     @State private var showFullCalendar = false
+    @State private var showPhotoGrid = false
     @State private var showDismissedPhotos = false
     @State private var showSettings = false
     @State private var permissionDenied = false
@@ -436,9 +437,27 @@ struct DatePickerView: View {
             .navigationTitle("Pick a Date")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showPhotoGrid = true
+                    } label: {
+                        Image(systemName: "photo.on.rectangle")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { showFullCalendar = false }
                         .fontWeight(.semibold)
+                }
+            }
+            .sheet(isPresented: $showPhotoGrid) {
+                if let earliestDate, let latestDate {
+                    PhotoGridPickerView(
+                        albumIdentifier: selectedAlbum?.collectionIdentifier,
+                        earliest: earliestDate,
+                        latest: latestDate,
+                        selectedDate: $pickerDate,
+                        onPick: { showFullCalendar = false }
+                    )
                 }
             }
         }

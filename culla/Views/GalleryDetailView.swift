@@ -17,7 +17,7 @@ struct GalleryDetailView: View {
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
     @State private var showColorPicker = false
-    @State private var showDeleteAlert = false
+    @State private var showDeleteMenu = false
     @State private var tourHintDismissed = false
     @State private var previewIdentifier: String?
     @Namespace private var heroNamespace
@@ -138,33 +138,56 @@ struct GalleryDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(role: .destructive) {
-                    showDeleteAlert = true
+                    withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                        showDeleteMenu = true
+                    }
                 } label: {
                     Image(systemName: "trash")
                 }
             }
         }
-        .alert("Delete \"\(gallery.name)\"?", isPresented: $showDeleteAlert) {
-            Button("Delete Gallery & Photos", role: .destructive) {
-                let count = allIdentifiers.count
-                viewModel?.deleteGalleryAndPhotos(gallery)
-                if count > 0 {
-                    totalDeletedPhotos += count
-                    DailyStats.upsert(in: modelContext, deletedDelta: count)
+        .overlay {
+            if showDeleteMenu {
+                ZStack {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                                showDeleteMenu = false
+                            }
+                        }
+
+                    DeleteGalleryMenu(
+                        galleryName: gallery.name,
+                        onDeleteWithPhotos: {
+                            let count = allIdentifiers.count
+                            viewModel?.deleteGalleryAndPhotos(gallery)
+                            if count > 0 {
+                                totalDeletedPhotos += count
+                                DailyStats.upsert(in: modelContext, deletedDelta: count)
+                            }
+                            dismiss()
+                        },
+                        onDeleteKeepPhotos: {
+                            viewModel?.deleteGallery(gallery)
+                            dismiss()
+                        },
+                        onUnlink: {
+                            viewModel?.unlinkGallery(gallery)
+                            dismiss()
+                        },
+                        onCancel: {
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                                showDeleteMenu = false
+                            }
+                        }
+                    )
+                    .frame(maxWidth: 300)
+                    .padding(.horizontal, 16)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
                 }
-                dismiss()
             }
-            Button("Delete Gallery, Keep Photos", role: .destructive) {
-                viewModel?.deleteGallery(gallery)
-                dismiss()
-            }
-            Button("Remove from Culla") {
-                viewModel?.unlinkGallery(gallery)
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact and you can re-import it anytime.")
         }
         .fullScreenCover(item: Binding(
             get: { previewIdentifier.map { PhotoPreviewItem(id: $0) } },
