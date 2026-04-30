@@ -51,11 +51,13 @@ struct DuplicateSweepView: View {
             .padding(.top, 8)
         }
         .deleteFeedback($deleteMessage)
-        .task {
+        .onAppear {
             if viewModel == nil {
                 let vm = DuplicateSweepViewModel(modelContext: modelContext)
                 viewModel = vm
-                await vm.startSearch(for: initialIdentifier, timeWindow: timeWindow)
+                Task { @MainActor in
+                    await vm.startSearch(for: initialIdentifier, timeWindow: timeWindow)
+                }
             }
         }
         .fullScreenCover(item: Binding(
