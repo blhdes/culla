@@ -133,11 +133,7 @@ private struct SplashGate: View {
             if subscriptions.subscriptionExpired {
                 paywallDismissible = true
                 showPaywall = true
-            } else if !hasSeenPaywall {
-                paywallDismissible = true
-                showPaywall = true
             } else {
-                // App update: paywall already seen but walkthrough not yet done
                 scheduleWalkthroughIfNeeded()
             }
         }
