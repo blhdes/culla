@@ -3,12 +3,13 @@ import SwiftData
 import PhotosUI
 
 struct DuplicateSweepView: View {
+    var initialIdentifier: String
     var timeWindow: TimeInterval = 3600
     var onClose: () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: DuplicateSweepViewModel?
-    @State private var showPicker = true
+    @State private var showPicker = false
     @State private var deleteMessage: DeleteFeedback?
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @State private var keptID: String?
@@ -25,7 +26,6 @@ struct DuplicateSweepView: View {
             if let viewModel {
                 switch viewModel.phase {
                 case .idle:
-                    // Picker is presented as a sheet
                     Color.clear
                 case .scanning:
                     scanningView
@@ -51,9 +51,11 @@ struct DuplicateSweepView: View {
             .padding(.top, 8)
         }
         .deleteFeedback($deleteMessage)
-        .onAppear {
+        .task {
             if viewModel == nil {
-                viewModel = DuplicateSweepViewModel(modelContext: modelContext)
+                let vm = DuplicateSweepViewModel(modelContext: modelContext)
+                viewModel = vm
+                await vm.startSearch(for: initialIdentifier, timeWindow: timeWindow)
             }
         }
         .fullScreenCover(item: Binding(
@@ -67,12 +69,7 @@ struct DuplicateSweepView: View {
             )
             .navigationTransition(.zoom(sourceID: item.id, in: heroNamespace))
         }
-        .sheet(isPresented: $showPicker, onDismiss: {
-            // If user cancelled the picker without selecting, go back
-            if viewModel?.phase == .idle {
-                onClose()
-            }
-        }) {
+        .sheet(isPresented: $showPicker) {
             PhotoPickerView { identifier in
                 showPicker = false
                 guard let viewModel else { return }
