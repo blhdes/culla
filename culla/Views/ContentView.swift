@@ -17,11 +17,7 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            if showDuplicateSweep {
-                DuplicateSweepView(timeWindow: TimeInterval(duplicateTimeWindowSeconds), onClose: {
-                    showDuplicateSweep = false
-                })
-            } else if let startDate {
+            if let startDate {
                 SwipeView(
                     startDate: startDate,
                     albumIdentifier: selectedAlbum?.collectionIdentifier,
@@ -60,6 +56,11 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showGalleries) {
             GalleriesView(sidebarGalleryIDs: $sidebarGalleryIDs, maxSidebarGalleries: maxSidebarGalleries)
+        }
+        .fullScreenCover(isPresented: $showDuplicateSweep) {
+            DuplicateSweepView(timeWindow: TimeInterval(duplicateTimeWindowSeconds), onClose: {
+                showDuplicateSweep = false
+            })
         }
     }
 }
