@@ -6,7 +6,7 @@ import Observation
 final class SubscriptionManager {
     static let shared = SubscriptionManager()
 
-    static let entitlementID = "Culla Pro"
+    static let entitlementID = "pro"
     private static let apiKey = "appl_qkEOEHhjiUplXNbPkjEwMTflFDQ"
 
     static let dailySwipeLimit = 20

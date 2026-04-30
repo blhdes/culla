@@ -50,6 +50,9 @@ struct PaywallSheet: View {
             }
         }
         .task { await loadOfferings() }
+        .onChange(of: subscriptions.isPro) { _, isPro in
+            if isPro { onClose() }
+        }
         .alert("Purchase failed", isPresented: Binding(
             get: { purchaseError != nil },
             set: { if !$0 { purchaseError = nil } }
@@ -451,9 +454,8 @@ struct PaywallSheet: View {
         do {
             let result = try await Purchases.shared.purchase(package: package)
             if result.userCancelled { return }
-            if result.customerInfo.entitlements[SubscriptionManager.entitlementID]?.isActive == true {
-                onClose()
-            }
+            // onClose fires via .onChange(of: subscriptions.isPro) once the
+            // customerInfoStream propagates the new entitlement.
         } catch {
             // RevenueCat returns a cancelled flag rather than throwing for user cancels,
             // so anything that lands here is a real failure worth showing.
