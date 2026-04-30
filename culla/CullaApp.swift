@@ -131,7 +131,7 @@ private struct SplashGate: View {
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
             if subscriptions.trialExpired {
-                paywallDismissible = false
+                paywallDismissible = true
                 showPaywall = true
             } else if !hasSeenPaywall {
                 paywallDismissible = true
@@ -143,7 +143,7 @@ private struct SplashGate: View {
         }
         .onChange(of: subscriptions.trialExpired) { _, expired in
             if expired && !showPaywall {
-                paywallDismissible = false
+                paywallDismissible = true
                 showPaywall = true
             }
         }
