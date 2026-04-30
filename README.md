@@ -27,6 +27,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 ### Modes & navigation
 - **Segmented mode picker** — switch between Photos, Favourites, and Duplicates from a native bottom toolbar
 - **Custom calendar** — scrollable photo-mosaic calendar that reflects the selected album
+- **Photo grid picker** — tap the photo icon in the calendar sheet to browse all photos as a scrollable grid; tapping a photo jumps the date wheel to that photo's date
 - **Smart date defaults** — jumps to the earliest available photo when you change albums
 - **Animated CullaEyes mascot** on the date picker (toggleable)
 - **Focus Timer** — 2, 5, or 10 minute sessions with a summary and circular progress arc
@@ -37,7 +38,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Custom 18-swatch palette** — fully editable accent colors with adaptive light/dark output
 - **Live rename sync** — rename a gallery in-app and the iPhone album updates too
 - **Move or copy** — when sorting from an album, choose whether photos stay or get moved
-- **Custom delete confirmation** — Messages-style menu anchored to the swiped row, with three deletion modes (delete + photos, delete keep photos, remove from Culla)
+- **Custom delete confirmation** — Messages-style menu with spring animation and three deletion modes (delete + photos, delete keep photos, remove from Culla); shared between the gallery list and gallery detail screen
 
 ### Background & theming
 - **Dynamic photo carousel background** — animated mosaic adapts to the selected gallery or favourites, with off / monochrome options
@@ -96,6 +97,7 @@ culla/
 │   ├── ContentView.swift               # Root navigation (date picker → swipe / duplicate sweep)
 │   ├── DatePickerView.swift            # Wheel + calendar + segmented mode picker
 │   ├── CalendarView.swift              # Custom photo-mosaic calendar (UIKit-backed grid)
+│   ├── PhotoGridPickerView.swift       # Scrollable photo grid for picking a start date
 │   ├── SwipeView.swift                 # Core swipe screen with gesture handling
 │   ├── PhotoCardView.swift             # Single photo card (drag offset, opacity)
 │   ├── PhotoCarouselBackground.swift   # Dynamic mosaic background, adapts to mode
