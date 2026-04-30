@@ -130,7 +130,7 @@ private struct SplashGate: View {
         } : nil)
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
-            if subscriptions.trialExpired {
+            if subscriptions.subscriptionExpired {
                 paywallDismissible = true
                 showPaywall = true
             } else if !hasSeenPaywall {
@@ -141,7 +141,7 @@ private struct SplashGate: View {
                 scheduleWalkthroughIfNeeded()
             }
         }
-        .onChange(of: subscriptions.trialExpired) { _, expired in
+        .onChange(of: subscriptions.subscriptionExpired) { _, expired in
             if expired && !showPaywall {
                 paywallDismissible = true
                 showPaywall = true
@@ -174,7 +174,7 @@ private struct SplashGate: View {
     private func scheduleWalkthroughIfNeeded() {
         let photoStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard !hasCompletedWalkthrough,
-              !subscriptions.trialExpired,
+              !subscriptions.subscriptionExpired,
               photoStatus == .authorized || photoStatus == .limited else { return }
         Task {
             try? await Task.sleep(for: .seconds(0.6))

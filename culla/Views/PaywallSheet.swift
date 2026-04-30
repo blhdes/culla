@@ -115,34 +115,35 @@ struct PaywallSheet: View {
     // MARK: - Paywall Body
 
     private func paywallBody(offering: Offering) -> some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                staggered(0) { hero }
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    staggered(0) { hero }
+                    staggered(1) { features }
+                }
+                .padding(.top, 24)
+                .padding(.bottom, 12)
+            }
+            .scrollBounceBehavior(.basedOnSize)
 
-                staggered(1) { features }
-
+            VStack(spacing: 12) {
                 staggered(2) {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 8) {
                         ForEach(offering.availablePackages, id: \.identifier) { package in
                             packageCard(package)
                         }
                     }
-                    .padding(.horizontal, 16)
                 }
-
-                VStack(spacing: 12) {
-                    staggered(3) { ctaButton }
-                    if let package = selectedPackage, introductoryTrialDays(package) != nil {
-                        staggered(4) { trialDisclosure(for: package) }
-                    }
-                    staggered(4) { footerLinks }
+                staggered(3) { ctaButton }
+                if let package = selectedPackage, introductoryTrialDays(package) != nil {
+                    staggered(4) { trialDisclosure(for: package) }
                 }
-                .padding(.horizontal, 16)
+                staggered(4) { footerLinks }
             }
-            .padding(.top, 12)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
         }
-        .scrollBounceBehavior(.basedOnSize)
     }
 
     @ViewBuilder
@@ -352,13 +353,7 @@ struct PaywallSheet: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.leading)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(accent.opacity(0.35), lineWidth: 1)
-        )
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 

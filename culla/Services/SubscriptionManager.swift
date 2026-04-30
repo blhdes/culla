@@ -20,8 +20,7 @@ final class SubscriptionManager {
     private(set) var todaySwipeCount: Int = 0
 
     /// True if the user has ever activated Culla Pro (trial or paid) but it is now inactive.
-    /// This signals that the trial has expired and a hard gate should be shown.
-    var trialExpired: Bool {
+    var subscriptionExpired: Bool {
         guard let entitlement = customerInfo?.entitlements[Self.entitlementID] else { return false }
         return !entitlement.isActive
     }
