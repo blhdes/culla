@@ -118,11 +118,11 @@ struct SettingsView: View {
                     } else {
                         Button("Upgrade to Culla Pro") { showPaywall = true }
                             .foregroundStyle(.primary)
+                        Button("Restore purchases") {
+                            Task { await restore() }
+                        }
+                        .foregroundStyle(.primary)
                     }
-                    Button("Restore purchases") {
-                        Task { await restore() }
-                    }
-                    .foregroundStyle(.primary)
                 }
             }
             .navigationTitle("Settings")
@@ -171,7 +171,15 @@ struct SettingsView: View {
 
     private func restore() async {
         do {
-            try await SubscriptionManager.shared.restorePurchases()
+            try await subscriptions.restorePurchases()
+            if !subscriptions.isPro {
+                restoreError = NSError(
+                    domain: "Culla",
+                    code: 0,
+                    userInfo: [NSLocalizedDescriptionKey: "No active subscription found on this account."]
+                )
+                showRestoreError = true
+            }
         } catch {
             restoreError = error
             showRestoreError = true

@@ -199,6 +199,7 @@ struct PaywallSheet: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
+        .padding(.bottom, 8)
     }
 
     private var features: some View {
