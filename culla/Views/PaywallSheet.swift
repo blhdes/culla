@@ -405,16 +405,19 @@ struct PaywallSheet: View {
                 print("  intro:", p.introductoryDiscount as Any)
             }
             #endif
+            // Resolve eligibility before revealing the paywall — otherwise the
+            // optimistic trial UI flashes for one frame before being hidden.
+            let eligibilityMap = await fetchEligibilityMap(for: current)
+            #if DEBUG
+            print("🟣 [Paywall] eligibility:", eligibilityMap)
+            #endif
             await MainActor.run {
                 offering = current
                 selectedPackage = defaultPackage(for: current)
+                eligibility = eligibilityMap
                 isLoading = false
                 hasAppeared = true
             }
-            await fetchEligibility(for: current)
-            #if DEBUG
-            print("🟣 [Paywall] eligibility:", eligibility)
-            #endif
         } catch {
             await MainActor.run {
                 loadError = error.localizedDescription
@@ -424,13 +427,12 @@ struct PaywallSheet: View {
         }
     }
 
-    private func fetchEligibility(for offering: Offering?) async {
-        guard let offering else { return }
+    private func fetchEligibilityMap(for offering: Offering?) async -> [String: IntroEligibilityStatus] {
+        guard let offering else { return [:] }
         let ids = offering.availablePackages.map { $0.storeProduct.productIdentifier }
-        guard !ids.isEmpty else { return }
+        guard !ids.isEmpty else { return [:] }
         let result = await Purchases.shared.checkTrialOrIntroDiscountEligibility(productIdentifiers: ids)
-        let map = result.mapValues { $0.status }
-        await MainActor.run { eligibility = map }
+        return result.mapValues { $0.status }
     }
 
     private func defaultPackage(for offering: Offering?) -> Package? {
