@@ -1,6 +1,7 @@
 import Foundation
 import RevenueCat
 import Observation
+import StoreKit
 
 @Observable
 final class SubscriptionManager {
@@ -12,15 +13,25 @@ final class SubscriptionManager {
     static let dailySwipeLimit = 20
     static let freeGalleryLimit = 3
 
-    private static let swipeCountKey = "dailySwipeCount"
-    private static let swipeDateKey  = "dailySwipeDate"
+    /// Builds 1 and 2 shipped as a paid app. Anyone who purchased then keeps Pro for life.
+    private static let legacyPaidBuildCutoff = 2
+
+    private static let swipeCountKey  = "dailySwipeCount"
+    private static let swipeDateKey   = "dailySwipeDate"
+    private static let legacyGrantKey = "isLegacyPaidUser"
 
     private(set) var customerInfo: CustomerInfo?
-    private(set) var isPro: Bool = false
     private(set) var todaySwipeCount: Int = 0
 
+    private var revenueIsPro: Bool = false
+    private(set) var isLegacyGranted: Bool = UserDefaults.standard.bool(forKey: SubscriptionManager.legacyGrantKey)
+
+    var isPro: Bool { revenueIsPro || isLegacyGranted }
+
     /// True if the user has ever activated Culla Pro (trial or paid) but it is now inactive.
+    /// Legacy paid-app users are excluded — their entitlement never expires.
     var subscriptionExpired: Bool {
+        guard !isLegacyGranted else { return false }
         guard let entitlement = customerInfo?.entitlements[Self.entitlementID] else { return false }
         return !entitlement.isActive
     }
@@ -46,11 +57,27 @@ final class SubscriptionManager {
             for await info in Purchases.shared.customerInfoStream {
                 await MainActor.run {
                     self?.customerInfo = info
-                    self?.isPro = info.entitlements[Self.entitlementID]?.isActive == true
+                    self?.revenueIsPro = info.entitlements[Self.entitlementID]?.isActive == true
                 }
                 await self?.reconcileTrialReminder(info: info)
             }
         }
+
+        Task { await checkLegacyPaidUser() }
+    }
+
+    /// Grants lifetime Pro to anyone who originally purchased Culla as a paid app
+    /// (builds 1–2). Result is cached in UserDefaults so we only verify the App Store
+    /// receipt once per device.
+    private func checkLegacyPaidUser() async {
+        guard !isLegacyGranted else { return }
+        guard let result = try? await AppTransaction.shared else { return }
+        guard case .verified(let transaction) = result else { return }
+        guard let originalBuild = Int(transaction.originalAppVersion) else { return }
+        guard originalBuild <= Self.legacyPaidBuildCutoff else { return }
+
+        UserDefaults.standard.set(true, forKey: Self.legacyGrantKey)
+        await MainActor.run { isLegacyGranted = true }
     }
 
     /// Syncs `todaySwipeCount` with UserDefaults, resetting it if the calendar day has rolled over.
@@ -108,6 +135,7 @@ final class SubscriptionManager {
     func restorePurchases() async throws {
         let info = try await Purchases.shared.restorePurchases()
         customerInfo = info
-        isPro = info.entitlements[Self.entitlementID]?.isActive == true
+        revenueIsPro = info.entitlements[Self.entitlementID]?.isActive == true
+        await checkLegacyPaidUser()
     }
 }
