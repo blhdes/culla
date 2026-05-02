@@ -231,6 +231,17 @@ struct SwipeView: View {
                     }
                 }
 
+                // Tap anywhere to dismiss the active hint.
+                // Sits above the hints overlay but below the chrome buttons,
+                // so Manage / Delete / back stay tappable.
+                .overlay {
+                    if showSwipeHint || showZoomTooltip {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { dismissHints() }
+                    }
+                }
+
                 // "Manage" button — bottom right, tappable
                 .overlay(alignment: .bottomTrailing) {
                     Button {

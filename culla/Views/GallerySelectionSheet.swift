@@ -8,6 +8,7 @@ struct GallerySelectionSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
 
     @State private var searchText = ""
@@ -86,6 +87,7 @@ struct GallerySelectionSheet: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(accent)
                     .controlSize(.large)
                     .padding(.horizontal, 32)
                 }
