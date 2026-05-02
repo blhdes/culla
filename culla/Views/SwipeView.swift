@@ -58,8 +58,10 @@ struct SwipeView: View {
     // Onboarding hints
     @AppStorage(OnboardingKey.zoomTooltipSeen) private var hasSeenZoomTooltip = false
     @AppStorage(OnboardingKey.swipeHintSeen) private var hasSeenSwipeHint = false
+    @AppStorage(OnboardingKey.skipTooltipSeen) private var hasSeenSkipTooltip = false
     @State private var showZoomTooltip = false
     @State private var showSwipeHint = false
+    @State private var showSkipTooltip = false
 
     // Undo auto-hide
     @State private var showUndo = false
@@ -139,6 +141,8 @@ struct SwipeView: View {
                     try? await Task.sleep(for: .seconds(1))
                     if !hasSeenSwipeHint {
                         withAnimation { showSwipeHint = true }
+                    } else if !hasSeenSkipTooltip {
+                        withAnimation { showSkipTooltip = true }
                     } else if !hasSeenZoomTooltip {
                         withAnimation { showZoomTooltip = true }
                     }
@@ -216,7 +220,7 @@ struct SwipeView: View {
                     }
                 }
 
-                // Onboarding hints — both disappear on first swipe action
+                // Onboarding hints — disappear on first swipe action
                 .overlay {
                     if showSwipeHint {
                         SwipeDirectionsHint {
@@ -224,6 +228,10 @@ struct SwipeView: View {
                             showSwipeHint = false
                         }
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    } else if showSkipTooltip {
+                        TooltipBubble(text: "Double-tap to skip a photo")
+                            .padding(.horizontal, 48)
+                            .transition(.opacity)
                     } else if showZoomTooltip {
                         TooltipBubble(text: "Pinch to zoom in or out on any photo")
                             .padding(.horizontal, 48)
@@ -235,7 +243,7 @@ struct SwipeView: View {
                 // Sits above the hints overlay but below the chrome buttons,
                 // so Manage / Delete / back stay tappable.
                 .overlay {
-                    if showSwipeHint || showZoomTooltip {
+                    if showSwipeHint || showSkipTooltip || showZoomTooltip {
                         Color.clear
                             .contentShape(Rectangle())
                             .onTapGesture { dismissHints() }
@@ -418,7 +426,7 @@ struct SwipeView: View {
     private func dragGesture(viewModel: SwipeViewModel) -> some Gesture {
         DragGesture(coordinateSpace: .global)
             .onChanged { value in
-                if showSwipeHint || showZoomTooltip { dismissHints() }
+                if showSwipeHint || showSkipTooltip || showZoomTooltip { dismissHints() }
                 cardOffset = value.translation
                 updateHighlight(
                     translation: value.translation,
@@ -642,10 +650,12 @@ struct SwipeView: View {
 
     private func dismissHints() {
         if showSwipeHint { hasSeenSwipeHint = true }
+        if showSkipTooltip { hasSeenSkipTooltip = true }
         if showZoomTooltip { hasSeenZoomTooltip = true }
         withAnimation(.easeOut(duration: 0.2)) {
             showZoomTooltip = false
             showSwipeHint = false
+            showSkipTooltip = false
         }
     }
 

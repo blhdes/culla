@@ -5,4 +5,5 @@ enum OnboardingKey {
     static let calendarTooltipSeen  = "hasSeenCalendarTooltip"
     static let zoomTooltipSeen      = "hasSeenZoomTooltip"
     static let swipeHintSeen        = "hasSeenSwipeHint"
+    static let skipTooltipSeen      = "hasSeenSkipTooltip"
 }
