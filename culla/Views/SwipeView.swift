@@ -136,15 +136,10 @@ struct SwipeView: View {
                 }
 
                 if !vm.isEmpty {
+                    try? await Task.sleep(for: .seconds(1))
                     if !hasSeenSwipeHint {
-                        try? await Task.sleep(for: .seconds(1))
                         withAnimation { showSwipeHint = true }
-                        try? await Task.sleep(for: .seconds(7))
-                        if !hasSeenZoomTooltip {
-                            withAnimation { showZoomTooltip = true }
-                        }
                     } else if !hasSeenZoomTooltip {
-                        try? await Task.sleep(for: .seconds(1))
                         withAnimation { showZoomTooltip = true }
                     }
                 }
@@ -635,12 +630,12 @@ struct SwipeView: View {
     }
 
     private func dismissHints() {
+        if showSwipeHint { hasSeenSwipeHint = true }
+        if showZoomTooltip { hasSeenZoomTooltip = true }
         withAnimation(.easeOut(duration: 0.2)) {
             showZoomTooltip = false
             showSwipeHint = false
         }
-        hasSeenZoomTooltip = true
-        hasSeenSwipeHint = true
     }
 
     private func flashUndo() {
