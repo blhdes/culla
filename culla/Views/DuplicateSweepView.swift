@@ -386,10 +386,12 @@ private struct DuplicatePhotoView: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
+                    .transition(.opacity)
             } else {
                 Color.clear
             }
         }
+        .animation(.easeOut(duration: 0.35), value: loader.image != nil)
         .task { await loader.load() }
     }
 }

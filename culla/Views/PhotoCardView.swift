@@ -25,16 +25,17 @@ struct PhotoCardView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                if let image = loader.image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: isZoomed ? .fill : .fit)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .animation(.easeInOut(duration: 0.3), value: isZoomed)
-                } else {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Group {
+                    if let image = loader.image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: isZoomed ? .fill : .fit)
+                            .frame(width: geo.size.width, height: geo.size.height)
+                            .animation(.easeInOut(duration: 0.3), value: isZoomed)
+                            .transition(.opacity)
+                    }
                 }
+                .animation(.easeOut(duration: 0.35), value: loader.image != nil)
 
                 swipeOverlay
             }
