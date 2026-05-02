@@ -204,9 +204,13 @@ struct DatePickerView: View {
                 Button {
                     showGalleries = true
                 } label: {
-                    Image(systemName: "rectangle.stack")
+                    HStack(spacing: 4) {
+                        Image(systemName: "rectangle.stack")
+                            .foregroundStyle(accent)
+                        Text("Galleries")
+                            .foregroundStyle(.primary)
+                    }
                 }
-                .tint(accent)
                 .tourTarget(.galleriesButton)
             }
             ToolbarItem(placement: .bottomBar) {

@@ -25,7 +25,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Haptic feedback** — toggleable in Settings; light on dismiss, medium on gallery sort
 
 ### Modes & navigation
-- **Segmented mode picker** — switch between Photos, Favourites, and Duplicates from a native bottom toolbar
+- **Segmented mode picker** — switch between Cullaing, This Day, and Duplicates from a native bottom toolbar
 - **Custom calendar** — scrollable photo-mosaic calendar that reflects the selected album
 - **Photo grid picker** — tap the photo icon in the calendar sheet to browse all photos as a scrollable grid; tapping a photo jumps the date wheel to that photo's date
 - **Smart date defaults** — jumps to the earliest available photo when you change albums
