@@ -111,19 +111,23 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Subscription") {
-                    if subscriptions.isPro {
-                        Button("Manage subscription") { showCustomerCenter = true }
-                            .foregroundStyle(.primary)
-                    } else {
-                        Button("Upgrade to Culla Pro") { showPaywall = true }
-                            .foregroundStyle(.primary)
-                        Button("Restore purchases") {
-                            Task { await restore() }
-                        }
-                        .foregroundStyle(.primary)
-                    }
-                }
+                // MARK: - FREEMIUM HIDDEN — restore in vNext
+                // The Subscription section is hidden while the freemium model is
+                // disabled (everyone is Pro). Original block preserved below.
+                //
+                // Section("Subscription") {
+                //     if subscriptions.isPro {
+                //         Button("Manage subscription") { showCustomerCenter = true }
+                //             .foregroundStyle(.primary)
+                //     } else {
+                //         Button("Upgrade to Culla Pro") { showPaywall = true }
+                //             .foregroundStyle(.primary)
+                //         Button("Restore purchases") {
+                //             Task { await restore() }
+                //         }
+                //         .foregroundStyle(.primary)
+                //     }
+                // }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

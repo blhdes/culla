@@ -309,15 +309,17 @@ struct SwipeView: View {
                         .padding(.vertical, 6)
                         .background(.ultraThinMaterial, in: Capsule())
                 }
-                if !subscriptions.isPro {
-                    Text("\(subscriptions.todaySwipeCount) / \(SubscriptionManager.dailySwipeLimit) today")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial, in: Capsule())
-                }
+                // FREEMIUM HIDDEN — restore in vNext
+                // Daily swipe counter hidden while the freemium model is disabled.
+                // if !subscriptions.isPro {
+                //     Text("\(subscriptions.todaySwipeCount) / \(SubscriptionManager.dailySwipeLimit) today")
+                //         .font(.caption)
+                //         .fontWeight(.medium)
+                //         .foregroundStyle(.secondary)
+                //         .padding(.horizontal, 12)
+                //         .padding(.vertical, 6)
+                //         .background(.ultraThinMaterial, in: Capsule())
+                // }
                 if let toastMessage {
                     Text(toastMessage)
                         .font(.subheadline)

@@ -26,20 +26,33 @@ final class SubscriptionManager {
     private var revenueIsPro: Bool = false
     private(set) var isLegacyGranted: Bool = UserDefaults.standard.bool(forKey: SubscriptionManager.legacyGrantKey)
 
-    var isPro: Bool { revenueIsPro || isLegacyGranted }
+    // MARK: - FREEMIUM HIDDEN — restore in vNext
+    //
+    // The freemium model is temporarily disabled: everyone is treated as Pro,
+    // no paywalls are gated, no daily swipe limit applies. Each property below
+    // is hard-coded to the "unlocked" branch so every `if !isPro` / `if hasReachedDailyLimit`
+    // / `if subscriptionExpired` check across the codebase resolves to the unlocked path
+    // without having to touch every call site. The original logic is preserved
+    // verbatim in the commented blocks — to restore freemium, swap each return for
+    // the commented body.
+
+    var isPro: Bool { true }
+    // var isPro: Bool { revenueIsPro || isLegacyGranted }
 
     /// True if the user has ever activated Culla Pro (trial or paid) but it is now inactive.
     /// Legacy paid-app users are excluded — their entitlement never expires.
-    var subscriptionExpired: Bool {
-        guard !isLegacyGranted else { return false }
-        guard let entitlement = customerInfo?.entitlements[Self.entitlementID] else { return false }
-        return !entitlement.isActive
-    }
+    var subscriptionExpired: Bool { false }
+    // var subscriptionExpired: Bool {
+    //     guard !isLegacyGranted else { return false }
+    //     guard let entitlement = customerInfo?.entitlements[Self.entitlementID] else { return false }
+    //     return !entitlement.isActive
+    // }
 
     /// True when a free user has used all 20 swipes for today.
-    var hasReachedDailyLimit: Bool {
-        !isPro && todaySwipeCount >= Self.dailySwipeLimit
-    }
+    var hasReachedDailyLimit: Bool { false }
+    // var hasReachedDailyLimit: Bool {
+    //     !isPro && todaySwipeCount >= Self.dailySwipeLimit
+    // }
 
     private var streamTask: Task<Void, Never>?
     /// The expiration date we've already scheduled a reminder for — prevents re-prompting
