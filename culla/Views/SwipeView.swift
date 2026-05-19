@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import Photos
 import Combine
+import LinkPresentation
 
 struct SwipeView: View {
     let startDate: Date
@@ -46,8 +47,7 @@ struct SwipeView: View {
     @State private var showSessionSummary: Bool = false
 
     // Share sheet
-    @State private var showShareSheet = false
-    @State private var shareImage: UIImage?
+    @State private var shareItem: ShareItem?
 
     // Paywall
     @State private var showPaywall = false
@@ -110,10 +110,8 @@ struct SwipeView: View {
                 maxSelection: maxSidebarGalleries
             )
         }
-        .sheet(isPresented: $showShareSheet) {
-            if let shareImage {
-                ShareSheet(items: [shareImage])
-            }
+        .sheet(item: $shareItem) { item in
+            ShareSheet(image: item.image)
         }
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(onClose: { showPaywall = false })
@@ -519,8 +517,7 @@ struct SwipeView: View {
                     let screenSize = UIScreen.main.bounds.size
                     let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
                     if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
-                        shareImage = image
-                        showShareSheet = true
+                        shareItem = ShareItem(image: image)
                     }
                 }
                 return
@@ -855,11 +852,46 @@ private extension View {
 
 // MARK: - Share Sheet
 
+struct ShareItem: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+final class SharePhotoItem: NSObject, UIActivityItemSource {
+    let image: UIImage
+    let title: String
+
+    init(image: UIImage, title: String) {
+        self.image = image
+        self.title = title
+    }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        image
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        image
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController, subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
+        title
+    }
+
+    func activityViewControllerLinkMetadata(_ activityViewController: UIActivityViewController) -> LPLinkMetadata? {
+        let metadata = LPLinkMetadata()
+        metadata.title = title
+        metadata.imageProvider = NSItemProvider(object: image)
+        return metadata
+    }
+}
+
 struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
+    let image: UIImage
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let source = SharePhotoItem(image: image, title: "Culla")
+        return UIActivityViewController(activityItems: [source], applicationActivities: nil)
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
