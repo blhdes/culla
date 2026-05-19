@@ -148,6 +148,11 @@ private struct SplashGate: View {
                 scheduleWalkthroughIfNeeded()
             }
         }
+        .onChange(of: hasCompletedWalkthrough) { _, completed in
+            if !completed && isReady {
+                scheduleWalkthroughIfNeeded()
+            }
+        }
         .onChange(of: sidebarGalleryIDs) { _, newValue in
             if let data = try? JSONEncoder().encode(newValue) {
                 UserDefaults.standard.set(data, forKey: "sidebarGalleryIDs")

@@ -111,6 +111,13 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Help") {
+                    Button("Restart tutorial") {
+                        restartTutorial()
+                    }
+                    .foregroundStyle(.primary)
+                }
+
                 // MARK: - FREEMIUM HIDDEN — restore in vNext
                 // The Subscription section is hidden while the freemium model is
                 // disabled (everyone is Pro). Original block preserved below.
@@ -171,6 +178,16 @@ struct SettingsView: View {
                 selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
             }
         }
+    }
+
+    private func restartTutorial() {
+        let defaults = UserDefaults.standard
+        defaults.set(false, forKey: OnboardingKey.walkthroughComplete)
+        defaults.set(false, forKey: OnboardingKey.calendarTooltipSeen)
+        defaults.set(false, forKey: OnboardingKey.zoomTooltipSeen)
+        defaults.set(false, forKey: OnboardingKey.swipeHintSeen)
+        defaults.set(false, forKey: OnboardingKey.skipTooltipSeen)
+        dismiss()
     }
 
     private func restore() async {
