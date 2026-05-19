@@ -111,7 +111,7 @@ struct SwipeView: View {
             )
         }
         .sheet(item: $shareItem) { item in
-            ShareSheet(image: item.image)
+            ShareSheet(image: item.image, date: item.date)
         }
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(onClose: { showPaywall = false })
@@ -517,7 +517,7 @@ struct SwipeView: View {
                     let screenSize = UIScreen.main.bounds.size
                     let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
                     if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
-                        shareItem = ShareItem(image: image)
+                        shareItem = ShareItem(image: image, date: viewModel.currentPhotoDate)
                     }
                 }
                 return
@@ -855,6 +855,7 @@ private extension View {
 struct ShareItem: Identifiable {
     let id = UUID()
     let image: UIImage
+    let date: Date?
 }
 
 final class SharePhotoItem: NSObject, UIActivityItemSource {
@@ -888,12 +889,18 @@ final class SharePhotoItem: NSObject, UIActivityItemSource {
 
 struct ShareSheet: UIViewControllerRepresentable {
     let image: UIImage
+    let date: Date?
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        let source = SharePhotoItem(image: image, title: "Culla")
+        let source = SharePhotoItem(image: image, title: Self.title(for: date))
         return UIActivityViewController(activityItems: [source], applicationActivities: nil)
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+
+    private static func title(for date: Date?) -> String {
+        guard let date else { return "Culla" }
+        return "Culla · \(date.formatted(date: .abbreviated, time: .omitted))"
+    }
 }
 
