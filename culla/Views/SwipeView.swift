@@ -73,6 +73,11 @@ struct SwipeView: View {
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
+    @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
+
+    private var sidebarLayout: SidebarLayout {
+        SidebarLayout(rawValue: sidebarLayoutRaw) ?? .panels
+    }
 
     private let swipeThreshold: CGFloat = 100
     private var maxSidebarGalleries: Int {
@@ -199,18 +204,30 @@ struct SwipeView: View {
 
                 // Sidebar overlay — fades in + subtle slide from right
                 .overlay {
-                    let progress = isLongPressing ? 1.0 : rightDragProgress
-                    HStack(spacing: 0) {
-                        Spacer()
-                        GallerySidebarView(
-                            galleries: sidebarGalleries,
-                            highlightedID: highlightedGalleryID,
-                            dragProgress: progress,
-                            isLongPress: isLongPressing
-                        )
-                        .frame(width: geo.size.width * 0.5)
-                        .offset(x: (1.0 - progress) * 30)
+                    let progress = isLongPressing ? 1.0 : sidebarDragProgress
+                    Group {
+                        switch sidebarLayout {
+                        case .panels:
+                            HStack(spacing: 0) {
+                                Spacer()
+                                GallerySidebarView(
+                                    galleries: sidebarGalleries,
+                                    highlightedID: highlightedGalleryID,
+                                    dragProgress: progress,
+                                    isLongPress: isLongPressing
+                                )
+                                .frame(width: geo.size.width * 0.5)
+                            }
+                        case .arc:
+                            GalleryArcView(
+                                galleries: sidebarGalleries,
+                                highlightedID: highlightedGalleryID,
+                                dragProgress: progress,
+                                isLongPress: isLongPressing
+                            )
+                        }
                     }
+                    .offset(x: (1.0 - progress) * 30)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
                     .onPreferenceChange(GalleryFramePreferenceKey.self) { frames in
@@ -343,6 +360,31 @@ struct SwipeView: View {
         // Photo date + undo at bottom
         .overlay(alignment: .bottom) {
             VStack(spacing: 10) {
+                // Arc mode: explicit favorite + share buttons, since those swipe
+                // directions are reassigned to gallery slots.
+                if sidebarLayout == .arc {
+                    HStack(spacing: 14) {
+                        Button {
+                            toggleFavoriteCurrent(viewModel: viewModel)
+                        } label: {
+                            Image(systemName: viewModel.currentPhotoIsFavorite ? "heart.fill" : "heart")
+                                .font(.title3)
+                                .foregroundStyle(viewModel.currentPhotoIsFavorite ? Color.pink : .primary)
+                                .frame(width: 44, height: 44)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        Button {
+                            shareCurrent(viewModel: viewModel)
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.title3)
+                                .foregroundStyle(.primary)
+                                .frame(width: 44, height: 44)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
                 if let date = viewModel.currentPhotoDate {
                     Button {
                         guard viewModel.canUndo else { return }
@@ -441,13 +483,22 @@ struct SwipeView: View {
     // MARK: - Gesture Handling
 
     private func updateHighlight(translation: CGSize, location: CGPoint) {
-        // Highlight galleries whenever there's meaningful rightward movement.
-        // No axis dominance check — top/bottom galleries naturally require
-        // steep angles, and the highlight should still work.
-        if translation.width > 30 {
-            highlightedGalleryID = findGallery(at: location)
-        } else {
-            highlightedGalleryID = nil
+        switch sidebarLayout {
+        case .panels:
+            // Highlight galleries whenever there's meaningful rightward movement.
+            // No axis dominance check — top/bottom galleries naturally require
+            // steep angles, and the highlight should still work.
+            if translation.width > 30 {
+                highlightedGalleryID = findGallery(at: location)
+            } else {
+                highlightedGalleryID = nil
+            }
+        case .arc:
+            if let idx = GalleryArcView.index(forDrag: translation, count: sidebarGalleries.count) {
+                highlightedGalleryID = sidebarGalleries[idx].id
+            } else {
+                highlightedGalleryID = nil
+            }
         }
     }
 
@@ -456,21 +507,36 @@ struct SwipeView: View {
         let ty = value.translation.height
         let ptx = value.predictedEndTranslation.width
         let pty = value.predictedEndTranslation.height
+        let isArc = (sidebarLayout == .arc)
 
-        // Right swipe with no galleries set up — guide the user to Manage
+        // Did the user attempt a gallery commit? Panels = rightward speed;
+        // arc = total drag magnitude in any direction within the arc.
+        let attemptedGalleryCommit: Bool = {
+            if isArc {
+                return hypot(tx, ty) > swipeThreshold || hypot(ptx, pty) > swipeThreshold
+            }
+            return tx > swipeThreshold || ptx > swipeThreshold
+        }()
+
+        // Arc-mode only: was the drag pointed into the arc (not into dismiss territory)?
+        let inArcDirection: Bool = {
+            guard isArc else { return false }
+            let angleDeg = atan2(ty, tx) * 180 / .pi
+            return abs(angleDeg) <= GalleryArcView.arcSpanDeg / 2
+        }()
+
+        // Gallery-direction swipe with no galleries set up — guide the user to Manage
         // instead of letting the swipe silently fall through.
-        if (tx > swipeThreshold || ptx > swipeThreshold), sidebarGalleries.isEmpty {
+        if attemptedGalleryCommit, sidebarGalleries.isEmpty, (!isArc || inArcDirection) {
             snapBack()
             showToast("Add a gallery first")
             showGallerySelector = true
             return
         }
 
-        // Right swipe with a highlighted gallery always wins —
-        // even if the angle is steep (top/bottom galleries).
-        // The highlight means the finger is over a sidebar panel,
-        // so the user's intent is clear.
-        if tx > swipeThreshold || ptx > swipeThreshold,
+        // Commit to the highlighted gallery. The highlight means the finger was
+        // over a panel (panels) or pointed at an arc segment (arc), so user intent is clear.
+        if attemptedGalleryCommit,
            let id = highlightedGalleryID,
            let gallery = sidebarGalleries.first(where: { $0.id == id }) {
             if subscriptions.hasReachedDailyLimit {
@@ -478,7 +544,16 @@ struct SwipeView: View {
                 showPaywall = true
                 return
             }
-            flyOff(x: 500) {
+            let target: CGSize = {
+                if isArc {
+                    // Fly the card in the same direction the finger was moving.
+                    let angleRad = atan2(ty, tx)
+                    let distance: CGFloat = 600
+                    return CGSize(width: cos(angleRad) * distance, height: sin(angleRad) * distance)
+                }
+                return CGSize(width: 500, height: 0)
+            }()
+            flyOff(to: target) {
                 viewModel.assignToGallery(gallery)
                 subscriptions.recordSwipe()
                 Haptics.swipeRight()
@@ -487,44 +562,22 @@ struct SwipeView: View {
             return
         }
 
-        // Vertical swipe: primary axis is vertical
-        if abs(ty) > abs(tx) {
-            // Swipe UP → favorite
+        // Vertical swipe → favorite/share. Panels mode only; arc mode reassigns
+        // those directions to gallery slots and exposes fav/share as buttons.
+        if !isArc, abs(ty) > abs(tx) {
             if ty < -swipeThreshold || pty < -swipeThreshold {
                 snapBack()
-                Task {
-                    guard let identifier = viewModel.currentIdentifier else { return }
-                    let isFavorite = await photoService.toggleFavorite(identifier: identifier)
-                    viewModel.currentPhotoIsFavorite = isFavorite
-                    Haptics.swipeUp()
-                    if isFavorite {
-                        totalFavouritedPhotos += 1
-                        DailyStats.upsert(in: modelContext, favouritedDelta: 1)
-                    } else {
-                        totalFavouritedPhotos = max(0, totalFavouritedPhotos - 1)
-                        DailyStats.upsert(in: modelContext, favouritedDelta: -1)
-                    }
-                    showToast(isFavorite ? "Favorited ♥" : "Unfavorited")
-                }
+                toggleFavoriteCurrent(viewModel: viewModel)
                 return
             }
-            // Swipe DOWN → share
             if ty > swipeThreshold || pty > swipeThreshold {
-                Haptics.swipeDown()
                 snapBack()
-                Task {
-                    guard let identifier = viewModel.currentIdentifier else { return }
-                    let screenSize = UIScreen.main.bounds.size
-                    let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
-                    if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
-                        shareItem = ShareItem(image: image, date: viewModel.currentPhotoDate)
-                    }
-                }
+                shareCurrent(viewModel: viewModel)
                 return
             }
         }
 
-        // Left swipe: dismiss if actual OR predicted distance exceeds threshold
+        // Left swipe → dismiss (both modes).
         if tx < -swipeThreshold || ptx < -swipeThreshold {
             if subscriptions.hasReachedDailyLimit {
                 snapBack()
@@ -544,9 +597,44 @@ struct SwipeView: View {
         snapBack()
     }
 
+    // MARK: - Favorite / Share helpers (callable from swipes and from buttons)
+
+    private func toggleFavoriteCurrent(viewModel: SwipeViewModel) {
+        Task {
+            guard let identifier = viewModel.currentIdentifier else { return }
+            let isFavorite = await photoService.toggleFavorite(identifier: identifier)
+            viewModel.currentPhotoIsFavorite = isFavorite
+            Haptics.swipeUp()
+            if isFavorite {
+                totalFavouritedPhotos += 1
+                DailyStats.upsert(in: modelContext, favouritedDelta: 1)
+            } else {
+                totalFavouritedPhotos = max(0, totalFavouritedPhotos - 1)
+                DailyStats.upsert(in: modelContext, favouritedDelta: -1)
+            }
+            showToast(isFavorite ? "Favorited \u{2665}" : "Unfavorited")
+        }
+    }
+
+    private func shareCurrent(viewModel: SwipeViewModel) {
+        Haptics.swipeDown()
+        Task {
+            guard let identifier = viewModel.currentIdentifier else { return }
+            let screenSize = UIScreen.main.bounds.size
+            let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
+            if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
+                shareItem = ShareItem(image: image, date: viewModel.currentPhotoDate)
+            }
+        }
+    }
+
     private func flyOff(x: CGFloat, action: @escaping () -> Void) {
+        flyOff(to: CGSize(width: x, height: 0), action: action)
+    }
+
+    private func flyOff(to offset: CGSize, action: @escaping () -> Void) {
         withAnimation(.easeIn(duration: 0.25)) {
-            cardOffset = CGSize(width: x, height: 0)
+            cardOffset = offset
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             cardOffset = .zero
@@ -599,12 +687,26 @@ struct SwipeView: View {
         min(max(cardOffset.width / swipeThreshold, 0), 1.0)
     }
 
+    /// Progress used to drive the gallery sidebar overlay + chrome fade.
+    /// Panels: horizontal rightward drag only.
+    /// Arc: drag magnitude in any direction within the arc's angular span.
+    private var sidebarDragProgress: CGFloat {
+        switch sidebarLayout {
+        case .panels:
+            return rightDragProgress
+        case .arc:
+            let angleDeg = atan2(cardOffset.height, cardOffset.width) * 180 / .pi
+            guard abs(angleDeg) <= GalleryArcView.arcSpanDeg / 2 else { return 0 }
+            return min(max(hypot(cardOffset.width, cardOffset.height) / swipeThreshold, 0), 1.0)
+        }
+    }
+
     /// Fade out UI chrome as the user drags toward galleries,
     /// so gallery names aren't blocked by buttons and labels.
     /// On long-press, fully hide chrome to spotlight the sidebar.
     private var chromeOpacity: Double {
         if isLongPressing { return 0 }
-        return Double(1.0 - rightDragProgress)
+        return Double(1.0 - sidebarDragProgress)
     }
 
     private func findGallery(at point: CGPoint) -> UUID? {
