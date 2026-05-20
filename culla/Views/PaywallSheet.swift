@@ -186,12 +186,13 @@ struct PaywallSheet: View {
                     }
                 }
 
-            if showCullaEyes {
-                CullaEyes()
-                    .tint(accent)
-                    .scaleEffect(0.55)
-                    .frame(height: 22)
-            }
+            // MARK: - CULLA EYES HIDDEN — restore in vNext
+            // if showCullaEyes {
+            //     CullaEyes()
+            //         .tint(accent)
+            //         .scaleEffect(0.55)
+            //         .frame(height: 22)
+            // }
 
             Text("culla Pro")
                 .font(.system(size: 24, weight: .bold, design: .rounded))

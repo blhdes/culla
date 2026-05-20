@@ -56,11 +56,12 @@ struct DatePickerView: View {
     var body: some View {
         VStack(spacing: 28) {
             if let earliestDate, let latestDate {
-                if showCullaEyes {
-                    CullaEyes()
-                        .tint(accent)
-                        .padding(.top, 8)
-                }
+                // MARK: - CULLA EYES HIDDEN — restore in vNext
+                // if showCullaEyes {
+                //     CullaEyes()
+                //         .tint(accent)
+                //         .padding(.top, 8)
+                // }
 
                 Spacer()
 

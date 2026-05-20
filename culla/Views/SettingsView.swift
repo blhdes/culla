@@ -91,7 +91,8 @@ struct SettingsView: View {
 
                 Section("Interface") {
                     Toggle("Show status bar", isOn: $statusBarVisible)
-                    Toggle("Culla Eyes", isOn: $showCullaEyes)
+                    // MARK: - CULLA EYES HIDDEN — restore in vNext
+                    // Toggle("Culla Eyes", isOn: $showCullaEyes)
                     Toggle("Haptics", isOn: $hapticsEnabled)
                 }
 
