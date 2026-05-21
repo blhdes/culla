@@ -11,7 +11,6 @@ struct SettingsView: View {
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
-    @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SubscriptionManager.self) private var subscriptions
@@ -95,19 +94,6 @@ struct SettingsView: View {
                     // MARK: - CULLA EYES HIDDEN — restore in vNext
                     // Toggle("Culla Eyes", isOn: $showCullaEyes)
                     Toggle("Haptics", isOn: $hapticsEnabled)
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Gallery sidebar")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Picker("Gallery sidebar", selection: $sidebarLayoutRaw) {
-                            ForEach(SidebarLayout.allCases) { layout in
-                                Text(layout.displayName).tag(layout.rawValue)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    .padding(.vertical, 4)
                 }
 
                 Section("Dynamic background") {
