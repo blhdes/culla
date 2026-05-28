@@ -11,9 +11,11 @@ struct SettingsView: View {
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
-    @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
+    // MARK: - ARC SIDEBAR HIDDEN — restore in vNext (see SwipeView.sidebarLayout)
+    // @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
 
     @State private var selectedSwatchIndex: Int = 0
@@ -40,111 +42,32 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Appearance") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Theme")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Picker("Theme", selection: $colorSchemeString) {
-                            Text("System").tag("system")
-                            Text("Light").tag("light")
-                            Text("Dark").tag("dark")
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    .padding(.vertical, 4)
+            ScrollView {
+                VStack(spacing: 22) {
+                    appearanceCard
+                    interfaceCard
+                    dynamicBackgroundCard
+                    helpCard
+                    versionFooter
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Accent colour")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Picker("Accent colour", selection: $accentMode) {
-                            Text("Random").tag("random")
-                            Text("Custom").tag("custom")
-                        }
-                        .pickerStyle(.segmented)
-
-                        if accentMode == "custom" {
-                            LazyVGrid(columns: swatchColumns, spacing: 12) {
-                                ForEach(0..<12, id: \.self) { i in
-                                    colorSwatch(index: i, hex: paletteHexes[i])
-                                }
-                            }
-                            .padding(.top, 4)
-
-                            ColorPicker("Edit colour", selection: Binding(
-                                get: { Color.adaptiveNeon(hex: paletteHexes[selectedSwatchIndex]) },
-                                set: { newColor in
-                                    var updated = paletteHexes
-                                    let newHex = newColor.hexString
-                                    updated[selectedSwatchIndex] = newHex
-                                    savePalette(updated)
-                                    customAccentHex = newHex
-                                }
-                            ), supportsOpacity: false)
-                            .padding(.top, 8)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                    .animation(.easeInOut(duration: 0.2), value: accentMode)
+                    // MARK: - FREEMIUM HIDDEN — restore in vNext
+                    // The Subscription card is hidden while the freemium model is
+                    // disabled (everyone is Pro). Original block preserved below.
+                    //
+                    // SettingsCard(title: "Subscription") {
+                    //     if subscriptions.isPro {
+                    //         settingsButtonRow("Manage subscription") { showCustomerCenter = true }
+                    //     } else {
+                    //         settingsButtonRow("Upgrade to Culla Pro") { showPaywall = true }
+                    //         settingsButtonRow("Restore purchases") { Task { await restore() } }
+                    //     }
+                    // }
                 }
-
-                Section("Interface") {
-                    Toggle("Show status bar", isOn: $statusBarVisible)
-                    // MARK: - CULLA EYES HIDDEN — restore in vNext
-                    // Toggle("Culla Eyes", isOn: $showCullaEyes)
-                    Toggle("Haptics", isOn: $hapticsEnabled)
-
-                    Picker("Gallery sidebar", selection: $sidebarLayoutRaw) {
-                        ForEach(SidebarLayout.allCases) { layout in
-                            Text(layout.displayName).tag(layout.rawValue)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Section("Dynamic background") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Picker("Mode", selection: $backgroundMode) {
-                            Text("Off").tag("off")
-                            Text("Gallery").tag("gallery")
-                            Text("Favourites").tag("favourites")
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    .padding(.vertical, 4)
-
-                    if backgroundMode != "off" {
-                        Toggle("Monochrome", isOn: $monochrome)
-                    }
-                }
-
-                Section("Help") {
-                    Button("Restart tutorial") {
-                        restartTutorial()
-                    }
-                    .foregroundStyle(.primary)
-                }
-
-                // MARK: - FREEMIUM HIDDEN — restore in vNext
-                // The Subscription section is hidden while the freemium model is
-                // disabled (everyone is Pro). Original block preserved below.
-                //
-                // Section("Subscription") {
-                //     if subscriptions.isPro {
-                //         Button("Manage subscription") { showCustomerCenter = true }
-                //             .foregroundStyle(.primary)
-                //     } else {
-                //         Button("Upgrade to Culla Pro") { showPaywall = true }
-                //             .foregroundStyle(.primary)
-                //         Button("Restore purchases") {
-                //             Task { await restore() }
-                //         }
-                //         .foregroundStyle(.primary)
-                //     }
-                // }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 20)
             }
+            .scrollContentBackground(.hidden)
+            .background(Color(.systemBackground))
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -189,6 +112,153 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Cards
+
+    private var appearanceCard: some View {
+        SettingsCard(title: "Appearance") {
+            labeledControl("Theme") {
+                GlassChipPicker.theme(selection: $colorSchemeString)
+            }
+
+            rowDivider
+
+            labeledControl("Accent colour") {
+                VStack(spacing: 14) {
+                    GlassChipPicker(selection: $accentMode, options: [
+                        .init(id: "random", label: "Random", icon: "dice.fill"),
+                        .init(id: "custom", label: "Custom", icon: "paintpalette.fill")
+                    ])
+
+                    if accentMode == "custom" {
+                        LazyVGrid(columns: swatchColumns, spacing: 12) {
+                            ForEach(0..<12, id: \.self) { i in
+                                colorSwatch(index: i, hex: paletteHexes[i])
+                            }
+                        }
+
+                        ColorPicker("Edit colour", selection: Binding(
+                            get: { Color.adaptiveNeon(hex: paletteHexes[selectedSwatchIndex]) },
+                            set: { newColor in
+                                var updated = paletteHexes
+                                let newHex = newColor.hexString
+                                updated[selectedSwatchIndex] = newHex
+                                savePalette(updated)
+                                customAccentHex = newHex
+                            }
+                        ), supportsOpacity: false)
+                        .font(.system(.subheadline, design: .rounded))
+                    }
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: accentMode)
+        }
+    }
+
+    private var interfaceCard: some View {
+        SettingsCard(title: "Interface") {
+            SettingsToggleRow(title: "Show status bar", isOn: $statusBarVisible)
+            // MARK: - CULLA EYES HIDDEN — restore in vNext
+            // SettingsToggleRow(title: "Culla Eyes", isOn: $showCullaEyes)
+            rowDivider
+            SettingsToggleRow(title: "Haptics", isOn: $hapticsEnabled)
+
+            // MARK: - ARC SIDEBAR HIDDEN — restore in vNext
+            // labeledControl("Gallery sidebar") {
+            //     GlassChipPicker(selection: $sidebarLayoutRaw, options:
+            //         SidebarLayout.allCases.map { .init(id: $0.rawValue, label: $0.displayName) })
+            // }
+        }
+    }
+
+    private var dynamicBackgroundCard: some View {
+        SettingsCard(title: "Dynamic background") {
+            labeledControl("Mode") {
+                GlassChipPicker(selection: $backgroundMode, options: [
+                    .init(id: "off",        label: "Off"),
+                    .init(id: "gallery",    label: "Gallery"),
+                    .init(id: "favourites", label: "Favourites")
+                ])
+            }
+
+            if backgroundMode != "off" {
+                rowDivider
+                SettingsToggleRow(title: "Monochrome", isOn: $monochrome)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: backgroundMode)
+    }
+
+    private var helpCard: some View {
+        SettingsCard(title: "Help") {
+            settingsButtonRow("Restart tutorial", icon: "arrow.counterclockwise") {
+                restartTutorial()
+            }
+        }
+    }
+
+    private var versionFooter: some View {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        let year = Calendar.current.component(.year, from: Date())
+        let versionLine = build.isEmpty ? "Version \(version)" : "Version \(version) (\(build))"
+        return VStack(spacing: 3) {
+            Text("Culla")
+                .font(.system(.caption, design: .rounded).weight(.medium))
+                .foregroundStyle(.secondary)
+            Text(versionLine)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Text("© \(String(year)) Culla")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Row helpers
+
+    /// A small secondary label stacked above a control — the calm-tier
+    /// replacement for a Form row's leading label.
+    @ViewBuilder
+    private func labeledControl<Control: View>(
+        _ title: String,
+        @ViewBuilder control: () -> Control
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(.secondary)
+            control()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func settingsButtonRow(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(accent)
+                Text(title)
+                    .font(.system(.body, design: .rounded))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var rowDivider: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.06))
+            .frame(height: 0.5)
+    }
+
     private func restartTutorial() {
         let defaults = UserDefaults.standard
         defaults.set(false, forKey: OnboardingKey.walkthroughComplete)
@@ -219,19 +289,24 @@ struct SettingsView: View {
     @ViewBuilder
     private func colorSwatch(index: Int, hex: String) -> some View {
         let isSelected = selectedSwatchIndex == index
+        let color = Color.adaptiveNeon(hex: hex)
         Circle()
-            .fill(Color.adaptiveNeon(hex: hex))
+            .fill(color)
             .frame(width: 40, height: 40)
             .overlay {
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                }
+                Circle()
+                    .stroke(.primary, lineWidth: isSelected ? 2 : 0)
+                    .padding(-4)
             }
+            .shadow(color: isSelected ? color.opacity(0.5) : .clear, radius: 6)
+            .frame(maxWidth: .infinity)
+            .contentShape(Circle())
             .onTapGesture {
-                selectedSwatchIndex = index
+                withAnimation(.snappy(duration: 0.22)) {
+                    selectedSwatchIndex = index
+                }
                 customAccentHex = hex
             }
+            .animation(.snappy(duration: 0.22), value: isSelected)
     }
 }

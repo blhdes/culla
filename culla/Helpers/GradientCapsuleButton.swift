@@ -1,0 +1,75 @@
+import SwiftUI
+
+/// The app's primary call-to-action vocabulary. Bold accent-gradient capsule
+/// with a soft accent shadow halo — used for hero CTAs across the redesigned
+/// screens (Duplicate Sweep, empty/done states, sheet primary actions).
+/// Centralizing this prevents the buttons from drifting apart visually as the
+/// design evolves.
+///
+/// Deliberately not glass: on a Liquid-Glass-heavy screen the CTA needs to be
+/// bold and opaque so it wins the visual hierarchy. The glass surfaces frame
+/// the *path* to the CTA, not the CTA itself.
+struct GradientCapsuleButton: View {
+    let title: String
+    var icon: String? = nil
+    var iconEffect: IconEffect = .none
+    var tint: Color? = nil
+    var role: ButtonRole? = nil
+    let action: () -> Void
+
+    @Environment(\.appAccent) private var appAccent
+
+    /// Optional repeating SF symbol effect applied to the leading icon. Use
+    /// `.pulse` for inviting CTAs (Start, Continue); leave `.none` for action
+    /// buttons (Refresh, Delete) where motion would feel restless.
+    enum IconEffect { case none, pulse }
+
+    /// The fill color — an explicit `tint` (e.g. `.red` for destructive
+    /// actions) overrides the app accent.
+    private var fill: Color { tint ?? appAccent }
+
+    var body: some View {
+        Button(role: role, action: action) {
+            HStack(spacing: 10) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 15, weight: .bold))
+                        .symbolEffect(
+                            .pulse,
+                            options: .repeating,
+                            isActive: iconEffect == .pulse
+                        )
+                }
+                Text(title)
+                    .font(.system(.headline, design: .rounded).weight(.bold))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background {
+                Capsule()
+                    .fill(LinearGradient(
+                        colors: [fill, fill.opacity(0.78)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+            }
+            .overlay {
+                Capsule()
+                    .strokeBorder(.white.opacity(0.22), lineWidth: 1)
+            }
+            .shadow(color: fill.opacity(0.30), radius: 18, y: 8)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+#Preview {
+    VStack(spacing: 24) {
+        GradientCapsuleButton(title: "Start Cullaing", icon: "play.fill", iconEffect: .pulse) {}
+        GradientCapsuleButton(title: "Refresh library", icon: "arrow.clockwise") {}
+        GradientCapsuleButton(title: "Delete 12", icon: "trash", tint: .red) {}
+    }
+    .padding(24)
+    .environment(\.appAccent, .blue)
+}

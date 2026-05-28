@@ -75,9 +75,12 @@ struct SwipeView: View {
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
     @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
 
-    private var sidebarLayout: SidebarLayout {
-        SidebarLayout(rawValue: sidebarLayoutRaw) ?? .panels
-    }
+    // MARK: - ARC SIDEBAR DEACTIVATED — restore in vNext
+    // The arc fan shape never shipped (couldn't get it right within SwiftUI's
+    // clip-shape limits). Force panels regardless of any stored value so the
+    // arc code path below stays dead but intact for a future attempt. To
+    // restore: return `SidebarLayout(rawValue: sidebarLayoutRaw) ?? .panels`.
+    private var sidebarLayout: SidebarLayout { .panels }
 
     private let swipeThreshold: CGFloat = 100
     private var maxSidebarGalleries: Int {

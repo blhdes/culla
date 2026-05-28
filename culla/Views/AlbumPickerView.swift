@@ -28,11 +28,11 @@ struct AlbumPickerView: View {
 
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("From the very first photo")
-                                        .fontWeight(.medium)
+                                        .font(.system(.body, design: .rounded).weight(.medium))
                                         .foregroundStyle(.primary)
 
                                     Text("\(unsortedCount) photos to sort")
-                                        .font(.caption)
+                                        .font(.system(.caption, design: .rounded))
                                         .foregroundStyle(.tertiary)
                                 }
 
@@ -55,11 +55,11 @@ struct AlbumPickerView: View {
 
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("Favorites")
-                                        .fontWeight(.medium)
+                                        .font(.system(.body, design: .rounded).weight(.medium))
                                         .foregroundStyle(.primary)
 
                                     Text("\(favoritesCount) favorited photos")
-                                        .font(.caption)
+                                        .font(.system(.caption, design: .rounded))
                                         .foregroundStyle(.tertiary)
                                 }
 
@@ -81,7 +81,7 @@ struct AlbumPickerView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(album.name)
-                                .fontWeight(.medium)
+                                .font(.system(.body, design: .rounded).weight(.medium))
                                 .foregroundStyle(.primary)
 
                             HStack(spacing: 4) {
@@ -92,7 +92,7 @@ struct AlbumPickerView: View {
                                     Text(startDate.formatted(.dateTime.month(.abbreviated).year()))
                                 }
                             }
-                            .font(.caption)
+                            .font(.system(.caption, design: .rounded))
                             .foregroundStyle(.tertiary)
                         }
                         .padding(.vertical, 4)

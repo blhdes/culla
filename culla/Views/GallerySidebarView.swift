@@ -8,28 +8,37 @@ struct GallerySidebarView: View {
     let dragProgress: CGFloat
     var isLongPress: Bool = false
 
+    @Environment(\.appAccent) private var accent
+
     /// Whether the user is actively dragging (any rightward movement).
     private var isDragging: Bool { dragProgress > 0 }
 
     var body: some View {
         if galleries.isEmpty {
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 Spacer()
                 Image(systemName: "rectangle.stack.badge.plus")
                     .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(accent)
+                    .symbolEffect(.pulse, options: .repeating, isActive: isDragging)
+                    .frame(width: 64, height: 64)
+                    .glassSurface(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(accent.opacity(0.35), lineWidth: 1)
+                    )
+                    .shadow(color: accent.opacity(0.35), radius: 14, y: 6)
                 Text("Add a gallery\nto sort photos")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 4) {
                     Text("Tap Manage")
-                        .font(.caption)
+                        .font(.system(.caption, design: .rounded))
                     Image(systemName: "arrow.down.right")
                         .font(.caption)
                 }
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -162,8 +171,7 @@ struct GallerySidebarItem: View {
                 .opacity(backgroundOpacity)
 
             Text(gallery.name)
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(.system(.title3, design: .rounded).weight(.semibold))
                 .foregroundStyle(isDragging ? .white : .secondary)
                 .shadow(color: isDragging ? .black.opacity(0.25) : .clear, radius: 2, x: 0, y: 1)
                 .padding(.leading, 20)

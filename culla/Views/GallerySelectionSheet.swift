@@ -9,6 +9,7 @@ struct GallerySelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
 
     @State private var searchText = ""
@@ -34,6 +35,7 @@ struct GallerySelectionSheet: View {
                     galleryList
                 }
             }
+            .background(Color(.systemBackground).ignoresSafeArea())
             .navigationTitle("Select Galleries")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -123,6 +125,10 @@ struct GallerySelectionSheet: View {
                 } header: {
                     HStack {
                         Text("\(selectedIDs.count) of \(maxSelection) selected")
+                            .font(.system(.footnote, design: .rounded).weight(.medium))
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: selectedIDs.count)
                         Spacer()
                         Menu {
                             ForEach(GallerySortOption.allCases, id: \.self) { option in
@@ -142,9 +148,10 @@ struct GallerySelectionSheet: View {
                                 Text(sortOption.rawValue)
                                 Image(systemName: "chevron.up.chevron.down")
                             }
-                            .font(.caption)
+                            .font(.system(.caption, design: .rounded))
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 6, trailing: 16))
                 }
             }
 
@@ -158,20 +165,28 @@ struct GallerySelectionSheet: View {
                         Button("Add") { createGallery() }
                             .disabled(newGalleryName.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
+                    .font(.system(.body, design: .rounded))
                 } else {
                     Button("Create New Gallery") {
                         showCreateField = true
                         isFieldFocused = true
                     }
+                    .font(.system(.body, design: .rounded).weight(.medium))
+                    .foregroundStyle(accent)
                 }
 
                 Button {
                     showAlbumImport = true
                 } label: {
                     Label("Import from Phone", systemImage: "square.and.arrow.down")
+                        .font(.system(.body, design: .rounded))
                 }
             }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .searchable(text: $searchText, prompt: "Search galleries")
     }
 
@@ -181,6 +196,7 @@ struct GallerySelectionSheet: View {
     private func galleryRow(_ gallery: Gallery) -> some View {
         let isSelected = selectedIDs.contains(gallery.id)
         let atLimit = selectedIDs.count >= maxSelection
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
 
         Button {
             if isSelected {
@@ -191,29 +207,63 @@ struct GallerySelectionSheet: View {
                 showPaywall = true
             }
         } label: {
-            HStack(spacing: 12) {
+            // Dark light-mode neons (deep teal/purple) become unreadable when
+            // .primary text sits on the tinted glass — flip to white only when
+            // luminance is low enough to need it.
+            let labelColor: Color = isSelected
+                ? gallery.color.foregroundOnTintedGlass(in: colorScheme)
+                : .primary
+
+            HStack(spacing: 14) {
                 Circle()
                     .fill(gallery.color)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 12, height: 12)
+                    .shadow(color: gallery.color.opacity(0.6), radius: 5)
 
                 Text(gallery.name)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(labelColor)
 
                 Spacer()
 
                 Text("\(gallery.sortedPhotos.count)")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(.system(.caption, design: .rounded).weight(.medium))
+                    .monospacedDigit()
+                    .foregroundStyle(isSelected ? labelColor.opacity(0.7) : .secondary)
 
+                // Multi-select idiom: empty circle ↔ filled check, swapping with
+                // a bounce so toggling feels landed. The check picks up the
+                // gallery's own color, but flips to the label color when the
+                // tint is dark so it stays visible against the wash.
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .primary : .quaternary)
+                    .foregroundStyle(
+                        isSelected
+                            ? (labelColor == .white ? labelColor : gallery.color)
+                            : Color.secondary.opacity(0.4)
+                    )
                     .font(.title3)
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.bounce, value: isSelected)
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity)
+            .glassSurface(in: shape, tint: isSelected ? gallery.color : nil)
+            .overlay(
+                shape.strokeBorder(
+                    isSelected ? gallery.color.opacity(0.5) : .white.opacity(0.06),
+                    lineWidth: isSelected ? 1.4 : 1
+                )
+            )
+            .contentShape(shape)
         }
+        .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
         .disabled(!isSelected && atLimit && subscriptions.isPro)
         .opacity(!isSelected && atLimit ? 0.35 : 1.0)
+        .animation(.snappy(duration: 0.22), value: isSelected)
     }
 
     // MARK: - Filtering

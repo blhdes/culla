@@ -7,6 +7,7 @@ struct GalleriesView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
     @Environment(\.activeTourStep) private var tourStep
     @Environment(\.tourAdvance) private var tourAdvance
@@ -63,6 +64,9 @@ struct GalleriesView: View {
                         NavigationLink(value: gallery) {
                             galleryRow(gallery)
                         }
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button {
                                 withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
@@ -84,11 +88,15 @@ struct GalleriesView: View {
                     }
                 } header: {
                     Text(selectionStatusText)
+                        .font(.system(.footnote, design: .rounded).weight(.medium))
                         .foregroundStyle(activeGalleryCount == 0 ? Color.orange : Color.secondary)
                         .textCase(nil)
                 }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemBackground).ignoresSafeArea())
         .environment(\.editMode, $editMode)
         .navigationTitle("Galleries")
         .navigationDestination(for: Gallery.self) { gallery in
@@ -244,37 +252,52 @@ struct GalleriesView: View {
                 showPaywall = true
             }
         } label: {
-            HStack {
+            HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(sortedPhotos.count)")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
                         .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: sortedPhotos.count)
                     Text("photos sorted")
-                        .font(.caption)
+                        .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 if insightsViewModel.currentStreak > 0 {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Image(systemName: "flame.fill")
                             .foregroundStyle(.orange)
+                            .symbolEffect(.bounce, value: insightsViewModel.currentStreak)
                         Text("\(insightsViewModel.currentStreak)")
-                            .font(.title3)
-                            .fontWeight(.bold)
+                            .font(.system(.headline, design: .rounded).weight(.bold))
                             .monospacedDigit()
+                            .contentTransition(.numericText())
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .glassSurface(in: Capsule())
                 }
 
                 Image(systemName: subscriptions.isPro ? "chevron.right" : "lock.fill")
-                    .font(.caption)
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(.vertical, 8)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 18)
+            .frame(maxWidth: .infinity)
+            .glassSurface(in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(.white.opacity(0.06), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
-        .listRowSeparator(.hidden, edges: .top)
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 6, trailing: 16))
     }
 
     // MARK: - Selection
@@ -329,11 +352,18 @@ struct GalleriesView: View {
     @ViewBuilder
     private func galleryRow(_ gallery: Gallery) -> some View {
         @Bindable var gallery = gallery
-        HStack(spacing: 12) {
+        // Active = selected for swiping. The card glows with the gallery's own
+        // color when active — Culla's per-gallery identity carrying the
+        // "selected" state (vs. a generic accent halo).
+        let isActive = sidebarGalleryIDs.contains(gallery.id)
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+
+        HStack(spacing: 14) {
             if editMode == .active {
                 Circle()
                     .fill(gallery.color)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 12, height: 12)
+                    .shadow(color: gallery.color.opacity(0.6), radius: 5)
             } else {
                 Button { toggleSelection(gallery) } label: {
                     selectionCircle(for: gallery)
@@ -341,24 +371,45 @@ struct GalleriesView: View {
                 .buttonStyle(.plain)
             }
 
+            // When the row is active, the glass picks up `gallery.color` as
+            // tint — some neons are dark enough that .primary text collides.
+            // `foregroundOnTintedGlass` flips to white only when needed.
+            let labelColor: Color = isActive
+                ? gallery.color.foregroundOnTintedGlass(in: colorScheme)
+                : .primary
+
             if editMode == .active {
                 TextField("Gallery name", text: $gallery.name)
-                    .fontWeight(.medium)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(labelColor)
                     .onSubmit {
                         try? modelContext.save()
                     }
             } else {
                 Text(gallery.name)
-                    .fontWeight(.medium)
+                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .foregroundStyle(labelColor)
             }
 
             Spacer()
 
             Text("\(gallery.sortedPhotos.count)")
-                .font(.subheadline)
-                .foregroundStyle(.tertiary)
+                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                .monospacedDigit()
+                .foregroundStyle(isActive ? labelColor.opacity(0.7) : .secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity)
+        .glassSurface(in: shape, tint: isActive ? gallery.color : nil)
+        .overlay(
+            shape.strokeBorder(
+                isActive ? gallery.color.opacity(0.5) : .white.opacity(0.06),
+                lineWidth: isActive ? 1.4 : 1
+            )
+        )
+        .shadow(color: isActive ? gallery.color.opacity(0.3) : .clear, radius: 14, y: 6)
+        .animation(.snappy(duration: 0.25), value: isActive)
     }
 }
 

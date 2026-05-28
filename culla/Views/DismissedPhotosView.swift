@@ -4,6 +4,7 @@ import SwiftData
 struct DismissedPhotosView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appAccent) private var accent
 
     @State private var viewModel: DismissedPhotosViewModel?
     @State private var deleteMessage: DeleteFeedback?
@@ -28,7 +29,8 @@ struct DismissedPhotosView: View {
                         // Photo count + selection controls
                         HStack {
                             Text("\(viewModel.dismissedPhotos.count) photos")
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .monospacedDigit()
                                 .foregroundStyle(.secondary)
 
                             Spacer()
@@ -37,12 +39,14 @@ struct DismissedPhotosView: View {
                                 Button("Deselect All") {
                                     viewModel.deselectAll()
                                 }
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .foregroundStyle(accent)
                             } else {
                                 Button("Select All") {
                                     viewModel.selectAll()
                                 }
-                                .font(.subheadline)
+                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .foregroundStyle(accent)
                             }
                         }
                         .padding(.horizontal)
@@ -127,59 +131,54 @@ struct DismissedPhotosView: View {
             Divider()
             HStack(spacing: 12) {
                 if viewModel.hasSelection {
-                    Button {
+                    recoverButton("Recover (\(viewModel.selectedCount))") {
                         withAnimation { viewModel.recoverSelected() }
-                    } label: {
-                        Text("Recover (\(viewModel.selectedCount))")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-
-                    Button {
+                    deleteButton("Delete (\(viewModel.selectedCount))", disabled: viewModel.isDeleting) {
                         Haptics.deleteConfirm()
                         Task {
                             let count = await viewModel.deleteSelected()
                             showDeleteFeedback(count)
                         }
-                    } label: {
-                        Text("Delete (\(viewModel.selectedCount))")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .controlSize(.regular)
-                    .disabled(viewModel.isDeleting)
                 } else {
-                    Button {
+                    recoverButton("Recover All") {
                         withAnimation { viewModel.recoverAll() }
-                    } label: {
-                        Text("Recover All")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
-
-                    Button {
+                    deleteButton("Delete All", disabled: viewModel.isDeleting) {
                         Haptics.deleteConfirm()
                         Task {
                             let count = await viewModel.deleteAll()
                             showDeleteFeedback(count)
                         }
-                    } label: {
-                        Text("Delete All")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .controlSize(.regular)
-                    .disabled(viewModel.isDeleting)
                 }
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
             .background(.ultraThinMaterial)
         }
+    }
+
+    /// Secondary action — a glass capsule (recover keeps photos, so it reads
+    /// as the calm choice next to the bold red delete CTA).
+    private func recoverButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(.headline, design: .rounded).weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+                .glassSurface(in: Capsule())
+                .overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func deleteButton(_ title: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+        GradientCapsuleButton(title: title, icon: "trash", tint: .red, action: action)
+            .disabled(disabled)
+            .opacity(disabled ? 0.5 : 1)
     }
 
     private func showDeleteFeedback(_ count: Int) {

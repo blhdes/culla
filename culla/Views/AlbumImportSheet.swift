@@ -7,6 +7,7 @@ import Photos
 struct AlbumImportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appAccent) private var accent
     @Query private var galleries: [Gallery]
 
     /// Called after import with the UUIDs of every newly created gallery.
@@ -43,10 +44,14 @@ struct AlbumImportSheet: View {
                                     }
                                 } label: {
                                     Text(selectedAlbumIDs.count == sortedAlbums.count ? "Deselect All" : "Select All")
-                                        .font(.footnote)
+                                        .font(.system(.footnote, design: .rounded).weight(.medium))
+                                        .foregroundStyle(accent)
                                 }
                                 Text("\(selectedAlbumIDs.count) of \(sortedAlbums.count) selected")
-                                    .font(.footnote)
+                                    .font(.system(.footnote, design: .rounded))
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                    .animation(.snappy, value: selectedAlbumIDs.count)
                                     .foregroundStyle(.secondary)
                                 Spacer()
                                 Menu {
@@ -131,33 +136,37 @@ struct AlbumImportSheet: View {
                     .overlay {
                         AlbumThumbnailView(albumIdentifier: album.collectionIdentifier)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(isSelected ? accent : Color.white.opacity(0.08), lineWidth: isSelected ? 3 : 1)
                     }
                     .overlay(alignment: .topTrailing) {
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.title3)
-                                .foregroundStyle(.white, Color.accentColor)
+                                .foregroundStyle(.white, accent)
                                 .padding(6)
+                                .transition(.scale.combined(with: .opacity))
                         }
                     }
+                    .shadow(color: isSelected ? accent.opacity(0.35) : .clear, radius: 12, y: 5)
+                    .scaleEffect(isSelected ? 0.96 : 1.0)
 
                 Text(album.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
                 Text("\(album.photoCount) photos")
-                    .font(.caption2)
+                    .font(.system(.caption2, design: .rounded))
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
         .buttonStyle(.plain)
         .contentShape(Rectangle())
+        .animation(.snappy(duration: 0.22), value: isSelected)
     }
 
     // MARK: - Filtering & Sorting

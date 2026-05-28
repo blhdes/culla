@@ -33,6 +33,8 @@ struct InsightsView: View {
                     statsContent
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemBackground).ignoresSafeArea())
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -56,38 +58,36 @@ struct InsightsView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 24) {
+            HeroIconTile(systemName: "chart.line.uptrend.xyaxis", pulse: true)
             Text("Start sorting to see\nyour progress here")
-                .font(.subheadline)
+                .font(.system(.title3, design: .rounded).weight(.semibold))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Stats Content
 
     private var statsContent: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                // Hero stat
+            VStack(spacing: 22) {
+                // Hero stat — the count ticks up via numericText when it changes.
                 VStack(spacing: 4) {
                     Text("\(sortedPhotos.count)")
                         .font(.system(size: 56, weight: .bold, design: .rounded))
                         .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: sortedPhotos.count)
                     Text("photos sorted")
-                        .font(.subheadline)
+                        .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
-                .padding(.top, 24)
-                .padding(.bottom, 8)
+                .padding(.top, 16)
 
                 // Streak row
-                HStack(spacing: 24) {
+                HStack(spacing: 14) {
                     streakBadge(
                         icon: "flame.fill",
                         value: viewModel.currentStreak,
@@ -99,27 +99,26 @@ struct InsightsView: View {
                         label: "Best"
                     )
                 }
-                .padding(.horizontal)
 
                 // Details card
-                VStack(spacing: 0) {
-                    detailRow("Deleted", value: "\(totalDeletedPhotos)")
-                    detailRow("Remaining", value: "\(remainingCount)")
-                    detailRow("Galleries", value: "\(galleries.count)")
-                    detailRow("Skipped", value: "\(totalSkippedPhotos)")
-                    detailRow("Favourites", value: "\(totalFavouritedPhotos)")
-                    detailRow("Top this week", value: mostActiveGalleryText)
+                GlassPanel(icon: "square.stack.3d.up.fill", title: "Details") {
+                    VStack(spacing: 0) {
+                        detailRow("Deleted", value: "\(totalDeletedPhotos)")
+                        detailRow("Remaining", value: "\(remainingCount)")
+                        detailRow("Galleries", value: "\(galleries.count)")
+                        detailRow("Skipped", value: "\(totalSkippedPhotos)")
+                        detailRow("Favourites", value: "\(totalFavouritedPhotos)")
+                        detailRow("Top this week", value: mostActiveGalleryText)
+                    }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .padding(.horizontal)
 
                 // 7-day activity chart
                 activityChart
             }
+            .padding(.horizontal, 18)
             .padding(.bottom, 40)
         }
+        .scrollContentBackground(.hidden)
     }
 
     // MARK: - Chart
@@ -160,12 +159,7 @@ struct InsightsView: View {
     }
 
     private var activityChart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Last 7 days")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 4)
-
+        GlassPanel(icon: "chart.xyaxis.line", title: "Last 7 days") {
             Chart(chartData) { point in
                 LineMark(
                     x: .value("Day", point.date, unit: .day),
@@ -199,10 +193,6 @@ struct InsightsView: View {
             .chartLegend(position: .bottom, alignment: .center, spacing: 12)
             .frame(height: 180)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal)
     }
 
     // MARK: - Computed Stats
@@ -244,18 +234,24 @@ struct InsightsView: View {
             HStack(spacing: 6) {
                 Image(systemName: icon)
                     .foregroundStyle(value > 0 ? .orange : .secondary)
+                    .symbolEffect(.bounce, value: value)
                 Text(value > 0 ? "\(value)" : "—")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(.system(.title2, design: .rounded).weight(.bold))
                     .monospacedDigit()
+                    .contentTransition(.numericText())
             }
             Text(label)
-                .font(.caption)
+                .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 16)
+        .glassSurface(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(.white.opacity(0.06), lineWidth: 1)
+        )
+        .animation(.snappy, value: value)
     }
 
     private func detailRow(_ label: String, value: String) -> some View {
@@ -267,7 +263,7 @@ struct InsightsView: View {
                 .fontWeight(.medium)
                 .monospacedDigit()
         }
-        .font(.body)
+        .font(.system(.body, design: .rounded))
         .padding(.vertical, 8)
     }
 }

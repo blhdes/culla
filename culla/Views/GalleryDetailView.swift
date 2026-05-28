@@ -31,23 +31,33 @@ struct GalleryDetailView: View {
             } else {
                 VStack(spacing: 0) {
                     VStack(spacing: 8) {
-                        HStack(spacing: 8) {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    showColorPicker.toggle()
-                                }
-                            } label: {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showColorPicker.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
                                 Circle()
                                     .fill(gallery.color)
-                                    .frame(width: 12, height: 12)
+                                    .frame(width: 18, height: 18)
+                                    .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
+                                    .shadow(color: gallery.color.opacity(0.5), radius: 5)
+
+                                Text("\(allIdentifiers.count) photos")
+                                    .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                Image(systemName: showColorPicker ? "chevron.up" : "paintpalette.fill")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                                    .contentTransition(.symbolEffect(.replace))
                             }
-
-                            Text("\(allIdentifiers.count) photos")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-
-                            Spacer()
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
 
                         if showColorPicker {
                             VStack(spacing: 12) {
@@ -66,13 +76,13 @@ struct GalleryDetailView: View {
                                         } label: {
                                             Circle()
                                                 .fill(Color.adaptiveNeon(hex: hex))
-                                                .frame(width: 24, height: 24)
+                                                .frame(width: 26, height: 26)
                                                 .overlay {
-                                                    if gallery.colorHex == hex {
-                                                        Circle()
-                                                            .strokeBorder(.primary, lineWidth: 2)
-                                                    }
+                                                    Circle()
+                                                        .stroke(.primary, lineWidth: gallery.colorHex == hex ? 2 : 0)
+                                                        .padding(-3)
                                                 }
+                                                .shadow(color: gallery.colorHex == hex ? Color.adaptiveNeon(hex: hex).opacity(0.5) : .clear, radius: 5)
                                         }
                                     }
                                 }
