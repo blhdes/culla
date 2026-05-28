@@ -11,8 +11,6 @@ struct SettingsView: View {
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
-    // MARK: - ARC SIDEBAR HIDDEN — restore in vNext (see SwipeView.sidebarLayout)
-    // @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appAccent) private var accent
@@ -173,12 +171,6 @@ struct SettingsView: View {
             // SettingsToggleRow(title: "Culla Eyes", isOn: $showCullaEyes)
             rowDivider
             SettingsToggleRow(title: "Haptics", isOn: $hapticsEnabled)
-
-            // MARK: - ARC SIDEBAR HIDDEN — restore in vNext
-            // labeledControl("Gallery sidebar") {
-            //     GlassChipPicker(selection: $sidebarLayoutRaw, options:
-            //         SidebarLayout.allCases.map { .init(id: $0.rawValue, label: $0.displayName) })
-            // }
         }
     }
 

@@ -73,14 +73,6 @@ struct SwipeView: View {
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
-    @AppStorage("gallerySidebarLayout") private var sidebarLayoutRaw = SidebarLayout.panels.rawValue
-
-    // MARK: - ARC SIDEBAR DEACTIVATED — restore in vNext
-    // The arc fan shape never shipped (couldn't get it right within SwiftUI's
-    // clip-shape limits). Force panels regardless of any stored value so the
-    // arc code path below stays dead but intact for a future attempt. To
-    // restore: return `SidebarLayout(rawValue: sidebarLayoutRaw) ?? .panels`.
-    private var sidebarLayout: SidebarLayout { .panels }
 
     private let swipeThreshold: CGFloat = 100
     private var maxSidebarGalleries: Int {
@@ -210,24 +202,12 @@ struct SwipeView: View {
                     let progress = isLongPressing ? 1.0 : rightDragProgress
                     HStack(spacing: 0) {
                         Spacer()
-                        Group {
-                            switch sidebarLayout {
-                            case .panels:
-                                GallerySidebarView(
-                                    galleries: sidebarGalleries,
-                                    highlightedID: highlightedGalleryID,
-                                    dragProgress: progress,
-                                    isLongPress: isLongPressing
-                                )
-                            case .arc:
-                                GalleryArcView(
-                                    galleries: sidebarGalleries,
-                                    highlightedID: highlightedGalleryID,
-                                    dragProgress: progress,
-                                    isLongPress: isLongPressing
-                                )
-                            }
-                        }
+                        GallerySidebarView(
+                            galleries: sidebarGalleries,
+                            highlightedID: highlightedGalleryID,
+                            dragProgress: progress,
+                            isLongPress: isLongPressing
+                        )
                         .frame(width: geo.size.width * 0.5)
                         .offset(x: (1.0 - progress) * 30)
                     }
@@ -498,8 +478,7 @@ struct SwipeView: View {
                 showPaywall = true
                 return
             }
-            let (fx, fy) = flyOffVector(for: value.translation, fallback: 500)
-            flyOff(x: fx, y: fy) {
+            flyOff(x: 500) {
                 viewModel.assignToGallery(gallery)
                 subscriptions.recordSwipe()
                 Haptics.swipeRight()
@@ -563,17 +542,6 @@ struct SwipeView: View {
 
         // Below threshold and no gallery → snap back
         snapBack()
-    }
-
-    /// In arc mode, send the card off along the drag vector so it appears to
-    /// fly into the highlighted gallery rather than always sliding right.
-    /// Panels mode keeps the legacy straight-right fly-off (`fallback`, 0).
-    private func flyOffVector(for translation: CGSize, fallback: CGFloat) -> (CGFloat, CGFloat) {
-        guard sidebarLayout == .arc else { return (fallback, 0) }
-        let mag = hypot(translation.width, translation.height)
-        guard mag > 1 else { return (fallback, 0) }
-        let speed: CGFloat = fallback
-        return (speed * translation.width / mag, speed * translation.height / mag)
     }
 
     private func flyOff(x: CGFloat, y: CGFloat = 0, action: @escaping () -> Void) {

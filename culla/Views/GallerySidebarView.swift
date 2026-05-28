@@ -163,12 +163,31 @@ struct GallerySidebarItem: View {
 
     var body: some View {
         ZStack(alignment: .leading) {
+            // Veil that obscures the photo as the user commits to a gallery.
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .opacity(materialOpacity)
 
+            // Flat colour base — tints non-highlighted rows and carries the
+            // long-press states. Highlighted rows get the full 0.85 fill.
             neonColor
                 .opacity(backgroundOpacity)
+
+            // Signal 1: a directional gradient layered on the highlighted row
+            // for richness, without needing a secondary palette colour.
+            LinearGradient(
+                colors: [neonColor, neonColor.opacity(0.7)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .opacity(isHighlighted ? 0.6 : 0)
+
+            // Signal 2: a 3pt leading bar. Luminance-independent, so even pale
+            // neons (#FFE600, #00FFEE) read as an unambiguous "you're here".
+            Rectangle()
+                .fill(neonColor)
+                .frame(width: 3)
+                .opacity(isHighlighted ? 1.0 : 0.0)
 
             Text(gallery.name)
                 .font(.system(.title3, design: .rounded).weight(.semibold))
@@ -184,11 +203,12 @@ struct GallerySidebarItem: View {
         .animation(.easeInOut(duration: 0.2), value: isDragging)
     }
 
-    /// Swipe uses the full ultraThinMaterial to obscure the photo as the user
-    /// commits to a gallery. Long-press keeps the photo readable behind a
-    /// much lighter veil so the user can still see what they're sorting.
+    /// Swipe veils the photo with ultraThinMaterial as the user commits to a
+    /// gallery, but caps at 0.85 so a sliver of the photo always bleeds
+    /// through (no full blackout at 100% pull). Long-press keeps the photo
+    /// readable behind a much lighter veil.
     private var materialOpacity: Double {
-        isLongPress ? 0.35 : Double(dragProgress)
+        isLongPress ? 0.35 : 0.85 * Double(dragProgress)
     }
 
     private var backgroundOpacity: Double {
@@ -197,9 +217,13 @@ struct GallerySidebarItem: View {
         return isHighlighted ? 0.85 : 0.2 + 0.4 * dragProgress
     }
 
+    /// Ramps continuously with dragProgress instead of jumping when isDragging
+    /// flips. At rest = 0.5; full drag, non-highlighted = 0.7; full drag,
+    /// highlighted = 1.0. Avoids the small pop the step function produced.
     private var textOpacity: Double {
-        if !isDragging { return 0.5 }
-        return isHighlighted ? 1.0 : 0.65
+        let p = Double(max(0, min(1, dragProgress)))
+        let target: Double = isHighlighted ? 1.0 : 0.7
+        return 0.5 + (target - 0.5) * p
     }
 }
 
