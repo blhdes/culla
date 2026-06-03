@@ -65,6 +65,9 @@ final class PhotoBackgroundManager {
         imgOptions.deliveryMode = .fastFormat
         imgOptions.isNetworkAccessAllowed = true
         imgOptions.resizeMode = .fast
+        // Release the previous batch's prefetch before priming the new one,
+        // otherwise repeated album switches accumulate cached thumbnails.
+        cacheManager.stopCachingImagesForAllAssets()
         cacheManager.startCachingImages(
             for: assets,
             targetSize: Self.thumbSize,
@@ -74,10 +77,12 @@ final class PhotoBackgroundManager {
 
         var loaded: [UIImage] = []
         for asset in assets {
+            if Task.isCancelled { return }   // album switched mid-load — stop fetching for the stale album
             if let img = await fetch(asset) {
                 loaded.append(img)
             }
         }
+        guard !Task.isCancelled else { return }   // don't let a superseded load clobber the current album's images
         images = loaded
     }
 
@@ -149,9 +154,14 @@ struct PhotoCarouselBackground: View {
             guard effectiveMode != "off" else { return }
             let showFavourites = effectiveMode == "favourites"
             await manager.load(albumIdentifier: albumIdentifier, showFavourites: showFavourites)
-            noiseImage = await Task.detached(priority: .background) {
-                makeNoiseTexture()
-            }.value
+            guard !Task.isCancelled else { return }
+            // Grain is identical every run — compute it once, not on every album switch
+            if noiseImage == nil {
+                noiseImage = await Task.detached(priority: .background) {
+                    makeNoiseTexture()
+                }.value
+            }
+            guard !Task.isCancelled else { return }
             // Reveal everything in one slow fade once both photos and grain are ready
             withAnimation(.easeIn(duration: 1.5)) {
                 revealOpacity = 1
@@ -176,6 +186,10 @@ struct PhotoCarouselBackground: View {
     private var photoCanvas: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: isPaused)) { timeline in
             Canvas { context, size in
+                // Read the observable array once per frame, not per cell; also guards the modulo below.
+                let images = manager.images
+                guard !images.isEmpty else { return }
+
                 let tRaw = timeline.date.timeIntervalSinceReferenceDate - timeOffset
 
                 // Vertical: whole wall drifts upward, resets seamlessly at tileSize
@@ -212,8 +226,8 @@ struct PhotoCarouselBackground: View {
                                 guard x + photoSize > 0, x < size.width else { continue }
 
                                 // Each row uses a unique photo slice: row 0 → 0‥5, row 1 → 6‥11, …
-                                let idx = (row * photosPerTile + col) % manager.images.count
-                                let img = manager.images[idx]
+                                let idx = (row * photosPerTile + col) % images.count
+                                let img = images[idx]
 
                                 let imgSize = img.size
                                 let scale = max(photoSize / imgSize.width, photoSize / imgSize.height)
