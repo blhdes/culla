@@ -7,9 +7,9 @@ A native iOS app for organizing your photo library. Swipe through photos one by 
 Most photo organizer apps let you keep or delete. Culla's core experience is **multi-gallery sorting** — drag a photo toward any of your galleries and it's instantly saved there. Your galleries sync with real iPhone Photos albums, so everything stays organized across your device.
 
 - 100% native Swift/SwiftUI — RevenueCat is the only third-party dependency
-- Freemium on the App Store — free tier with limits, one-time unlock for everything
+- Freemium model on the App Store — free tier with limits, one-time unlock for everything (**temporarily disabled in the current build — ships fully unlocked**)
 - Syncs with your iPhone Photos library
-- Minimalist, HIG-compliant design with a personal accent palette
+- Minimalist, HIG-compliant design with a personal accent palette and a reusable Living-Glass surface system
 
 ## Features
 
@@ -29,7 +29,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Custom calendar** — scrollable photo-mosaic calendar that reflects the selected album
 - **Photo grid picker** — tap the photo icon in the calendar sheet to browse all photos as a scrollable grid; tapping a photo jumps the date wheel to that photo's date
 - **Smart date defaults** — jumps to the earliest available photo when you change albums
-- **Animated CullaEyes mascot** on the date picker (toggleable)
+- **Animated CullaEyes mascot** on the date picker (toggleable) — *temporarily hidden in the current build*
 - **Focus Timer** — 2, 5, or 10 minute sessions with a summary and circular progress arc
 - **On This Day** — revisit photos from today's date in past years
 
@@ -40,7 +40,8 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Move or copy** — when sorting from an album, choose whether photos stay or get moved
 - **Custom delete confirmation** — Messages-style menu with spring animation and three deletion modes (delete + photos, delete keep photos, remove from Culla); shared between the gallery list and gallery detail screen
 
-### Background & theming
+### Design & theming
+- **Living-Glass design system** — a reusable set of glass surfaces (iOS 26 Liquid Glass, with an iOS 18 `.thinMaterial` fallback) shared across destination sheets and Settings; per-gallery color carries the "selected" state
 - **Dynamic photo carousel background** — animated mosaic adapts to the selected gallery or favourites, with off / monochrome options
 - **Adaptive scrim** — text stays readable over any photo backdrop
 - **Random session accent** — a fresh neon accent on every launch, or pin one in Settings
@@ -55,6 +56,9 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Native zoom transition** for full-resolution photo preview
 
 ### Onboarding & monetization
+
+> **Note:** Freemium gating and the paywall are **temporarily disabled** in the current build — every user is treated as Pro (fully unlocked). The code is retained, and the items below describe the intended model.
+
 - **In-app spotlight tour** — anchored, auto-advancing walkthrough that introduces sorting, galleries, color picking, and swipe directions
 - **Two-phase review prompt** — `AppStore.requestReview(in:)` on iOS 18+, falls back to `SKStoreReviewController`
 - **Custom paywall** — staggered animations, soft + hard gating via RevenueCat
@@ -125,8 +129,13 @@ culla/
 │
 └── Helpers/
     ├── PhotoImageLoader.swift          # Per-card async image loader
-    ├── AccentEnvironment.swift         # @Environment-driven accent color
+    ├── AccentEnvironment.swift         # @Environment accent + on-tinted-glass text contrast
     ├── Haptics.swift                   # Centralized haptic generator + settings toggle
+    ├── GlassSurface.swift              # .glassSurface() modifier + GlassStack (iOS 26 glass, iOS 18 fallback)
+    ├── GlassPanel.swift                # "Loud" destination panel + SettingsToggleRow + GlassChipPicker
+    ├── SettingsCard.swift              # "Calm" card surface for Settings/utility screens
+    ├── GradientCapsuleButton.swift     # Gradient capsule CTA (tint/role for destructive actions)
+    ├── HeroIconTile.swift              # Glass hero icon tile
     ├── OnboardingManager.swift         # Tracks onboarding/tour completion
     ├── TourEnvironment.swift           # Active tour step + advance closure plumbing
     └── TourTarget.swift                # SwiftUI preferences for spotlight anchoring
@@ -141,7 +150,8 @@ culla/
 - **PHCachingImageManager** preloads the next 3 photos so transitions feel instant.
 - **@Observable** (iOS 17 Observation framework) drives reactive UI updates.
 - **Vision framework** powers duplicate detection via `VNGenerateImageFeaturePrintRequest`.
-- **RevenueCat** handles entitlements; the paywall UI is fully custom.
+- **RevenueCat** handles entitlements; the paywall UI is fully custom. *(Gating is temporarily disabled — `SubscriptionManager.isPro` returns `true` for everyone.)*
+- **Living-Glass design system** — shared glass surfaces in `Helpers/` (Liquid Glass on iOS 26, `.thinMaterial` fallback on iOS 18). Two tiers: *calm* (`SettingsCard`) for utility screens, *loud* (`GlassPanel`) for destination sheets; per-gallery color carries the selected state instead of a generic accent.
 - **Tour anchoring** uses SwiftUI `PreferenceKey` so spotlights track real on-screen elements through layout changes.
 
 ### Data Flow
@@ -203,4 +213,4 @@ Old images are evicted from the cache as the window slides forward. Calendar mos
 
 ## License
 
-Open source. Freemium on the App Store — free tier with limits, one-time unlock for everything else, no subscriptions.
+Open source. Freemium on the App Store — free tier with limits, one-time unlock for everything else, no subscriptions. *(Freemium gating is temporarily disabled in the current build.)*
