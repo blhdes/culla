@@ -49,7 +49,7 @@ struct PhotoGridPickerView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 2) {
                         ForEach(items) { item in
-                            GridThumbnailCell(assetID: item.id)
+                            GridThumbnailCell(assetID: item.id, videoDuration: item.videoDuration)
                                 .id(item.id)
                                 .onTapGesture { pick(item) }
                         }
@@ -76,7 +76,7 @@ struct PhotoGridPickerView: View {
 
         let loaded = await Task.detached(priority: .userInitiated) {
             service.gridAssets(from: e, to: l, inAlbum: albumID)
-                .map { GridPhoto(id: $0.id, creationDate: $0.creationDate) }
+                .map { GridPhoto(id: $0.id, creationDate: $0.creationDate, videoDuration: $0.videoDuration) }
         }.value
 
         items = loaded.reversed()
@@ -97,12 +97,13 @@ struct PhotoGridPickerView: View {
 private struct GridPhoto: Identifiable, Equatable {
     let id: String
     let creationDate: Date
+    let videoDuration: TimeInterval?
 }
 
 private struct GridThumbnailCell: View {
     let assetID: String
+    let videoDuration: TimeInterval?
     @State private var image: UIImage?
-    @State private var videoDuration: TimeInterval?
 
     var body: some View {
         Color.secondary.opacity(0.15)
@@ -121,11 +122,6 @@ private struct GridThumbnailCell: View {
             }
             .clipped()
             .task(id: assetID) {
-                if let info = PhotoLibraryService.shared.mediaInfo(for: assetID), info.isVideo {
-                    videoDuration = info.duration
-                } else {
-                    videoDuration = nil
-                }
                 image = await PhotoLibraryService.shared.loadThumbnail(for: assetID)
             }
     }

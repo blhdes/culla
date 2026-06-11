@@ -331,7 +331,7 @@ struct PhotoThumbnailView: View {
             .clipped()
             .contentShape(Rectangle())
             .task {
-                if let info = photoService.mediaInfo(for: assetIdentifier), info.isVideo {
+                if let info = photoService.assetInfo(for: assetIdentifier), info.isVideo {
                     videoDuration = info.duration
                 }
                 await loader.load()

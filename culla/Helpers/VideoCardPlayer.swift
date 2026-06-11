@@ -42,10 +42,9 @@ final class VideoCardPlayer {
         activeIdentifier = identifier
         stopPlayback()
 
+        // loadPlayerItem rejects non-videos itself — no separate media-type fetch.
         guard let identifier,
-              service.mediaInfo(for: identifier)?.isVideo == true else { return }
-
-        guard let item = await service.loadPlayerItem(for: identifier) else { return }
+              let item = await service.loadPlayerItem(for: identifier) else { return }
         guard gen == generation else { return }   // superseded while loading
 
         AudioSessionHelper.prepareForMutedPlayback()

@@ -114,8 +114,9 @@ final class SwipeViewModel {
 
         var queue = batch
         currentIdentifier = queue.removeFirst()
-        currentPhotoDate = photoService.fetchCreationDate(for: currentIdentifier!)
-        currentPhotoIsFavorite = photoService.fetchIsFavorite(for: currentIdentifier!)
+        let info = photoService.assetInfo(for: currentIdentifier!)
+        currentPhotoDate = info?.creationDate
+        currentPhotoIsFavorite = info?.isFavorite ?? false
 
         if !queue.isEmpty {
             nextIdentifier = queue.removeFirst()
@@ -266,8 +267,9 @@ final class SwipeViewModel {
         currentIdentifier = nextIdentifier
 
         if let current = currentIdentifier {
-            currentPhotoDate = photoService.fetchCreationDate(for: current)
-            currentPhotoIsFavorite = photoService.fetchIsFavorite(for: current)
+            let info = photoService.assetInfo(for: current)
+            currentPhotoDate = info?.creationDate
+            currentPhotoIsFavorite = info?.isFavorite ?? false
         } else {
             currentPhotoDate = nil
             currentPhotoIsFavorite = false
@@ -303,8 +305,9 @@ final class SwipeViewModel {
         }
         nextIdentifier = currentIdentifier
         currentIdentifier = identifier
-        currentPhotoDate = photoService.fetchCreationDate(for: identifier)
-        currentPhotoIsFavorite = photoService.fetchIsFavorite(for: identifier)
+        let info = photoService.assetInfo(for: identifier)
+        currentPhotoDate = info?.creationDate
+        currentPhotoIsFavorite = info?.isFavorite ?? false
         isEmpty = false
     }
 

@@ -363,23 +363,24 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return result.firstObject?.creationDate
     }
 
-    /// Returns whether a single photo asset is marked as favourite.
-    func fetchIsFavorite(for identifier: String) -> Bool {
-        let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
-        return result.firstObject?.isFavorite ?? false
-    }
-
-    /// Lightweight media metadata for a single asset.
-    struct AssetMediaInfo {
+    /// Everything the UI asks about a single asset, answered in one fetch.
+    struct AssetInfo {
+        let creationDate: Date?
+        let isFavorite: Bool
         let isVideo: Bool
         let duration: TimeInterval   // 0 for images
     }
 
-    /// Cheap single-asset metadata fetch (same cost as fetchCreationDate).
-    func mediaInfo(for identifier: String) -> AssetMediaInfo? {
+    /// Cheap single-asset metadata fetch (one PHAsset lookup).
+    func assetInfo(for identifier: String) -> AssetInfo? {
         let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
         guard let asset = result.firstObject else { return nil }
-        return AssetMediaInfo(isVideo: asset.mediaType == .video, duration: asset.duration)
+        return AssetInfo(
+            creationDate: asset.creationDate,
+            isFavorite: asset.isFavorite,
+            isVideo: asset.mediaType == .video,
+            duration: asset.duration
+        )
     }
 
     // MARK: - Fetching
@@ -796,10 +797,10 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return calendarResult
     }
 
-    /// Returns every image asset in the album scope between `earliest` and `latest`,
-    /// newest first, as `(localIdentifier, creationDate)` pairs. Used by the photo
-    /// grid picker so taps can map straight to a date without a second PHAsset fetch.
-    nonisolated func gridAssets(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> [(id: String, creationDate: Date)] {
+    /// Returns every asset in the album scope between `earliest` and `latest`,
+    /// newest first. Carries creationDate and videoDuration so the photo grid
+    /// picker never needs a second per-cell PHAsset fetch.
+    nonisolated func gridAssets(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> [(id: String, creationDate: Date, videoDuration: TimeInterval?)] {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
 
@@ -829,11 +830,12 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             result = PHAsset.fetchAssets(with: options)
         }
 
-        var items: [(id: String, creationDate: Date)] = []
+        var items: [(id: String, creationDate: Date, videoDuration: TimeInterval?)] = []
         items.reserveCapacity(result.count)
         result.enumerateObjects { asset, _, _ in
             guard let date = asset.creationDate else { return }
-            items.append((asset.localIdentifier, date))
+            let duration = asset.mediaType == .video ? asset.duration : nil
+            items.append((asset.localIdentifier, date, duration))
         }
         return items
     }
