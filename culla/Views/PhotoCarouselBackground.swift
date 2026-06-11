@@ -115,6 +115,7 @@ struct PhotoCarouselBackground: View {
     var isSharpened: Bool = false
 
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
+    @AppStorage("dynamicBackgroundStyle") private var backgroundStyle = "stream"
     @AppStorage("monochromeBackground") private var monochrome = false
     @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
@@ -141,7 +142,19 @@ struct PhotoCarouselBackground: View {
             if effectiveMode != "off" {
                 Group {
                     if !manager.images.isEmpty {
-                        photoCanvas
+                        // One treatment chain for both styles so they can never drift apart.
+                        Group {
+                            if backgroundStyle == "mosaic" {
+                                MosaicBackground(images: manager.images, isPaused: isPaused)
+                            } else {
+                                photoCanvas
+                            }
+                        }
+                        .blur(radius: isSharpened ? 1 : 7)
+                        .animation(.easeInOut(duration: 0.4), value: isSharpened)
+                        .opacity(0.9)
+                        .saturation(monochrome ? 0 : 1)
+                        .contrast(monochrome ? 1.3 : 1)
                     }
                     Rectangle().fill(Color(.systemBackground).opacity(colorScheme == .light ? 0.55 : 0.25))
                     grainLayer
@@ -249,11 +262,6 @@ struct PhotoCarouselBackground: View {
                     }
                 }
             }
-            .blur(radius: isSharpened ? 1 : 7)
-            .animation(.easeInOut(duration: 0.4), value: isSharpened)
-            .opacity(0.9)
-            .saturation(monochrome ? 0 : 1)
-            .contrast(monochrome ? 1.3 : 1)
         }
     }
 

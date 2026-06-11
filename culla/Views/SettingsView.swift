@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("includeVideos") private var includeVideos = true
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
+    @AppStorage("dynamicBackgroundStyle") private var backgroundStyle = "stream"
     @AppStorage("monochromeBackground") private var monochrome = false
 
     @Environment(\.dismiss) private var dismiss
@@ -188,6 +189,13 @@ struct SettingsView: View {
             }
 
             if backgroundMode != "off" {
+                rowDivider
+                labeledControl("Style") {
+                    GlassChipPicker(selection: $backgroundStyle, options: [
+                        .init(id: "stream", label: "Stream"),
+                        .init(id: "mosaic", label: "Mosaic")
+                    ])
+                }
                 rowDivider
                 SettingsToggleRow(title: "Monochrome", isOn: $monochrome)
             }
