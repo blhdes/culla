@@ -48,9 +48,6 @@ struct PhotoPreviewOverlay: View {
                 if videoPlayer.player != nil {
                     Button {
                         videoPlayer.isMuted.toggle()
-                        if !videoPlayer.isMuted {
-                            AudioSessionHelper.activateForAudio()
-                        }
                     } label: {
                         Image(systemName: videoPlayer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                             .font(.body)
@@ -73,9 +70,12 @@ struct PhotoPreviewOverlay: View {
             .padding(.top, 8)
         }
         .task {
-            // Poster loads either way — it's the fallback if the video can't play.
-            await loader.load()
+            // Poster loads either way — it's the fallback if the video can't
+            // play. Concurrent, so video start doesn't wait behind a
+            // max-size (possibly iCloud) image fetch.
+            async let poster: Void = loader.load()
             await videoPlayer.prepare(for: identifier, service: photoService)
+            await poster
         }
         .onDisappear { videoPlayer.teardown() }
     }

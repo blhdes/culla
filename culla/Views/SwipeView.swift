@@ -304,9 +304,6 @@ struct SwipeView: View {
                        videoPlayer.activeIdentifier == viewModel.currentIdentifier {
                         Button {
                             videoPlayer.isMuted.toggle()
-                            if !videoPlayer.isMuted {
-                                AudioSessionHelper.activateForAudio()
-                            }
                         } label: {
                             Image(systemName: videoPlayer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                                 .font(.title3)

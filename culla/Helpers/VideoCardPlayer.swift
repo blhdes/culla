@@ -13,14 +13,32 @@ final class VideoCardPlayer {
     private(set) var activeIdentifier: String?
 
     var isMuted = true {
-        didSet { player?.isMuted = isMuted }
+        didSet {
+            player?.isMuted = isMuted
+            if !isMuted {
+                AudioSessionHelper.activateForAudio()
+            }
+            // Re-muting keeps the session escalated until the card changes —
+            // restoring here would thrash the session while the video loops.
+        }
     }
 
     private var looper: AVPlayerLooper?
 
+    /// Bumped on every prepare/teardown. An in-flight load compares against it
+    /// after its await so a superseded load can never attach its player — even
+    /// when the same identifier is in flight twice (undo within the load window).
+    private var generation = 0
+
     /// Call whenever the top card changes. Tears down for images,
     /// loads and auto-plays (muted, looping) for videos.
     func prepare(for identifier: String?, service: PhotoLibraryService) async {
+        // Both the initial .task and onChange can request the same card —
+        // one load is enough.
+        guard identifier != activeIdentifier else { return }
+
+        generation += 1
+        let gen = generation
         activeIdentifier = identifier
         stopPlayback()
 
@@ -28,9 +46,7 @@ final class VideoCardPlayer {
               service.mediaInfo(for: identifier)?.isVideo == true else { return }
 
         guard let item = await service.loadPlayerItem(for: identifier) else { return }
-
-        // The user may have swiped on while the video was loading.
-        guard activeIdentifier == identifier else { return }
+        guard gen == generation else { return }   // superseded while loading
 
         AudioSessionHelper.prepareForMutedPlayback()
 
@@ -43,6 +59,7 @@ final class VideoCardPlayer {
     }
 
     func teardown() {
+        generation += 1
         activeIdentifier = nil
         stopPlayback()
     }
@@ -51,6 +68,8 @@ final class VideoCardPlayer {
         player?.pause()
         looper = nil
         player = nil
+        // Pause must precede this — deactivating a busy session throws.
+        AudioSessionHelper.restoreAmbientAfterAudio()
     }
 }
 
@@ -83,6 +102,9 @@ struct PlayerLayerView: UIViewRepresentable {
 // MARK: - Audio Session
 
 enum AudioSessionHelper {
+    /// True while the session is escalated to .playback by an unmute.
+    private static var isEscalated = false
+
     /// .ambient + mixWithOthers BEFORE first playback — the iOS default
     /// (.soloAmbient) would pause the user's music even for muted video.
     static func prepareForMutedPlayback() {
@@ -94,15 +116,31 @@ enum AudioSessionHelper {
     }
 
     /// Switch to .playback on unmute so video audio is audible even with the
-    /// silent switch on. Trade-off: this ducks/stops background music —
-    /// acceptable because the user explicitly asked to hear the video.
+    /// silent switch on. Trade-off: this stops background music — acceptable
+    /// because the user explicitly asked to hear the video.
     static func activateForAudio() {
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback)
             try session.setActive(true)
+            isEscalated = true
         } catch {
             print("culla: failed to activate playback audio session: \(error)")
+        }
+    }
+
+    /// Hands audio back to whatever the user was listening to before they
+    /// unmuted. Without the notifyOthersOnDeactivation handoff, one unmute
+    /// would leave the user's music paused for the rest of the app session.
+    static func restoreAmbientAfterAudio() {
+        guard isEscalated else { return }
+        isEscalated = false
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setActive(false, options: [.notifyOthersOnDeactivation])
+            try session.setCategory(.ambient, options: [.mixWithOthers])
+        } catch {
+            print("culla: failed to restore ambient audio session: \(error)")
         }
     }
 }
