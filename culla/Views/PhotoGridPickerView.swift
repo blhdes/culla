@@ -102,6 +102,7 @@ private struct GridPhoto: Identifiable, Equatable {
 private struct GridThumbnailCell: View {
     let assetID: String
     @State private var image: UIImage?
+    @State private var videoDuration: TimeInterval?
 
     var body: some View {
         Color.secondary.opacity(0.15)
@@ -113,8 +114,18 @@ private struct GridThumbnailCell: View {
                         .scaledToFill()
                 }
             }
+            .overlay(alignment: .bottomTrailing) {
+                if let videoDuration {
+                    VideoDurationBadge(duration: videoDuration)
+                }
+            }
             .clipped()
             .task(id: assetID) {
+                if let info = PhotoLibraryService.shared.mediaInfo(for: assetID), info.isVideo {
+                    videoDuration = info.duration
+                } else {
+                    videoDuration = nil
+                }
                 image = await PhotoLibraryService.shared.loadThumbnail(for: assetID)
             }
     }

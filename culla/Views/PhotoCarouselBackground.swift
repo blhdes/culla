@@ -32,6 +32,7 @@ final class PhotoBackgroundManager {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         fetchOptions.fetchLimit = 36
+        // Decorative background — intentionally image-only even when "Include videos" is on.
         fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
 
         var assets: [PHAsset] = []

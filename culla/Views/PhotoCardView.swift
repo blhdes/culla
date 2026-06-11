@@ -5,16 +5,25 @@ struct PhotoCardView: View {
     let photoService: PhotoLibraryService
     let offset: CGSize
     var isZoomed: Bool = false
+    /// Set only on the top card — background cards stay poster-frame only.
+    var videoPlayer: VideoCardPlayer?
 
     @State private var loader: PhotoImageLoader
 
     private let swipeThreshold: CGFloat = 100
 
-    init(assetIdentifier: String, photoService: PhotoLibraryService, offset: CGSize = .zero, isZoomed: Bool = false) {
+    init(
+        assetIdentifier: String,
+        photoService: PhotoLibraryService,
+        offset: CGSize = .zero,
+        isZoomed: Bool = false,
+        videoPlayer: VideoCardPlayer? = nil
+    ) {
         self.assetIdentifier = assetIdentifier
         self.photoService = photoService
         self.offset = offset
         self.isZoomed = isZoomed
+        self.videoPlayer = videoPlayer
         self._loader = State(initialValue: PhotoImageLoader(
             service: photoService,
             assetIdentifier: assetIdentifier,
@@ -36,6 +45,15 @@ struct PhotoCardView: View {
                     }
                 }
                 .animation(.easeOut(duration: 0.35), value: loader.image != nil)
+
+                // Video layer above the poster frame — the poster shows
+                // instantly and doubles as the loading state while an
+                // iCloud video streams in.
+                if let player = videoPlayer?.player,
+                   videoPlayer?.activeIdentifier == assetIdentifier {
+                    PlayerLayerView(player: player, fillsFrame: isZoomed)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                }
 
                 swipeOverlay
             }

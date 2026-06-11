@@ -62,10 +62,7 @@ struct PhoneAlbum: Identifiable, Hashable {
             self.photoCount = estimated
         } else {
             let options = PHFetchOptions()
-            options.predicate = NSPredicate(
-                format: "mediaType == %d",
-                PHAssetMediaType.image.rawValue
-            )
+            options.predicate = PhotoLibraryService.mediaPredicate()
             self.photoCount = PHAsset.fetchAssets(in: collection, options: options).count
         }
     }

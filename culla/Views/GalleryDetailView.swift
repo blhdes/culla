@@ -277,6 +277,7 @@ struct PhotoThumbnailView: View {
     let targetSize: CGSize
 
     @State private var loader: PhotoImageLoader
+    @State private var videoDuration: TimeInterval?
 
     /// Standard thumbnail size for a 3-column grid.
     static let gridSize: CGSize = {
@@ -322,8 +323,18 @@ struct PhotoThumbnailView: View {
                     }
                 }
             }
+            .overlay(alignment: .bottomTrailing) {
+                if let videoDuration {
+                    VideoDurationBadge(duration: videoDuration)
+                }
+            }
             .clipped()
             .contentShape(Rectangle())
-            .task { await loader.load() }
+            .task {
+                if let info = photoService.mediaInfo(for: assetIdentifier), info.isVideo {
+                    videoDuration = info.duration
+                }
+                await loader.load()
+            }
     }
 }

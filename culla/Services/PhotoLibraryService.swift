@@ -1,3 +1,4 @@
+import AVFoundation
 import Photos
 import UIKit
 
@@ -82,6 +83,30 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return status
     }
 
+    // MARK: - Include Videos Setting
+
+    /// UserDefaults key backing the Settings "Include videos" toggle.
+    /// Must match the @AppStorage key used in SettingsView/DatePickerView.
+    nonisolated static let includeVideosKey = "includeVideos"
+
+    /// Whether videos join the swipe pipeline. ON by default.
+    /// Uses object(forKey:) because bool(forKey:) returns false for a
+    /// missing key, which would silently default the feature OFF.
+    nonisolated static var includeVideos: Bool {
+        UserDefaults.standard.object(forKey: includeVideosKey) as? Bool ?? true
+    }
+
+    /// Builds the media-type predicate, optionally ANDed with extra conditions.
+    /// Single source of truth for "what counts as a sortable asset".
+    nonisolated static func mediaPredicate(and extra: NSPredicate? = nil) -> NSPredicate {
+        let types = includeVideos
+            ? [PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue]
+            : [PHAssetMediaType.image.rawValue]
+        let media = NSPredicate(format: "mediaType IN %@", types)
+        guard let extra else { return media }
+        return NSCompoundPredicate(andPredicateWithSubpredicates: [media, extra])
+    }
+
     // MARK: - Date Range
 
     /// Returns the creation dates of the earliest and latest photos in the library.
@@ -95,20 +120,17 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         options.fetchLimit = 1
 
         if albumIdentifier == PhoneAlbum.favoritesIdentifier {
-            options.predicate = NSPredicate(
-                format: "mediaType == %d AND isFavorite == YES",
-                PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(format: "isFavorite == YES"))
             return PHAsset.fetchAssets(with: options).firstObject?.creationDate
         } else if let albumIdentifier,
                   albumIdentifier != PhoneAlbum.unsortedIdentifier,
                   let collection = PHAssetCollection.fetchAssetCollections(
                       withLocalIdentifiers: [albumIdentifier], options: nil
                   ).firstObject {
-            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            options.predicate = Self.mediaPredicate()
             return PHAsset.fetchAssets(in: collection, options: options).firstObject?.creationDate
         } else {
-            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            options.predicate = Self.mediaPredicate()
             return PHAsset.fetchAssets(with: options).firstObject?.creationDate
         }
     }
@@ -119,39 +141,33 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         options.fetchLimit = 1
 
         if albumIdentifier == PhoneAlbum.favoritesIdentifier {
-            options.predicate = NSPredicate(
-                format: "mediaType == %d AND isFavorite == YES",
-                PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(format: "isFavorite == YES"))
             return PHAsset.fetchAssets(with: options).firstObject?.creationDate
         } else if let albumIdentifier,
                   albumIdentifier != PhoneAlbum.unsortedIdentifier,
                   let collection = PHAssetCollection.fetchAssetCollections(
                       withLocalIdentifiers: [albumIdentifier], options: nil
                   ).firstObject {
-            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            options.predicate = Self.mediaPredicate()
             return PHAsset.fetchAssets(in: collection, options: options).firstObject?.creationDate
         } else {
-            options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            options.predicate = Self.mediaPredicate()
             return PHAsset.fetchAssets(with: options).firstObject?.creationDate
         }
     }
 
     func photoDateRange() -> (earliest: Date, latest: Date)? {
-        let imageType = PHAssetMediaType.image.rawValue
         let floorDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!
 
         let earliestOptions = PHFetchOptions()
-        earliestOptions.predicate = NSPredicate(
-            format: "mediaType == %d AND creationDate >= %@",
-            imageType,
-            floorDate as NSDate
+        earliestOptions.predicate = Self.mediaPredicate(
+            and: NSPredicate(format: "creationDate >= %@", floorDate as NSDate)
         )
         earliestOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
         earliestOptions.fetchLimit = 1
 
         let latestOptions = PHFetchOptions()
-        latestOptions.predicate = NSPredicate(format: "mediaType == %d", imageType)
+        latestOptions.predicate = Self.mediaPredicate()
         latestOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         latestOptions.fetchLimit = 1
 
@@ -353,6 +369,19 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return result.firstObject?.isFavorite ?? false
     }
 
+    /// Lightweight media metadata for a single asset.
+    struct AssetMediaInfo {
+        let isVideo: Bool
+        let duration: TimeInterval   // 0 for images
+    }
+
+    /// Cheap single-asset metadata fetch (same cost as fetchCreationDate).
+    func mediaInfo(for identifier: String) -> AssetMediaInfo? {
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
+        guard let asset = result.firstObject else { return nil }
+        return AssetMediaInfo(isVideo: asset.mediaType == .video, duration: asset.duration)
+    }
+
     // MARK: - Fetching
 
     /// Returns asset identifiers for photos taken on or after `startDate`,
@@ -370,10 +399,8 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         }
 
         let fetchOptions = PHFetchOptions()
-        fetchOptions.predicate = NSPredicate(
-            format: "creationDate >= %@ AND mediaType == %d",
-            startDate as NSDate,
-            PHAssetMediaType.image.rawValue
+        fetchOptions.predicate = Self.mediaPredicate(
+            and: NSPredicate(format: "creationDate >= %@", startDate as NSDate)
         )
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 
@@ -411,10 +438,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         let currentYear = calendar.component(.year, from: .now)
 
         let fetchOptions = PHFetchOptions()
-        fetchOptions.predicate = NSPredicate(
-            format: "mediaType == %d",
-            PHAssetMediaType.image.rawValue
-        )
+        fetchOptions.predicate = Self.mediaPredicate()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 
         let result: PHFetchResult<PHAsset>
@@ -448,20 +472,14 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     /// Returns the count of favorited photos.
     func favoritesPhotoCount() -> Int {
         let options = PHFetchOptions()
-        options.predicate = NSPredicate(
-            format: "mediaType == %d AND isFavorite == YES",
-            PHAssetMediaType.image.rawValue
-        )
+        options.predicate = Self.mediaPredicate(and: NSPredicate(format: "isFavorite == YES"))
         return PHAsset.fetchAssets(with: options).count
     }
 
     /// Returns the count of all photos not yet sorted into a gallery (excludes already-sorted identifiers).
     func unsortedPhotoCount(excluding excludedIDs: Set<String> = []) -> Int {
         let options = PHFetchOptions()
-        options.predicate = NSPredicate(
-            format: "mediaType == %d",
-            PHAssetMediaType.image.rawValue
-        )
+        options.predicate = Self.mediaPredicate()
         let allAssets = PHAsset.fetchAssets(with: options)
 
         var count = 0
@@ -481,11 +499,10 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         excluding excludedIDs: Set<String>
     ) -> [String] {
         let fetchOptions = PHFetchOptions()
-        fetchOptions.predicate = NSPredicate(
-            format: "creationDate >= %@ AND mediaType == %d AND isFavorite == YES",
-            startDate as NSDate,
-            PHAssetMediaType.image.rawValue
-        )
+        fetchOptions.predicate = Self.mediaPredicate(and: NSPredicate(
+            format: "creationDate >= %@ AND isFavorite == YES",
+            startDate as NSDate
+        ))
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 
         let allAssets = PHAsset.fetchAssets(with: fetchOptions)
@@ -497,6 +514,49 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             }
         }
         return identifiers
+    }
+
+    // MARK: - Video Loading
+
+    /// Loads a playable item for a video asset. Streams from iCloud when needed.
+    func loadPlayerItem(for assetIdentifier: String) async -> AVPlayerItem? {
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
+        guard let asset = result.firstObject, asset.mediaType == .video else { return nil }
+
+        let options = PHVideoRequestOptions()
+        options.isNetworkAccessAllowed = true
+        options.deliveryMode = .automatic
+
+        return await withCheckedContinuation { continuation in
+            // requestPlayerItem can call back twice (degraded then final) —
+            // resuming a continuation twice crashes, so guard against it.
+            var resumed = false
+            PHImageManager.default().requestPlayerItem(forVideo: asset, options: options) { item, _ in
+                guard !resumed else { return }
+                resumed = true
+                continuation.resume(returning: item)
+            }
+        }
+    }
+
+    /// Returns the local file URL for a video asset, for sharing.
+    /// Nil for images and for iCloud-only videos that can't expose a file URL.
+    func loadVideoURL(for assetIdentifier: String) async -> URL? {
+        let result = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
+        guard let asset = result.firstObject, asset.mediaType == .video else { return nil }
+
+        let options = PHVideoRequestOptions()
+        options.isNetworkAccessAllowed = true
+        options.deliveryMode = .highQualityFormat
+
+        return await withCheckedContinuation { continuation in
+            var resumed = false
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                guard !resumed else { return }
+                resumed = true
+                continuation.resume(returning: (avAsset as? AVURLAsset)?.url)
+            }
+        }
     }
 
     // MARK: - Image Loading
@@ -680,7 +740,8 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     /// Respects album filtering: pass a collectionIdentifier to scope to an album,
     /// PhoneAlbum.favoritesIdentifier for favorites, or nil for all photos.
     nonisolated func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
-        let cacheKey = "\(albumIdentifier ?? "")|\(earliest.timeIntervalSince1970)|\(latest.timeIntervalSince1970)"
+        // includeVideos is part of the key so toggling the setting can't serve stale data.
+        let cacheKey = "\(Self.includeVideos)|\(albumIdentifier ?? "")|\(earliest.timeIntervalSince1970)|\(latest.timeIntervalSince1970)"
         if let cached = _calendarDataCache[cacheKey] {
             return cached
         }
@@ -691,26 +752,26 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         let result: PHFetchResult<PHAsset>
 
         if albumIdentifier == PhoneAlbum.favoritesIdentifier {
-            options.predicate = NSPredicate(
-                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d AND isFavorite == YES",
-                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND isFavorite == YES",
+                earliest as NSDate, latest as NSDate
+            ))
             result = PHAsset.fetchAssets(with: options)
         } else if let albumIdentifier,
                   albumIdentifier != PhoneAlbum.unsortedIdentifier,
                   let collection = PHAssetCollection.fetchAssetCollections(
                       withLocalIdentifiers: [albumIdentifier], options: nil
                   ).firstObject {
-            options.predicate = NSPredicate(
-                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
-                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@",
+                earliest as NSDate, latest as NSDate
+            ))
             result = PHAsset.fetchAssets(in: collection, options: options)
         } else {
-            options.predicate = NSPredicate(
-                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
-                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@",
+                earliest as NSDate, latest as NSDate
+            ))
             result = PHAsset.fetchAssets(with: options)
         }
 
@@ -745,26 +806,26 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         let result: PHFetchResult<PHAsset>
 
         if albumIdentifier == PhoneAlbum.favoritesIdentifier {
-            options.predicate = NSPredicate(
-                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d AND isFavorite == YES",
-                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@ AND isFavorite == YES",
+                earliest as NSDate, latest as NSDate
+            ))
             result = PHAsset.fetchAssets(with: options)
         } else if let albumIdentifier,
                   albumIdentifier != PhoneAlbum.unsortedIdentifier,
                   let collection = PHAssetCollection.fetchAssetCollections(
                       withLocalIdentifiers: [albumIdentifier], options: nil
                   ).firstObject {
-            options.predicate = NSPredicate(
-                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
-                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@",
+                earliest as NSDate, latest as NSDate
+            ))
             result = PHAsset.fetchAssets(in: collection, options: options)
         } else {
-            options.predicate = NSPredicate(
-                format: "creationDate >= %@ AND creationDate <= %@ AND mediaType == %d",
-                earliest as NSDate, latest as NSDate, PHAssetMediaType.image.rawValue
-            )
+            options.predicate = Self.mediaPredicate(and: NSPredicate(
+                format: "creationDate >= %@ AND creationDate <= %@",
+                earliest as NSDate, latest as NSDate
+            ))
             result = PHAsset.fetchAssets(with: options)
         }
 

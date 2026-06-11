@@ -29,6 +29,7 @@ struct DatePickerView: View {
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("duplicateTimeWindow") private var duplicateTimeWindowSeconds: Double = 3600
+    @AppStorage("includeVideos") private var includeVideos = true
 
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
@@ -294,6 +295,9 @@ struct DatePickerView: View {
                 pickerDate = newID == nil ? (latestDate ?? Date()) : Date()
                 lastSelectedAlbumID = newID ?? ""
             }
+        }
+        .onChange(of: includeVideos) {
+            Task { await loadLibrary() }
         }
     }
 

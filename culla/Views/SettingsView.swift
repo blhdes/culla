@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("statusBarVisible") private var statusBarVisible = false
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
+    @AppStorage("includeVideos") private var includeVideos = true
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("monochromeBackground") private var monochrome = false
@@ -171,6 +172,8 @@ struct SettingsView: View {
             // SettingsToggleRow(title: "Culla Eyes", isOn: $showCullaEyes)
             rowDivider
             SettingsToggleRow(title: "Haptics", isOn: $hapticsEnabled)
+            rowDivider
+            SettingsToggleRow(title: "Include videos", isOn: $includeVideos)
         }
     }
 

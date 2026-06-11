@@ -23,6 +23,9 @@ struct SwipeView: View {
     @State private var viewModel: SwipeViewModel?
     private let photoService = PhotoLibraryService.shared
 
+    // Video playback — one player, owned by whichever card is on top
+    @State private var videoPlayer = VideoCardPlayer()
+
     // Drag state
     @State private var cardOffset: CGSize = .zero
     @State private var highlightedGalleryID: UUID?
@@ -111,7 +114,7 @@ struct SwipeView: View {
             )
         }
         .sheet(item: $shareItem) { item in
-            ShareSheet(image: item.image, date: item.date)
+            ShareSheet(image: item.image, videoURL: item.videoURL, date: item.date)
         }
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(onClose: { showPaywall = false })
@@ -129,6 +132,8 @@ struct SwipeView: View {
                 )
                 viewModel = vm
                 await vm.loadInitialBatch()
+                // onChange below misses the initial value, so kick off here too
+                await videoPlayer.prepare(for: vm.currentIdentifier, service: photoService)
 
                 if let duration = focusDuration {
                     remainingSeconds = Int(duration)
@@ -154,6 +159,12 @@ struct SwipeView: View {
                 timerActive = false
                 showSessionSummary = true
             }
+        }
+        .onChange(of: viewModel?.currentIdentifier) { _, newID in
+            Task { await videoPlayer.prepare(for: newID, service: photoService) }
+        }
+        .onDisappear {
+            videoPlayer.teardown()
         }
         .onChange(of: viewModel?.actionHistory.count) { old, new in
             flashUndo()
@@ -285,6 +296,30 @@ struct SwipeView: View {
                     }
                 }
 
+                // Speaker button — top right, only while a video card is playing.
+                // Lives here (not inside the card) so the high-priority drag
+                // gesture can't swallow its taps.
+                .overlay(alignment: .topTrailing) {
+                    if videoPlayer.player != nil,
+                       videoPlayer.activeIdentifier == viewModel.currentIdentifier {
+                        Button {
+                            videoPlayer.isMuted.toggle()
+                            if !videoPlayer.isMuted {
+                                AudioSessionHelper.activateForAudio()
+                            }
+                        } label: {
+                            Image(systemName: videoPlayer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                .font(.title3)
+                                .frame(width: 24, height: 24)
+                                .padding(10)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.top, 8)
+                        .opacity(chromeOpacity)
+                    }
+                }
+
                 // Navigation buttons (replaces toolbar so they can fade)
                 .swipeTopNav(onBack: onBack, opacity: chromeOpacity)
         }
@@ -397,7 +432,8 @@ struct SwipeView: View {
                     assetIdentifier: currentID,
                     photoService: photoService,
                     offset: cardOffset,
-                    isZoomed: isPhotoZoomed
+                    isZoomed: isPhotoZoomed,
+                    videoPlayer: videoPlayer
                 )
                 .id(currentID)
             }
@@ -516,8 +552,11 @@ struct SwipeView: View {
                     guard let identifier = viewModel.currentIdentifier else { return }
                     let screenSize = UIScreen.main.bounds.size
                     let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
+                    // nil for images and for iCloud-only videos without a local file —
+                    // those fall back to sharing the poster frame below.
+                    let videoURL = await photoService.loadVideoURL(for: identifier)
                     if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
-                        shareItem = ShareItem(image: image, date: viewModel.currentPhotoDate)
+                        shareItem = ShareItem(image: image, videoURL: videoURL, date: viewModel.currentPhotoDate)
                     }
                 }
                 return
@@ -855,6 +894,7 @@ private extension View {
 struct ShareItem: Identifiable {
     let id = UUID()
     let image: UIImage
+    var videoURL: URL? = nil
     let date: Date?
 }
 
@@ -889,9 +929,14 @@ final class SharePhotoItem: NSObject, UIActivityItemSource {
 
 struct ShareSheet: UIViewControllerRepresentable {
     let image: UIImage
+    var videoURL: URL? = nil
     let date: Date?
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
+        // Videos share the actual movie file; images keep the rich-preview source.
+        if let videoURL {
+            return UIActivityViewController(activityItems: [videoURL], applicationActivities: nil)
+        }
         let source = SharePhotoItem(image: image, title: Self.title(for: date))
         return UIActivityViewController(activityItems: [source], applicationActivities: nil)
     }

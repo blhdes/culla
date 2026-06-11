@@ -12,13 +12,10 @@ final class InsightsViewModel {
         self.photoService = photoService
     }
 
-    /// Fetches the total number of photos in the user's library via PhotoKit.
+    /// Fetches the total number of sortable assets in the user's library via PhotoKit.
     func loadLibraryCount() {
         let options = PHFetchOptions()
-        options.predicate = NSPredicate(
-            format: "mediaType == %d",
-            PHAssetMediaType.image.rawValue
-        )
+        options.predicate = PhotoLibraryService.mediaPredicate()
         totalLibraryCount = PHAsset.fetchAssets(with: options).count
     }
     /// Calculates longest and current sorting streaks from SortedPhoto dates.

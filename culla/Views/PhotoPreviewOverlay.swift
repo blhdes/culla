@@ -11,6 +11,7 @@ struct PhotoPreviewOverlay: View {
     let onDismiss: () -> Void
 
     @State private var loader: PhotoImageLoader
+    @State private var videoPlayer = VideoCardPlayer()
 
     init(identifier: String, photoService: PhotoLibraryService, onDismiss: @escaping () -> Void) {
         self.identifier = identifier
@@ -27,7 +28,9 @@ struct PhotoPreviewOverlay: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            if let image = loader.image {
+            if let player = videoPlayer.player {
+                PlayerLayerView(player: player, fillsFrame: false)
+            } else if let image = loader.image {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -41,18 +44,39 @@ struct PhotoPreviewOverlay: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            Button {
-                onDismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.body)
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(.ultraThinMaterial, in: Circle())
+            HStack(spacing: 10) {
+                if videoPlayer.player != nil {
+                    Button {
+                        videoPlayer.isMuted.toggle()
+                        if !videoPlayer.isMuted {
+                            AudioSessionHelper.activateForAudio()
+                        }
+                    } label: {
+                        Image(systemName: videoPlayer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                            .font(.body)
+                            .foregroundStyle(.white)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                }
+                Button {
+                    onDismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.body)
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
             }
             .padding(.trailing, 16)
             .padding(.top, 8)
         }
-        .task { await loader.load() }
+        .task {
+            // Poster loads either way — it's the fallback if the video can't play.
+            await loader.load()
+            await videoPlayer.prepare(for: identifier, service: photoService)
+        }
+        .onDisappear { videoPlayer.teardown() }
     }
 }
