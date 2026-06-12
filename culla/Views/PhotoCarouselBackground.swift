@@ -20,6 +20,15 @@ final class PhotoBackgroundManager {
     var images: [UIImage] = []
 
     private let cacheManager = PHCachingImageManager()
+    // The whole gallery, kept lazily — PHFetchResult doesn't load assets until
+    // asked. A shuffled index walk visits every photo exactly once per cycle.
+    private var fetchResult: PHFetchResult<PHAsset>?
+    private var shuffledOrder: [Int] = []
+    private var cursor = 0
+    // Bumped on every pool swap so an in-flight walk fetch can detect it's stale —
+    // its continuation doesn't see cancellation, so this is the only guard.
+    private var loadGeneration = 0
+    private static let initialPoolSize = 36
     private static let thumbSize: CGSize = {
         let side = ceil(110 * UIScreen.main.scale)
         return CGSize(width: side, height: side)
@@ -31,36 +40,47 @@ final class PhotoBackgroundManager {
 
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 36
         // Decorative background — intentionally image-only even when "Include videos" is on.
         fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
 
-        var assets: [PHAsset] = []
+        let result: PHFetchResult<PHAsset>
 
         if showFavourites {
             // Fetch only favorited photos
             let favOptions = PHFetchOptions()
             favOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-            favOptions.fetchLimit = 36
             favOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
                 NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue),
                 NSPredicate(format: "favorite == YES")
             ])
-            let favResult = PHAsset.fetchAssets(with: favOptions)
-            favResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+            result = PHAsset.fetchAssets(with: favOptions)
         } else if let albumID = albumIdentifier {
             let collections = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil)
             if let collection = collections.firstObject {
-                let albumResult = PHAsset.fetchAssets(in: collection, options: fetchOptions)
-                albumResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+                result = PHAsset.fetchAssets(in: collection, options: fetchOptions)
+            } else {
+                result = PHFetchResult<PHAsset>()
             }
         } else {
-            let allResult = PHAsset.fetchAssets(with: fetchOptions)
-            allResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+            result = PHAsset.fetchAssets(with: fetchOptions)
         }
 
-        assets.shuffle()
-        guard !assets.isEmpty else { return }
+        guard result.count > 0 else { return }
+
+        // No awaits between here and the cache priming, so a superseded load
+        // can't interleave its cursor reset with ours.
+        fetchResult = result
+        shuffledOrder = Array(0..<result.count).shuffled()
+        cursor = 0
+        loadGeneration += 1
+
+        // The initial pool is just the first leg of the walk — a random sample
+        // of the whole gallery, not merely the most recent photos.
+        var assets: [PHAsset] = []
+        for _ in 0..<min(Self.initialPoolSize, result.count) {
+            assets.append(result.object(at: shuffledOrder[cursor]))
+            cursor += 1
+        }
 
         let imgOptions = PHImageRequestOptions()
         imgOptions.deliveryMode = .fastFormat
@@ -85,6 +105,24 @@ final class PhotoBackgroundManager {
         }
         guard !Task.isCancelled else { return }   // don't let a superseded load clobber the current album's images
         images = loaded
+    }
+
+    /// The next photo in the shuffled walk of the entire gallery. Every photo
+    /// appears once per cycle; reaching the end reshuffles and starts a new one.
+    func nextThumbnail() async -> UIImage? {
+        guard let result = fetchResult, result.count > 0 else { return nil }
+        if cursor >= shuffledOrder.count {
+            shuffledOrder.shuffle()
+            cursor = 0
+        }
+        let asset = result.object(at: shuffledOrder[cursor])
+        cursor += 1
+        let generation = loadGeneration
+        let image = await fetch(asset)
+        // The pool was swapped while we were fetching — this image belongs to
+        // the previous gallery. Skip the flip rather than show it on the new wall.
+        guard generation == loadGeneration else { return nil }
+        return image
     }
 
     func stopCaching() { cacheManager.stopCachingImagesForAllAssets() }
@@ -145,7 +183,9 @@ struct PhotoCarouselBackground: View {
                         // One treatment chain for both styles so they can never drift apart.
                         Group {
                             if backgroundStyle == "mosaic" {
-                                MosaicBackground(images: manager.images, isPaused: isPaused)
+                                MosaicBackground(images: manager.images, isPaused: isPaused) {
+                                    await manager.nextThumbnail()
+                                }
                             } else {
                                 photoCanvas
                             }

@@ -4,14 +4,18 @@ import SwiftUI
 
 /// Apple "Album Artwork" screensaver–style wall: a static, edge-to-edge grid of
 /// square photo tiles where one random tile 3D-flips to a new photo at a time.
-/// The companion style to `PhotoCarouselBackground`'s streaming wall — it draws
-/// from the same image pool and gets the same dim/blur/grain treatment from its parent.
+/// The companion style to `PhotoCarouselBackground`'s streaming wall — seeded
+/// from the same image pool, then each flip pulls the next photo from a shuffled
+/// walk of the entire gallery via `nextImage`.
 struct MosaicBackground: View {
+    /// Seed pool for the initial grid. Galleries smaller than the tile count
+    /// repeat photos — the intended fallback.
     let images: [UIImage]
     var isPaused: Bool = false
+    /// Next photo in the gallery-wide walk; nil skips the flip.
+    let nextImage: () async -> UIImage?
 
-    /// Which image each visible tile is currently showing (index into `images`).
-    @State private var tileImageIndices: [Int] = []
+    @State private var tileImages: [UIImage] = []
 
     // Matches the carousel's 110 pt photo size so both styles feel related.
     private let tileSize: CGFloat = 110
@@ -38,33 +42,42 @@ struct MosaicBackground: View {
                         )
                 }
             }
-            // Restarts on rotation, pause toggles, or a pool swap (album switch).
-            // The loop captures a value copy of this struct, so it must restart
-            // to see new inputs — otherwise it picks indices from the old pool's count.
-            .task(id: "\(cols * rows)-\(isPaused)-\(images.count)") {
+            // Restarts on rotation or pause toggles. The loop captures a value
+            // copy of this struct, but its only live inputs — tileImages and the
+            // manager behind nextImage — are reference-backed, so they stay current.
+            .task(id: "\(cols * rows)-\(isPaused)") {
                 await runFlipLoop(tileCount: cols * rows)
+            }
+            // Album switch: a fresh seed pool arrives — rebuild the grid from it.
+            .onChange(of: images) { _, newSeed in
+                seed(from: newSeed, tileCount: cols * rows)
             }
         }
     }
 
     private func image(forTile tile: Int) -> UIImage {
         guard !images.isEmpty else { return UIImage() }
-        if tile < tileImageIndices.count {
-            return images[tileImageIndices[tile] % images.count]
+        if tile < tileImages.count {
+            return tileImages[tile]
         }
         return images[tile % images.count]
     }
 
+    /// Fills every tile with a spread of distinct seed photos (repeats only if
+    /// the screen needs more tiles than the seed pool has images).
+    private func seed(from pool: [UIImage], tileCount: Int) {
+        guard !pool.isEmpty else { return }
+        var fill: [UIImage] = []
+        while fill.count < tileCount {
+            fill.append(contentsOf: pool.shuffled())
+        }
+        tileImages = Array(fill.prefix(tileCount))
+    }
+
     private func runFlipLoop(tileCount: Int) async {
         guard !images.isEmpty else { return }
-        // Seed every tile with a spread of distinct photos (repeats only if the
-        // screen needs more tiles than the pool has images).
-        if tileImageIndices.count != tileCount {
-            var seed: [Int] = []
-            while seed.count < tileCount {
-                seed.append(contentsOf: Array(0..<images.count).shuffled())
-            }
-            tileImageIndices = Array(seed.prefix(tileCount))
+        if tileImages.count != tileCount {
+            seed(from: images, tileCount: tileCount)
         }
 
         guard !isPaused else { return }
@@ -73,14 +86,10 @@ struct MosaicBackground: View {
             try? await Task.sleep(for: .seconds(Double.random(in: 0.7...1.3)))
             guard !Task.isCancelled else { return }
 
-            let tile = Int.random(in: 0..<tileCount)
-            var newIndex = Int.random(in: 0..<images.count)
-            if images.count > 1 {
-                while newIndex == tileImageIndices[tile] {
-                    newIndex = Int.random(in: 0..<images.count)
-                }
-            }
-            tileImageIndices[tile] = newIndex
+            guard let fresh = await nextImage() else { continue }
+            guard !Task.isCancelled else { return }
+
+            tileImages[Int.random(in: 0..<tileCount)] = fresh
         }
     }
 }
