@@ -215,7 +215,9 @@ struct SettingsView: View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
         let year = Calendar.current.component(.year, from: Date())
-        let versionLine = build.isEmpty ? "Version \(version)" : "Version \(version) (\(build))"
+        let versionLine = build.isEmpty
+            ? String(localized: "Version \(version)")
+            : String(localized: "Version \(version) (\(build))")
         return VStack(spacing: 3) {
             Text("Culla")
                 .font(.system(.caption, design: .rounded).weight(.medium))
@@ -237,7 +239,7 @@ struct SettingsView: View {
     /// replacement for a Form row's leading label.
     @ViewBuilder
     private func labeledControl<Control: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         @ViewBuilder control: () -> Control
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -249,7 +251,7 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func settingsButtonRow(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func settingsButtonRow(_ title: LocalizedStringKey, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
@@ -291,7 +293,7 @@ struct SettingsView: View {
                 restoreError = NSError(
                     domain: "Culla",
                     code: 0,
-                    userInfo: [NSLocalizedDescriptionKey: "No active subscription found on this account."]
+                    userInfo: [NSLocalizedDescriptionKey: String(localized: "No active subscription found on this account.")]
                 )
                 showRestoreError = true
             }

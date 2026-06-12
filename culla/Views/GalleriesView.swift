@@ -319,12 +319,12 @@ struct GalleriesView: View {
     private var selectionStatusText: String {
         let active = activeGalleryCount
         if active == 0 {
-            return "Tap a circle to activate galleries for swiping"
+            return String(localized: "Tap a circle to activate galleries for swiping")
         }
         if !subscriptions.isPro && active >= maxSidebarGalleries {
-            return "\(active) active · Upgrade to select more"
+            return String(localized: "\(active) active · Upgrade to select more")
         }
-        return "\(active) of \(galleries.count) active for swiping"
+        return String(localized: "\(active) of \(galleries.count) active for swiping")
     }
 
     @ViewBuilder
@@ -455,7 +455,7 @@ struct DeleteGalleryMenu: View {
     }
 
     @ViewBuilder
-    private func menuButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func menuButton(title: LocalizedStringKey, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline)

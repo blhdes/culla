@@ -21,8 +21,8 @@ enum TrialReminderService {
         guard expirationDate.timeIntervalSinceNow > 0 else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Your Culla Pro trial ends soon"
-        content.body = "Cancel anytime in Settings to avoid being charged."
+        content.title = String(localized: "Your Culla Pro trial ends soon")
+        content.body = String(localized: "Cancel anytime in Settings to avoid being charged.")
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: finalInterval, repeats: false)

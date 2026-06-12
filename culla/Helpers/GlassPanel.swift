@@ -13,7 +13,7 @@ import SwiftUI
 
 struct GlassPanel<Trailing: View, Content: View>: View {
     let icon: String
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder var trailing: () -> Trailing
     @ViewBuilder var content: () -> Content
 
@@ -47,7 +47,7 @@ struct GlassPanel<Trailing: View, Content: View>: View {
 extension GlassPanel where Trailing == EmptyView {
     init(
         icon: String,
-        title: String,
+        title: LocalizedStringKey,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.icon = icon
@@ -60,7 +60,7 @@ extension GlassPanel where Trailing == EmptyView {
 // MARK: - SettingsToggleRow
 
 struct SettingsToggleRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var isOn: Bool
 
     @Environment(\.appAccent) private var appAccent
@@ -87,7 +87,7 @@ struct SettingsToggleRow: View {
 struct GlassChipPicker: View {
     struct Option: Identifiable {
         let id: String
-        let label: String
+        let label: LocalizedStringKey
         var icon: String? = nil
     }
 

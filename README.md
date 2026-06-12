@@ -10,6 +10,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - Freemium model on the App Store — free tier with limits, one-time unlock for everything (**temporarily disabled in the current build — ships fully unlocked**)
 - Syncs with your iPhone Photos library
 - Minimalist, HIG-compliant design with a personal accent palette and a reusable Living-Glass surface system
+- Localized into 8 languages — English, Spanish, German, French, Italian, Japanese, Brazilian Portuguese, and Simplified Chinese
 
 ## Features
 
@@ -75,6 +76,8 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 ```
 culla/
 ├── CullaApp.swift                      # Entry point, splash gate, random accent, model container
+├── Localizable.xcstrings               # String Catalog — all UI strings in 8 languages
+├── InfoPlist.xcstrings                 # Localized photo-permission prompts
 │
 ├── Models/
 │   ├── Gallery.swift                   # User-created gallery (SwiftData @Model)
@@ -153,6 +156,7 @@ culla/
 - **RevenueCat** handles entitlements; the paywall UI is fully custom. *(Gating is temporarily disabled — `SubscriptionManager.isPro` returns `true` for everyone.)*
 - **Living-Glass design system** — shared glass surfaces in `Helpers/` (Liquid Glass on iOS 26, `.thinMaterial` fallback on iOS 18). Two tiers: *calm* (`SettingsCard`) for utility screens, *loud* (`GlassPanel`) for destination sheets; per-gallery color carries the selected state instead of a generic accent.
 - **Tour anchoring** uses SwiftUI `PreferenceKey` so spotlights track real on-screen elements through layout changes.
+- **Localization** via String Catalogs (`Localizable.xcstrings` + `InfoPlist.xcstrings`). Display text flows through `LocalizedStringKey` / `String(localized:)`; persisted identifiers (enum raw values, storage keys) stay English so translations never affect logic.
 
 ### Data Flow
 

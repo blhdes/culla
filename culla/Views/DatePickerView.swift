@@ -320,13 +320,13 @@ struct DatePickerView: View {
     private var actionButtonLabel: String {
         switch selectedMode {
         case .cullaing:
-            guard let focusDuration else { return "Start Cullaing" }
+            guard let focusDuration else { return String(localized: "Start Cullaing") }
             let minutes = Int(focusDuration) / 60
-            return "Culla for \(minutes) min"
+            return String(localized: "Culla for \(minutes) min")
         case .thisDay:
-            return "This Day"
+            return String(localized: "This Day")
         case .duplicates:
-            return "Sweep"
+            return String(localized: "Sweep")
         }
     }
 

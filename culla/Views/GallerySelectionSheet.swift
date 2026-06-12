@@ -24,6 +24,14 @@ struct GallerySelectionSheet: View {
         case custom = "Custom"
         case name = "Name"
         case photoCount = "Photo Count"
+
+        var displayName: LocalizedStringKey {
+            switch self {
+            case .custom: "Custom"
+            case .name: "Name"
+            case .photoCount: "Photo Count"
+            }
+        }
     }
 
     var body: some View {
@@ -136,7 +144,7 @@ struct GallerySelectionSheet: View {
                                     sortOption = option
                                 } label: {
                                     HStack {
-                                        Text(option.rawValue)
+                                        Text(option.displayName)
                                         if sortOption == option {
                                             Image(systemName: "checkmark")
                                         }
@@ -145,7 +153,7 @@ struct GallerySelectionSheet: View {
                             }
                         } label: {
                             HStack(spacing: 4) {
-                                Text(sortOption.rawValue)
+                                Text(sortOption.displayName)
                                 Image(systemName: "chevron.up.chevron.down")
                             }
                             .font(.system(.caption, design: .rounded))

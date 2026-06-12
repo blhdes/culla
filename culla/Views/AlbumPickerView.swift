@@ -125,7 +125,7 @@ struct AlbumPickerView: View {
                     }
                 } label: {
                     HStack {
-                        Text(option.rawValue)
+                        Text(option.displayName)
                         if sortOption == option {
                             Image(systemName: sortAscending ? "chevron.up" : "chevron.down")
                         }

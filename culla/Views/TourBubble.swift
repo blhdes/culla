@@ -68,7 +68,7 @@ struct TourBubble: View {
         .padding(16)
     }
 
-    private func nextButton(label: String, enabled: Bool) -> some View {
+    private func nextButton(label: LocalizedStringKey, enabled: Bool) -> some View {
         HStack(spacing: 4) {
             Text(label)
             if step != .readyToSwipe {

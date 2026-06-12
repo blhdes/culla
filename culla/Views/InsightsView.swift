@@ -254,7 +254,7 @@ struct InsightsView: View {
         .animation(.snappy, value: value)
     }
 
-    private func detailRow(_ label: String, value: String) -> some View {
+    private func detailRow(_ label: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(label)
                 .foregroundStyle(.secondary)

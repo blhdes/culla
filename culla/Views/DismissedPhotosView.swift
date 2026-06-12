@@ -162,7 +162,7 @@ struct DismissedPhotosView: View {
 
     /// Secondary action — a glass capsule (recover keeps photos, so it reads
     /// as the calm choice next to the bold red delete CTA).
-    private func recoverButton(_ title: String, action: @escaping () -> Void) -> some View {
+    private func recoverButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(.headline, design: .rounded).weight(.semibold))
@@ -175,7 +175,7 @@ struct DismissedPhotosView: View {
         .buttonStyle(.plain)
     }
 
-    private func deleteButton(_ title: String, disabled: Bool, action: @escaping () -> Void) -> some View {
+    private func deleteButton(_ title: LocalizedStringKey, disabled: Bool, action: @escaping () -> Void) -> some View {
         GradientCapsuleButton(title: title, icon: "trash", tint: .red, action: action)
             .disabled(disabled)
             .opacity(disabled ? 0.5 : 1)

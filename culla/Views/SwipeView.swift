@@ -494,7 +494,7 @@ struct SwipeView: View {
         // instead of letting the swipe silently fall through.
         if (tx > swipeThreshold || ptx > swipeThreshold), sidebarGalleries.isEmpty {
             snapBack()
-            showToast("Add a gallery first")
+            showToast(String(localized: "Add a gallery first"))
             showGallerySelector = true
             return
         }
@@ -537,7 +537,7 @@ struct SwipeView: View {
                         totalFavouritedPhotos = max(0, totalFavouritedPhotos - 1)
                         DailyStats.upsert(in: modelContext, favouritedDelta: -1)
                     }
-                    showToast(isFavorite ? "Favorited ♥" : "Unfavorited")
+                    showToast(isFavorite ? String(localized: "Favorited ♥") : String(localized: "Unfavorited"))
                 }
                 return
             }
@@ -571,7 +571,7 @@ struct SwipeView: View {
                 viewModel.dismissCurrent()
                 subscriptions.recordSwipe()
                 Haptics.swipeLeft()
-                showToast("Dismissed")
+                showToast(String(localized: "Dismissed"))
             }
             return
         }
@@ -942,7 +942,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 
     private static func title(for date: Date?) -> String {
         guard let date else { return "Culla" }
-        return "Culla · \(date.formatted(date: .abbreviated, time: .omitted))"
+        return String(localized: "Culla · \(date.formatted(date: .abbreviated, time: .omitted))")
     }
 }
 

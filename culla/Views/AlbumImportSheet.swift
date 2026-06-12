@@ -60,7 +60,7 @@ struct AlbumImportSheet: View {
                                             sortOption = option
                                         } label: {
                                             HStack {
-                                                Text(option.rawValue)
+                                                Text(option.displayName)
                                                 if sortOption == option {
                                                     Image(systemName: "checkmark")
                                                 }
@@ -69,7 +69,7 @@ struct AlbumImportSheet: View {
                                     }
                                 } label: {
                                     HStack(spacing: 4) {
-                                        Text(sortOption.rawValue)
+                                        Text(sortOption.displayName)
                                         Image(systemName: "chevron.up.chevron.down")
                                     }
                                     .font(.footnote)
@@ -96,7 +96,7 @@ struct AlbumImportSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    let label = selectedAlbumIDs.isEmpty
+                    let label: LocalizedStringKey = selectedAlbumIDs.isEmpty
                         ? "Import"
                         : "Import (\(selectedAlbumIDs.count))"
                     Button(label) { importSelected() }

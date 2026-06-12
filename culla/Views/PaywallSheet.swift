@@ -72,7 +72,7 @@ struct PaywallSheet: View {
         } else if let offering, !offering.availablePackages.isEmpty {
             paywallBody(offering: offering)
         } else {
-            errorView(message: "No subscription options are available right now. Please try again later.")
+            errorView(message: String(localized: "No subscription options are available right now. Please try again later."))
         }
     }
 
@@ -221,7 +221,7 @@ struct PaywallSheet: View {
         .padding(.horizontal, 16)
     }
 
-    private func featureRow(icon: String, title: String, detail: String) -> some View {
+    private func featureRow(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
@@ -334,11 +334,11 @@ struct PaywallSheet: View {
     }
 
     private var ctaTitle: String {
-        guard let package = selectedPackage else { return "Continue" }
+        guard let package = selectedPackage else { return String(localized: "Continue") }
         if let trialDays = introductoryTrialDays(package) {
-            return "Start \(trialDays)-day free trial"
+            return String(localized: "Start \(trialDays)-day free trial")
         }
-        return "Continue"
+        return String(localized: "Continue")
     }
 
     private func trialDisclosure(for package: Package) -> some View {
@@ -472,7 +472,7 @@ struct PaywallSheet: View {
             if subscriptions.isPro {
                 onClose()
             } else {
-                purchaseError = "No active subscription found on this account."
+                purchaseError = String(localized: "No active subscription found on this account.")
             }
         } catch {
             purchaseError = error.localizedDescription

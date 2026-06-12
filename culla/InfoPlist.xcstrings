@@ -1,0 +1,124 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "shouldTranslate" : false,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "comment" : "Privacy - Photo Library Additions Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla creates albums and organizes photos in your library based on your sorting choices."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla crea álbumes y organiza las fotos de tu fototeca según tus decisiones de clasificación."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla erstellt Alben und organisiert Fotos in deiner Mediathek basierend auf deinen Sortier-Entscheidungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla crée des albums et organise les photos de votre photothèque selon vos choix de tri."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla crea album e organizza le foto nella tua libreria in base alle tue scelte di smistamento."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cullaは仕分けの選択に基づいて、ライブラリ内にアルバムを作成し写真を整理します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Culla cria álbuns e organiza as fotos da sua fototeca com base nas suas escolhas de classificação."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla 会根据你的整理选择,在图库中创建相册并整理照片。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "comment" : "Privacy - Photo Library Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla needs access to your photo library to display and organize your photos."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla necesita acceso a tu fototeca para mostrar y organizar tus fotos."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla benötigt Zugriff auf deine Fotomediathek, um deine Fotos anzuzeigen und zu organisieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla a besoin d'accéder à votre photothèque pour afficher et organiser vos photos."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla ha bisogno di accedere alla tua libreria foto per mostrare e organizzare le tue foto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真の表示と整理のために、Cullaは写真ライブラリへのアクセスが必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Culla precisa de acesso à sua fototeca para exibir e organizar suas fotos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla 需要访问你的照片图库以显示和整理照片。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

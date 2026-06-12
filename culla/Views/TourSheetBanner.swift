@@ -18,7 +18,7 @@ struct TourSheetBanner: View {
                 .foregroundStyle(isDone ? .green : accent)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(isDone ? "Done!" : step.title)
+                Text(isDone ? String(localized: "Done!") : step.title)
                     .font(.subheadline.weight(.semibold))
                 if !isDone {
                     Text(guidanceText)
@@ -58,7 +58,7 @@ struct TourSheetBanner: View {
     }
 
     private var guidanceText: String {
-        "Tap + to create a new gallery, or use the menu to import an existing iPhone album."
+        String(localized: "Tap + to create a new gallery, or use the menu to import an existing iPhone album.")
     }
 }
 

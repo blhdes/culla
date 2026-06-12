@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TooltipBubble: View {
-    let text: String
+    let text: LocalizedStringKey
 
     @State private var isVisible = false
 

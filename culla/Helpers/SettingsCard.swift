@@ -6,7 +6,7 @@ import SwiftUI
 /// rest of the app's louder glass vocabulary (Galleries, Insights, Duplicate
 /// Sweep) keeps using `GlassPanel`.
 struct SettingsCard<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder var content: () -> Content
 
     var body: some View {

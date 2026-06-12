@@ -23,29 +23,29 @@ enum TourStep: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .welcome:          return "Welcome to Culla"
-        case .pickDate:         return "Pick a Date"
-        case .whatAreGalleries: return "Your Galleries"
-        case .setupGallery:     return "Set Up a Gallery"
-        case .changeColor:      return "Make It Yours"
-        case .readyToSwipe:     return "You're All Set"
+        case .welcome:          return String(localized: "Welcome to Culla")
+        case .pickDate:         return String(localized: "Pick a Date")
+        case .whatAreGalleries: return String(localized: "Your Galleries")
+        case .setupGallery:     return String(localized: "Set Up a Gallery")
+        case .changeColor:      return String(localized: "Make It Yours")
+        case .readyToSwipe:     return String(localized: "You're All Set")
         }
     }
 
     var body: String {
         switch self {
         case .welcome:
-            return "Culla helps you sort your photo library one swipe at a time. Let's take a quick tour."
+            return String(localized: "Culla helps you sort your photo library one swipe at a time. Let's take a quick tour.")
         case .pickDate:
-            return "Spin the wheel to choose a date. Culla shows your photos from that day. Tap the wheel to open a full calendar."
+            return String(localized: "Spin the wheel to choose a date. Culla shows your photos from that day. Tap the wheel to open a full calendar.")
         case .whatAreGalleries:
-            return "Tap that icon to open your Galleries — the destinations photos fly into when you swipe right."
+            return String(localized: "Tap that icon to open your Galleries — the destinations photos fly into when you swipe right.")
         case .setupGallery:
-            return "Tap the icon above to open Galleries, then create a new one or import an existing iPhone album."
+            return String(localized: "Tap the icon above to open Galleries, then create a new one or import an existing iPhone album.")
         case .changeColor:
-            return "Open any gallery from the list. Inside, tap the small color circle at the top to give it a neon color."
+            return String(localized: "Open any gallery from the list. Inside, tap the small color circle at the top to give it a neon color.")
         case .readyToSwipe:
-            return "Pick a date, tap Start, and swipe. Left to dismiss, right to sort, up to favourite, down to share."
+            return String(localized: "Pick a date, tap Start, and swipe. Left to dismiss, right to sort, up to favourite, down to share.")
         }
     }
 

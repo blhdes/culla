@@ -1,4 +1,5 @@
 import Photos
+import SwiftUI
 
 /// Represents an album from the user's phone photo library.
 /// Not persisted — fetched fresh from PhotoKit each time.
@@ -88,4 +89,14 @@ enum AlbumSortOption: String, CaseIterable {
     case name = "Name"
     case photoCount = "Photo Count"
     case dateCreated = "Date Created"
+
+    /// User-visible name. Kept separate from `rawValue` so translations
+    /// never change the underlying case identity.
+    var displayName: LocalizedStringKey {
+        switch self {
+        case .name: "Name"
+        case .photoCount: "Photo Count"
+        case .dateCreated: "Date Created"
+        }
+    }
 }
