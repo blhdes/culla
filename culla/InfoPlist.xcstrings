@@ -3,7 +3,6 @@
   "strings" : {
     "CFBundleDisplayName" : {
       "comment" : "Bundle display name",
-      "shouldTranslate" : false,
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11,11 +10,30 @@
             "value" : "Culla"
           }
         }
+      },
+      "shouldTranslate" : false
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "culla"
+          }
+        }
       }
     },
     "NSPhotoLibraryAddUsageDescription" : {
       "comment" : "Privacy - Photo Library Additions Usage Description",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla erstellt Alben und organisiert Fotos in deiner Mediathek basierend auf deinen Sortier-Entscheidungen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26,12 +44,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Culla crea álbumes y organiza las fotos de tu fototeca según tus decisiones de clasificación."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla erstellt Alben und organisiert Fotos in deiner Mediathek basierend auf deinen Sortier-Entscheidungen."
           }
         },
         "fr" : {
@@ -69,6 +81,12 @@
     "NSPhotoLibraryUsageDescription" : {
       "comment" : "Privacy - Photo Library Usage Description",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culla benötigt Zugriff auf deine Fotomediathek, um deine Fotos anzuzeigen und zu organisieren."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79,12 +97,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Culla necesita acceso a tu fototeca para mostrar y organizar tus fotos."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla benötigt Zugriff auf deine Fotomediathek, um deine Fotos anzuzeigen und zu organisieren."
           }
         },
         "fr" : {

@@ -58,6 +58,7 @@ struct SettingsView: View {
                     appearanceCard
                     interfaceCard
                     dynamicBackgroundCard
+                    languageCard
                     helpCard
                     versionFooter
 
@@ -201,6 +202,18 @@ struct SettingsView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: backgroundMode)
+    }
+
+    // The picker itself lives in the system Settings app — iOS shows a
+    // per-app Language row there automatically once the app ships more than
+    // one localization, and changing it relaunches the app in that language.
+    private var languageCard: some View {
+        SettingsCard(title: "Language") {
+            settingsButtonRow("App language", icon: "globe") {
+                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                UIApplication.shared.open(url)
+            }
+        }
     }
 
     private var helpCard: some View {
