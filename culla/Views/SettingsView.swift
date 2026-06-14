@@ -4,13 +4,11 @@ import StoreKit
 struct SettingsView: View {
     @AppStorage("appColorScheme") private var colorSchemeString = "system"
     @AppStorage("accentColorMode") private var accentMode = "random"
-    @AppStorage("customAccentHex") private var customAccentHex = ""
     @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
     @AppStorage("statusBarVisible") private var statusBarVisible = false
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @AppStorage("includeVideos") private var includeVideos = true
-    @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("dynamicBackgroundStyle") private var backgroundStyle = "stream"
     @AppStorage("backgroundBlur") private var backgroundBlur = 7.0
@@ -20,27 +18,10 @@ struct SettingsView: View {
     @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
 
-    @State private var selectedSwatchIndex: Int = 0
     @State private var showPaywall = false
     @State private var showCustomerCenter = false
     @State private var showRestoreError = false
     @State private var restoreError: Error?
-
-    private let swatchColumns = Array(repeating: GridItem(.flexible()), count: 6)
-
-    private var paletteHexes: [String] {
-        let stored = customPaletteHexes
-            .split(separator: ",", omittingEmptySubsequences: false)
-            .map(String.init)
-        guard stored.count == 12 else { return Array(Color.neonHexes[0..<12]) }
-        return stored.enumerated().map { i, hex in
-            hex.isEmpty ? Color.neonHexes[i] : hex
-        }
-    }
-
-    private func savePalette(_ hexes: [String]) {
-        customPaletteHexes = hexes.joined(separator: ",")
-    }
 
     // A sheet runs in its own presentation host, so `.preferredColorScheme`
     // set on the presenter doesn't update this view live — only on the next
@@ -57,12 +38,12 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 22) {
+                    SettingsAppHeader()
                     appearanceCard
                     interfaceCard
                     dynamicBackgroundCard
                     languageCard
                     helpCard
-                    versionFooter
 
                     // MARK: - FREEMIUM HIDDEN — restore in vNext
                     // The Subscription card is hidden while the freemium model is
@@ -101,28 +82,17 @@ struct SettingsView: View {
             Text(error.localizedDescription)
         }
         .onChange(of: accentMode) { _, newMode in
-            guard newMode == "custom" else { return }
-            guard subscriptions.isPro else {
-                accentMode = "random"
-                showPaywall = true
-                return
-            }
-            if customAccentHex.isEmpty {
-                selectedSwatchIndex = 0
-                customAccentHex = paletteHexes[0]
-            } else {
-                selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
-            }
+            // Custom accent is a Pro feature — bounce non-subscribers back to
+            // Random and show the paywall. The swatch picker handles its own
+            // selection state once it appears.
+            guard newMode == "custom", !subscriptions.isPro else { return }
+            accentMode = "random"
+            showPaywall = true
         }
         .onChange(of: backgroundMode) { _, newMode in
             guard newMode != "off" && !subscriptions.isPro else { return }
             backgroundMode = "off"
             showPaywall = true
-        }
-        .onAppear {
-            if accentMode == "custom" && !customAccentHex.isEmpty {
-                selectedSwatchIndex = paletteHexes.firstIndex(of: customAccentHex) ?? 0
-            }
         }
         .preferredColorScheme(sheetColorScheme)
     }
@@ -145,23 +115,7 @@ struct SettingsView: View {
                     ])
 
                     if accentMode == "custom" {
-                        LazyVGrid(columns: swatchColumns, spacing: 12) {
-                            ForEach(0..<12, id: \.self) { i in
-                                colorSwatch(index: i, hex: paletteHexes[i])
-                            }
-                        }
-
-                        ColorPicker("Edit colour", selection: Binding(
-                            get: { Color.adaptiveNeon(hex: paletteHexes[selectedSwatchIndex]) },
-                            set: { newColor in
-                                var updated = paletteHexes
-                                let newHex = newColor.hexString
-                                updated[selectedSwatchIndex] = newHex
-                                savePalette(updated)
-                                customAccentHex = newHex
-                            }
-                        ), supportsOpacity: false)
-                        .font(.system(.subheadline, design: .rounded))
+                        AccentPalettePicker()
                     }
                 }
             }
@@ -209,10 +163,7 @@ struct SettingsView: View {
                     ])
                 }
                 rowDivider
-                labeledControl("Blur") {
-                    Slider(value: $backgroundBlur, in: 0...20)
-                        .tint(accent)
-                }
+                blurControl
                 rowDivider
                 SettingsToggleRow(title: "Monochrome", isOn: $monochrome)
             }
@@ -240,26 +191,27 @@ struct SettingsView: View {
         }
     }
 
-    private var versionFooter: some View {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
-        let year = Calendar.current.component(.year, from: Date())
-        let versionLine = build.isEmpty
-            ? String(localized: "Version \(version)")
-            : String(localized: "Version \(version) (\(build))")
-        return VStack(spacing: 3) {
-            Text("Culla")
-                .font(.system(.caption, design: .rounded).weight(.medium))
-                .foregroundStyle(.secondary)
-            Text(versionLine)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-            Text("© \(String(year)) Culla")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+    /// Blur slider with a live numeric readout. The Slider alone gave no
+    /// feedback — you couldn't tell whether you were at 3 or 17. The value
+    /// ticks with `.numericText()` as you drag.
+    private var blurControl: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Blur")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("\(Int(backgroundBlur.rounded()))")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+            }
+            Slider(value: $backgroundBlur, in: 0...20)
+                .tint(accent)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(.snappy(duration: 0.25), value: Int(backgroundBlur.rounded()))
     }
 
     // MARK: - Row helpers
@@ -332,27 +284,4 @@ struct SettingsView: View {
         }
     }
 
-    @ViewBuilder
-    private func colorSwatch(index: Int, hex: String) -> some View {
-        let isSelected = selectedSwatchIndex == index
-        let color = Color.adaptiveNeon(hex: hex)
-        Circle()
-            .fill(color)
-            .frame(width: 40, height: 40)
-            .overlay {
-                Circle()
-                    .stroke(.primary, lineWidth: isSelected ? 2 : 0)
-                    .padding(-4)
-            }
-            .shadow(color: isSelected ? color.opacity(0.5) : .clear, radius: 6)
-            .frame(maxWidth: .infinity)
-            .contentShape(Circle())
-            .onTapGesture {
-                withAnimation(.snappy(duration: 0.22)) {
-                    selectedSwatchIndex = index
-                }
-                customAccentHex = hex
-            }
-            .animation(.snappy(duration: 0.22), value: isSelected)
-    }
 }
