@@ -13,8 +13,27 @@ struct GalleriesView: View {
     @Environment(\.tourAdvance) private var tourAdvance
     @Environment(\.dismiss) private var dismiss
     @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
+    // Shared with GallerySelectionSheet via the same keys, so the sort choice is
+    // consistent across both gallery sheets and survives relaunch.
+    @AppStorage("gallerySortField") private var sortFieldRaw = GallerySortField.custom.rawValue
+    @AppStorage("gallerySortDescending") private var sortDescending = false
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
+
+    /// Bridges the persisted raw string to the typed field the `SortChip` binds.
+    private var sortField: Binding<GallerySortField> {
+        Binding(
+            get: { GallerySortField(rawValue: sortFieldRaw) ?? .custom },
+            set: { sortFieldRaw = $0.rawValue }
+        )
+    }
+
+    /// The galleries in the order the chosen sort dictates. `custom` falls
+    /// straight through to the `displayOrder` query, which is what lets the
+    /// Edit-mode drag reorder keep working.
+    private var sortedGalleries: [Gallery] {
+        galleries.sortedBy(field: sortField.wrappedValue, descending: sortDescending)
+    }
     @State private var viewModel: GalleryViewModel?
     @State private var insightsViewModel = InsightsViewModel()
 
@@ -61,7 +80,7 @@ struct GalleriesView: View {
                 .listRowBackground(Color.clear)
             } else {
                 Section {
-                    ForEach(galleries) { gallery in
+                    ForEach(sortedGalleries) { gallery in
                         NavigationLink(value: gallery) {
                             galleryRow(gallery)
                         }
@@ -80,6 +99,9 @@ struct GalleriesView: View {
                         }
                     }
                     .onMove { source, destination in
+                        // Manual reorder only makes sense in the natural order —
+                        // a derived sort owns the order otherwise.
+                        guard sortField.wrappedValue == .custom else { return }
                         var reordered = galleries
                         reordered.move(fromOffsets: source, toOffset: destination)
                         for (index, gallery) in reordered.enumerated() {
@@ -88,10 +110,14 @@ struct GalleriesView: View {
                         try? modelContext.save()
                     }
                 } header: {
-                    Text(selectionStatusText)
-                        .font(.system(.footnote, design: .rounded).weight(.medium))
-                        .foregroundStyle(activeGalleryCount == 0 ? Color.orange : Color.secondary)
-                        .textCase(nil)
+                    HStack {
+                        Text(selectionStatusText)
+                            .font(.system(.footnote, design: .rounded).weight(.medium))
+                            .foregroundStyle(activeGalleryCount == 0 ? Color.orange : Color.secondary)
+                            .textCase(nil)
+                        Spacer()
+                        SortChip(field: sortField, descending: $sortDescending)
+                    }
                 }
             }
         }

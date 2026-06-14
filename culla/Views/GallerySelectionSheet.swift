@@ -18,21 +18,18 @@ struct GallerySelectionSheet: View {
     @State private var showCreateField = false
     @State private var showAlbumImport = false
     @State private var showPaywall = false
-    @State private var sortOption: GallerySortOption = .custom
+    // Shared with GalleriesView via the same keys, so the sort choice is
+    // consistent across both gallery sheets and survives relaunch.
+    @AppStorage("gallerySortField") private var sortFieldRaw = GallerySortField.custom.rawValue
+    @AppStorage("gallerySortDescending") private var sortDescending = false
     @FocusState private var isFieldFocused: Bool
 
-    private enum GallerySortOption: String, CaseIterable {
-        case custom = "Custom"
-        case name = "Name"
-        case photoCount = "Photo Count"
-
-        var displayName: LocalizedStringKey {
-            switch self {
-            case .custom: "Custom"
-            case .name: "Name"
-            case .photoCount: "Photo Count"
-            }
-        }
+    /// Bridges the persisted raw string to the typed field the `SortChip` binds.
+    private var sortField: Binding<GallerySortField> {
+        Binding(
+            get: { GallerySortField(rawValue: sortFieldRaw) ?? .custom },
+            set: { sortFieldRaw = $0.rawValue }
+        )
     }
 
     var body: some View {
@@ -128,7 +125,7 @@ struct GallerySelectionSheet: View {
                         galleryRow(gallery)
                     }
                     .onMove { source, destination in
-                        guard sortOption == .custom else { return }
+                        guard sortField.wrappedValue == .custom else { return }
                         reorderGalleries(from: source, to: destination)
                     }
                 } header: {
@@ -139,26 +136,7 @@ struct GallerySelectionSheet: View {
                             .contentTransition(.numericText())
                             .animation(.snappy, value: selectedIDs.count)
                         Spacer()
-                        Menu {
-                            ForEach(GallerySortOption.allCases, id: \.self) { option in
-                                Button {
-                                    sortOption = option
-                                } label: {
-                                    HStack {
-                                        Text(option.displayName)
-                                        if sortOption == option {
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(sortOption.displayName)
-                                Image(systemName: "chevron.up.chevron.down")
-                            }
-                            .font(.system(.caption, design: .rounded))
-                        }
+                        SortChip(field: sortField, descending: $sortDescending)
                     }
                     .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 6, trailing: 16))
                 }
@@ -288,16 +266,10 @@ struct GallerySelectionSheet: View {
     }
 
     private var sortedGalleries: [Gallery] {
-        switch sortOption {
-        case .custom:
-            return filteredGalleries
-        case .name:
-            return filteredGalleries.sorted {
-                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-            }
-        case .photoCount:
-            return filteredGalleries.sorted { $0.sortedPhotos.count > $1.sortedPhotos.count }
-        }
+        filteredGalleries.sortedBy(
+            field: sortField.wrappedValue,
+            descending: sortDescending
+        )
     }
 
     // MARK: - Reorder

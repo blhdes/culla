@@ -9,16 +9,16 @@
     },
     "\"Remove from Culla\" just hides it here — your iPhone album stays intact.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "«Quitar de Culla» solo la oculta aquí: tu álbum del iPhone queda intacto."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "„Aus Culla entfernen“ blendet sie nur hier aus — dein iPhone-Album bleibt unverändert."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«Quitar de Culla» solo la oculta aquí: tu álbum del iPhone queda intacto."
           }
         },
         "fr": {
@@ -55,16 +55,16 @@
     },
     "* Photos already sorted into other galleries will also appear here.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "* Las fotos ya clasificadas en otras galerías también aparecerán aquí."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "* Fotos, die bereits in andere Galerien sortiert wurden, erscheinen ebenfalls hier."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "* Las fotos ya clasificadas en otras galerías también aparecerán aquí."
           }
         },
         "fr": {
@@ -115,16 +115,16 @@
     },
     "%lld active · Upgrade to select more": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld activas · Mejora para seleccionar más"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld aktiv · Upgrade für mehr Auswahl"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld activas · Mejora para seleccionar más"
           }
         },
         "fr": {
@@ -161,16 +161,16 @@
     },
     "%lld cleaned up in total": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld limpiadas en total"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Insgesamt %lld bereinigt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld limpiadas en total"
           }
         },
         "fr": {
@@ -207,6 +207,12 @@
     },
     "%lld duplicates found — %lld marked for deletion": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld Duplikate gefunden — %2$lld zum Löschen markiert"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -217,12 +223,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld duplicados encontrados — %2$lld marcados para eliminar"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld Duplikate gefunden — %2$lld zum Löschen markiert"
           }
         },
         "fr": {
@@ -259,16 +259,16 @@
     },
     "%lld favorited photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld fotos favoritas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld favorisierte Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld fotos favoritas"
           }
         },
         "fr": {
@@ -305,16 +305,16 @@
     },
     "%lld min": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld min"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld Min."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
           }
         },
         "fr": {
@@ -351,6 +351,12 @@
     },
     "%lld of %lld active for swiping": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld zum Wischen aktiv"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -361,12 +367,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld de %2$lld activas para deslizar"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld von %2$lld zum Wischen aktiv"
           }
         },
         "fr": {
@@ -403,6 +403,12 @@
     },
     "%lld of %lld duplicates": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld Duplikaten"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -413,12 +419,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld de %2$lld duplicados"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld von %2$lld Duplikaten"
           }
         },
         "fr": {
@@ -455,6 +455,12 @@
     },
     "%lld of %lld selected": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld ausgewählt"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -465,12 +471,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld de %2$lld seleccionados"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$lld von %2$lld ausgewählt"
           }
         },
         "fr": {
@@ -507,16 +507,16 @@
     },
     "%lld photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld fotos"
           }
         },
         "fr": {
@@ -553,16 +553,16 @@
     },
     "%lld photos deleted": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld fotos eliminadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld Fotos gelöscht"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld fotos eliminadas"
           }
         },
         "fr": {
@@ -599,16 +599,16 @@
     },
     "%lld photos to sort": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld fotos por clasificar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld Fotos zu sortieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld fotos por clasificar"
           }
         },
         "fr": {
@@ -646,18 +646,64 @@
     "© %@ Culla": {
       "shouldTranslate": false
     },
-    "Accent colour": {
+    "Accent": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Color de acento"
+            "value": "Acento"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "Akzent"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accent"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accento"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アクセント"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destaque"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "强调色"
+          }
+        }
+      }
+    },
+    "Accent colour": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Akzentfarbe"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color de acento"
           }
         },
         "fr": {
@@ -694,16 +740,16 @@
     },
     "Add": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Hinzufügen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir"
           }
         },
         "fr": {
@@ -740,16 +786,16 @@
     },
     "Add a gallery\nto sort photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añade una galería\npara clasificar fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Füge eine Galerie hinzu,\num Fotos zu sortieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una galería\npara clasificar fotos"
           }
         },
         "fr": {
@@ -786,16 +832,16 @@
     },
     "Add a gallery first": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añade una galería primero"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Füge zuerst eine Galerie hinzu"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una galería primero"
           }
         },
         "fr": {
@@ -832,16 +878,16 @@
     },
     "Albums": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Álbumes"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alben"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Álbumes"
           }
         },
         "fr": {
@@ -878,16 +924,16 @@
     },
     "All phone albums have already been imported.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todos los álbumes del teléfono ya se han importado."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alle Alben des Telefons wurden bereits importiert."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos los álbumes del teléfono ya se han importado."
           }
         },
         "fr": {
@@ -924,16 +970,16 @@
     },
     "All Photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todas las fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alle Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todas las fotos"
           }
         },
         "fr": {
@@ -970,16 +1016,16 @@
     },
     "All photos from this date have been sorted or dismissed.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todas las fotos de esta fecha se han clasificado o descartado."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alle Fotos dieses Datums wurden sortiert oder verworfen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todas las fotos de esta fecha se han clasificado o descartado."
           }
         },
         "fr": {
@@ -1014,18 +1060,64 @@
         }
       }
     },
-    "Appearance": {
+    "App language": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-Sprache"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Apariencia"
+            "value": "Idioma de la app"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Langue de l'app"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lingua dell'app"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appの言語"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma do app"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 语言"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Erscheinungsbild"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apariencia"
           }
         },
         "fr": {
@@ -1060,18 +1152,64 @@
         }
       }
     },
-    "Back to Calendar": {
+    "ascending": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Volver al calendario"
+            "value": "ascendente"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "aufsteigend"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "croissant"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "crescente"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昇順"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "crescente"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "升序"
+          }
+        }
+      }
+    },
+    "Back to Calendar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Zurück zum Kalender"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volver al calendario"
           }
         },
         "fr": {
@@ -1106,18 +1244,64 @@
         }
       }
     },
-    "Cancel": {
+    "Blur": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cancelar"
+            "value": "Desenfoque"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "Unschärfe"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flou"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sfocatura"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ぼかし"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desfoque"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模糊"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Abbrechen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
           }
         },
         "fr": {
@@ -1154,16 +1338,16 @@
     },
     "Cancel anytime in Settings to avoid being charged.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancela en cualquier momento en Ajustes para evitar el cobro."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Kündige jederzeit in den Einstellungen, damit dir nichts berechnet wird."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancela en cualquier momento en Ajustes para evitar el cobro."
           }
         },
         "fr": {
@@ -1200,16 +1384,16 @@
     },
     "Continue": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Continuar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Weiter"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
           }
         },
         "fr": {
@@ -1246,16 +1430,16 @@
     },
     "Count": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cantidad"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Anzahl"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cantidad"
           }
         },
         "fr": {
@@ -1292,16 +1476,16 @@
     },
     "Create": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crear"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Erstellen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear"
           }
         },
         "fr": {
@@ -1338,16 +1522,16 @@
     },
     "Create New": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crear nueva"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Neu erstellen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear nueva"
           }
         },
         "fr": {
@@ -1384,16 +1568,16 @@
     },
     "Create New Gallery": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crear nueva galería"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Neue Galerie erstellen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear nueva galería"
           }
         },
         "fr": {
@@ -1439,16 +1623,16 @@
     },
     "Culla can only see photos you've selected. Add more or grant full access for the best experience.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Culla solo puede ver las fotos que has seleccionado. Añade más o concede acceso completo para una mejor experiencia."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Culla sieht nur die von dir ausgewählten Fotos. Füge mehr hinzu oder erlaube vollen Zugriff für das beste Erlebnis."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Culla solo puede ver las fotos que has seleccionado. Añade más o concede acceso completo para una mejor experiencia."
           }
         },
         "fr": {
@@ -1485,16 +1669,16 @@
     },
     "Culla for %lld min": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Culla durante %lld min"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Culla für %lld Min."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Culla durante %lld min"
           }
         },
         "fr": {
@@ -1531,16 +1715,16 @@
     },
     "Culla helps you sort your photo library one swipe at a time. Let's take a quick tour.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Culla te ayuda a ordenar tu fototeca deslizando una foto a la vez. Hagamos un recorrido rápido."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Culla hilft dir, deine Fotomediathek Wisch für Wisch zu sortieren. Machen wir eine kurze Tour."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Culla te ayuda a ordenar tu fototeca deslizando una foto a la vez. Hagamos un recorrido rápido."
           }
         },
         "fr": {
@@ -1577,16 +1761,16 @@
     },
     "Culla needs access to your photo library to organize your photos.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Culla necesita acceso a tu fototeca para organizar tus fotos."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Culla benötigt Zugriff auf deine Fotomediathek, um deine Fotos zu organisieren."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Culla necesita acceso a tu fototeca para organizar tus fotos."
           }
         },
         "fr": {
@@ -1629,16 +1813,16 @@
     },
     "Custom": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Personalizado"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Eigene"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizado"
           }
         },
         "fr": {
@@ -1675,16 +1859,16 @@
     },
     "Custom accents": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acentos personalizados"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Eigene Akzentfarben"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acentos personalizados"
           }
         },
         "fr": {
@@ -1721,16 +1905,16 @@
     },
     "Custom color": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Color personalizado"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Eigene Farbe"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color personalizado"
           }
         },
         "fr": {
@@ -1767,16 +1951,16 @@
     },
     "Dark": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Oscuro"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Dunkel"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscuro"
           }
         },
         "fr": {
@@ -1813,16 +1997,16 @@
     },
     "Date": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fecha"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Datum"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha"
           }
         },
         "fr": {
@@ -1859,16 +2043,16 @@
     },
     "Date Created": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fecha de creación"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Erstellungsdatum"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fecha de creación"
           }
         },
         "fr": {
@@ -1905,16 +2089,16 @@
     },
     "Day": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Día"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tag"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Día"
           }
         },
         "fr": {
@@ -1951,16 +2135,16 @@
     },
     "Delete \"%@\"?": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Eliminar «%@»?"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "„%@“ löschen?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar «%@»?"
           }
         },
         "fr": {
@@ -1997,16 +2181,16 @@
     },
     "Delete (%lld)": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar (%lld)"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Löschen (%lld)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar (%lld)"
           }
         },
         "fr": {
@@ -2043,16 +2227,16 @@
     },
     "Delete %lld": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar %lld"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld löschen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar %lld"
           }
         },
         "fr": {
@@ -2089,16 +2273,16 @@
     },
     "Delete All": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar todo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alle löschen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar todo"
           }
         },
         "fr": {
@@ -2135,16 +2319,16 @@
     },
     "Delete Gallery & Photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar galería y fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerie & Fotos löschen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar galería y fotos"
           }
         },
         "fr": {
@@ -2181,16 +2365,16 @@
     },
     "Delete Gallery, Keep Photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminar galería, conservar fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerie löschen, Fotos behalten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar galería, conservar fotos"
           }
         },
         "fr": {
@@ -2227,16 +2411,16 @@
     },
     "Deleted": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eliminadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Gelöscht"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminadas"
           }
         },
         "fr": {
@@ -2271,18 +2455,64 @@
         }
       }
     },
-    "Deselect All": {
+    "descending": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Deseleccionar todo"
+            "value": "descendente"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "absteigend"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "décroissant"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "decrescente"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "降順"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "decrescente"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "降序"
+          }
+        }
+      }
+    },
+    "Deselect All": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Auswahl aufheben"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deseleccionar todo"
           }
         },
         "fr": {
@@ -2319,16 +2549,16 @@
     },
     "Details": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Detalles"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Details"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles"
           }
         },
         "fr": {
@@ -2365,16 +2595,16 @@
     },
     "Dismiss": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Descartar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Verwerfen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descartar"
           }
         },
         "fr": {
@@ -2411,16 +2641,16 @@
     },
     "Dismissed": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Descartada"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Verworfen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descartada"
           }
         },
         "fr": {
@@ -2457,16 +2687,16 @@
     },
     "Dismissed Photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fotos descartadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Verworfene Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotos descartadas"
           }
         },
         "fr": {
@@ -2503,16 +2733,16 @@
     },
     "Done": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Listo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fertig"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo"
           }
         },
         "fr": {
@@ -2549,16 +2779,16 @@
     },
     "Done!": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Listo!"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fertig!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Listo!"
           }
         },
         "fr": {
@@ -2595,16 +2825,16 @@
     },
     "Double-tap to skip a photo": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca dos veces para saltar una foto"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Doppeltippen, um ein Foto zu überspringen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca dos veces para saltar una foto"
           }
         },
         "fr": {
@@ -2641,16 +2871,16 @@
     },
     "Duplicate sweep": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Barrido de duplicados"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Duplikat-Bereinigung"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barrido de duplicados"
           }
         },
         "fr": {
@@ -2687,16 +2917,16 @@
     },
     "Duplicates": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duplicados"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Duplikate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicados"
           }
         },
         "fr": {
@@ -2733,16 +2963,16 @@
     },
     "Dynamic background": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fondo dinámico"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Dynamischer Hintergrund"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fondo dinámico"
           }
         },
         "fr": {
@@ -2779,16 +3009,16 @@
     },
     "Edit": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Editar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Bearbeiten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar"
           }
         },
         "fr": {
@@ -2825,16 +3055,16 @@
     },
     "Edit colour": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Editar color"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Farbe bearbeiten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar color"
           }
         },
         "fr": {
@@ -2871,16 +3101,16 @@
     },
     "Favorited ♥": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorita ♥"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Favorisiert ♥"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorita ♥"
           }
         },
         "fr": {
@@ -2917,16 +3147,16 @@
     },
     "Favorites": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoritos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Favoriten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritos"
           }
         },
         "fr": {
@@ -2963,16 +3193,16 @@
     },
     "Favourites": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoritos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Favoriten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoritos"
           }
         },
         "fr": {
@@ -3009,16 +3239,16 @@
     },
     "Filter by album": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Filtrar por álbum"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Nach Album filtern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrar por álbum"
           }
         },
         "fr": {
@@ -3055,16 +3285,16 @@
     },
     "Find and remove duplicate photos instantly": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Encuentra y elimina fotos duplicadas al instante"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Finde und entferne doppelte Fotos sofort"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Encuentra y elimina fotos duplicadas al instante"
           }
         },
         "fr": {
@@ -3101,16 +3331,16 @@
     },
     "Finding duplicates...": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscando duplicados…"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Duplikate werden gesucht …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscando duplicados…"
           }
         },
         "fr": {
@@ -3147,6 +3377,12 @@
     },
     "Free for 7 days, then %@%@. Cancel anytime in Settings before the trial ends — you won't be charged if you cancel in time.": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 Tage gratis, danach %1$@%2$@. Kündige jederzeit in den Einstellungen vor Ablauf der Testphase — bei rechtzeitiger Kündigung wird dir nichts berechnet."
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -3157,12 +3393,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gratis durante 7 días, luego %1$@%2$@. Cancela en Ajustes en cualquier momento antes de que termine la prueba: no se te cobrará si cancelas a tiempo."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "7 Tage gratis, danach %1$@%2$@. Kündige jederzeit in den Einstellungen vor Ablauf der Testphase — bei rechtzeitiger Kündigung wird dir nichts berechnet."
           }
         },
         "fr": {
@@ -3199,16 +3429,16 @@
     },
     "From the very first photo": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desde la primera foto"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Ab dem allerersten Foto"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desde la primera foto"
           }
         },
         "fr": {
@@ -3245,16 +3475,16 @@
     },
     "Galleries": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerien"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galerías"
           }
         },
         "fr": {
@@ -3291,16 +3521,16 @@
     },
     "Galleries are how you organize swiped photos. Create one or import an existing iPhone album.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las galerías son la forma de organizar las fotos deslizadas. Crea una o importa un álbum existente del iPhone."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Mit Galerien organisierst du gewischte Fotos. Erstelle eine oder importiere ein vorhandenes iPhone-Album."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las galerías son la forma de organizar las fotos deslizadas. Crea una o importa un álbum existente del iPhone."
           }
         },
         "fr": {
@@ -3337,16 +3567,16 @@
     },
     "Galleries you create will appear here.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las galerías que crees aparecerán aquí."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerien, die du erstellst, erscheinen hier."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las galerías que crees aparecerán aquí."
           }
         },
         "fr": {
@@ -3383,16 +3613,16 @@
     },
     "Gallery": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Galería"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerie"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Galería"
           }
         },
         "fr": {
@@ -3429,16 +3659,16 @@
     },
     "Gallery name": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nombre de la galería"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galeriename"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre de la galería"
           }
         },
         "fr": {
@@ -3475,16 +3705,16 @@
     },
     "Haptics": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Respuesta háptica"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Haptik"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respuesta háptica"
           }
         },
         "fr": {
@@ -3521,16 +3751,16 @@
     },
     "Help": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ayuda"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Hilfe"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayuda"
           }
         },
         "fr": {
@@ -3567,16 +3797,16 @@
     },
     "Import": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Importieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar"
           }
         },
         "fr": {
@@ -3613,16 +3843,16 @@
     },
     "Import (%lld)": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar (%lld)"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Importieren (%lld)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar (%lld)"
           }
         },
         "fr": {
@@ -3659,16 +3889,16 @@
     },
     "Import Albums": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar álbumes"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alben importieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar álbumes"
           }
         },
         "fr": {
@@ -3705,16 +3935,16 @@
     },
     "Import from Phone": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importar del teléfono"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Vom Telefon importieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar del teléfono"
           }
         },
         "fr": {
@@ -3751,16 +3981,16 @@
     },
     "Include videos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Incluir vídeos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Videos einbeziehen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluir vídeos"
           }
         },
         "fr": {
@@ -3797,16 +4027,16 @@
     },
     "Insights": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estadísticas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Einblicke"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estadísticas"
           }
         },
         "fr": {
@@ -3843,16 +4073,16 @@
     },
     "Insights & streaks": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estadísticas y rachas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Einblicke & Serien"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estadísticas y rachas"
           }
         },
         "fr": {
@@ -3889,16 +4119,16 @@
     },
     "Interface": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Interfaz"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Oberfläche"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interfaz"
           }
         },
         "fr": {
@@ -3935,16 +4165,16 @@
     },
     "Keep Going": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seguir"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Weitermachen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seguir"
           }
         },
         "fr": {
@@ -3981,16 +4211,16 @@
     },
     "Keep in album": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conservar en el álbum"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Im Album behalten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conservar en el álbum"
           }
         },
         "fr": {
@@ -4025,18 +4255,64 @@
         }
       }
     },
-    "Last 7 days": {
+    "Language": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprache"
+          }
+        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Últimos 7 días"
+            "value": "Idioma"
           }
         },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Langue"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lingua"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        }
+      }
+    },
+    "Last 7 days": {
+      "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Letzte 7 Tage"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Últimos 7 días"
           }
         },
         "fr": {
@@ -4073,16 +4349,16 @@
     },
     "Let's Go!": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¡Vamos!"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Los geht's!"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¡Vamos!"
           }
         },
         "fr": {
@@ -4119,16 +4395,16 @@
     },
     "Light": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Claro"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Hell"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
           }
         },
         "fr": {
@@ -4165,16 +4441,16 @@
     },
     "Limited photo access": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acceso limitado a fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Eingeschränkter Fotozugriff"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acceso limitado a fotos"
           }
         },
         "fr": {
@@ -4211,16 +4487,16 @@
     },
     "Loading albums…": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando álbumes…"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alben werden geladen …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando álbumes…"
           }
         },
         "fr": {
@@ -4257,16 +4533,16 @@
     },
     "Loading photos...": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando fotos…"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fotos werden geladen …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando fotos…"
           }
         },
         "fr": {
@@ -4303,16 +4579,16 @@
     },
     "Loading your library...": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando tu fototeca…"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Deine Mediathek wird geladen …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando tu fototeca…"
           }
         },
         "fr": {
@@ -4349,16 +4625,16 @@
     },
     "Loading…": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cargando…"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wird geladen …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando…"
           }
         },
         "fr": {
@@ -4395,16 +4671,16 @@
     },
     "Make It Yours": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hazla tuya"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Ganz dein Stil"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazla tuya"
           }
         },
         "fr": {
@@ -4441,16 +4717,16 @@
     },
     "Manage": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gestionar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Verwalten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestionar"
           }
         },
         "fr": {
@@ -4487,16 +4763,16 @@
     },
     "Mode": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Modus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo"
           }
         },
         "fr": {
@@ -4533,16 +4809,16 @@
     },
     "Monochrome": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Monocromo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Monochrom"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monocromo"
           }
         },
         "fr": {
@@ -4579,16 +4855,16 @@
     },
     "Mosaic": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mosaico"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Mosaik"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mosaico"
           }
         },
         "fr": {
@@ -4625,16 +4901,16 @@
     },
     "Move out": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sacar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Herausnehmen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sacar"
           }
         },
         "fr": {
@@ -4671,16 +4947,16 @@
     },
     "Name": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nombre"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Name"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
           }
         },
         "fr": {
@@ -4717,16 +4993,16 @@
     },
     "New Gallery": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nueva galería"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Neue Galerie"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva galería"
           }
         },
         "fr": {
@@ -4763,16 +5039,16 @@
     },
     "Next": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siguiente"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Weiter"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siguiente"
           }
         },
         "fr": {
@@ -4809,16 +5085,16 @@
     },
     "No active subscription found on this account.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se encontró ninguna suscripción activa en esta cuenta."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Kein aktives Abo für diesen Account gefunden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró ninguna suscripción activa en esta cuenta."
           }
         },
         "fr": {
@@ -4855,16 +5131,16 @@
     },
     "No Albums to Import": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay álbumes para importar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Alben zum Importieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay álbumes para importar"
           }
         },
         "fr": {
@@ -4901,16 +5177,16 @@
     },
     "No daily limits or gallery restrictions": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin límites diarios ni restricciones de galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Tageslimits oder Galerie-Beschränkungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin límites diarios ni restricciones de galerías"
           }
         },
         "fr": {
@@ -4947,16 +5223,16 @@
     },
     "No Dismissed Photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay fotos descartadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine verworfenen Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay fotos descartadas"
           }
         },
         "fr": {
@@ -4993,16 +5269,16 @@
     },
     "No duplicates found": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se encontraron duplicados"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Duplikate gefunden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron duplicados"
           }
         },
         "fr": {
@@ -5039,16 +5315,16 @@
     },
     "No Galleries": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Galerien"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin galerías"
           }
         },
         "fr": {
@@ -5085,16 +5361,16 @@
     },
     "No Galleries Yet": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aún no hay galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Noch keine Galerien"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay galerías"
           }
         },
         "fr": {
@@ -5131,16 +5407,16 @@
     },
     "No more photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay más fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine weiteren Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay más fotos"
           }
         },
         "fr": {
@@ -5177,16 +5453,16 @@
     },
     "No Photos": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin fotos"
           }
         },
         "fr": {
@@ -5223,16 +5499,16 @@
     },
     "No photos selected": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay fotos seleccionadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Keine Fotos ausgewählt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay fotos seleccionadas"
           }
         },
         "fr": {
@@ -5269,16 +5545,16 @@
     },
     "No Photos Yet": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aún no hay fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Noch keine Fotos"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no hay fotos"
           }
         },
         "fr": {
@@ -5315,16 +5591,16 @@
     },
     "No subscription options are available right now. Please try again later.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay opciones de suscripción disponibles en este momento. Inténtalo de nuevo más tarde."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Derzeit sind keine Abo-Optionen verfügbar. Bitte versuche es später erneut."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay opciones de suscripción disponibles en este momento. Inténtalo de nuevo más tarde."
           }
         },
         "fr": {
@@ -5361,16 +5637,16 @@
     },
     "No Timer": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin temporizador"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Kein Timer"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin temporizador"
           }
         },
         "fr": {
@@ -5407,16 +5683,16 @@
     },
     "Nothing in this album for this date range.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay nada en este álbum para este rango de fechas."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "In diesem Album gibt es nichts für diesen Zeitraum."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay nada en este álbum para este rango de fechas."
           }
         },
         "fr": {
@@ -5453,16 +5729,16 @@
     },
     "Off": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desactivado"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Aus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivado"
           }
         },
         "fr": {
@@ -5499,13 +5775,13 @@
     },
     "OK": {
       "localizations": {
-        "es": {
+        "de": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
           }
         },
-        "de": {
+        "es": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
@@ -5545,16 +5821,16 @@
     },
     "Open any gallery from the list. Inside, tap the small color circle at the top to give it a neon color.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abre cualquier galería de la lista. Dentro, toca el pequeño círculo de color de arriba para darle un color neón."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Öffne eine Galerie aus der Liste. Tippe darin oben auf den kleinen Farbkreis, um ihr eine Neonfarbe zu geben."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre cualquier galería de la lista. Dentro, toca el pequeño círculo de color de arriba para darle un color neón."
           }
         },
         "fr": {
@@ -5591,16 +5867,16 @@
     },
     "Open Settings": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abrir Ajustes"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Einstellungen öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes"
           }
         },
         "fr": {
@@ -5635,18 +5911,64 @@
         }
       }
     },
-    "Personalise colours, themes & backgrounds": {
+    "Per gallery": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Personaliza colores, temas y fondos"
+            "value": "Por galería"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "Pro Galerie"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par galerie"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per galleria"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ギャラリーごと"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por galeria"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个影集"
+          }
+        }
+      }
+    },
+    "Personalise colours, themes & backgrounds": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Farben, Themes & Hintergründe anpassen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personaliza colores, temas y fondos"
           }
         },
         "fr": {
@@ -5683,16 +6005,16 @@
     },
     "Photo access required": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se requiere acceso a las fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fotozugriff erforderlich"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se requiere acceso a las fotos"
           }
         },
         "fr": {
@@ -5729,16 +6051,16 @@
     },
     "Photo Count": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Número de fotos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fotoanzahl"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número de fotos"
           }
         },
         "fr": {
@@ -5775,16 +6097,16 @@
     },
     "photos sorted": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "fotos clasificadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fotos sortiert"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fotos clasificadas"
           }
         },
         "fr": {
@@ -5821,16 +6143,16 @@
     },
     "Photos you dismiss will appear here for review.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las fotos que descartes aparecerán aquí para revisarlas."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Fotos, die du verwirfst, erscheinen hier zur Durchsicht."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las fotos que descartes aparecerán aquí para revisarlas."
           }
         },
         "fr": {
@@ -5867,16 +6189,16 @@
     },
     "Pick a Date": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elige una fecha"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wähle ein Datum"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una fecha"
           }
         },
         "fr": {
@@ -5913,16 +6235,16 @@
     },
     "Pick a date, tap Start, and swipe. Left to dismiss, right to sort, up to favourite, down to share.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elige una fecha, toca Empezar y desliza. Izquierda para descartar, derecha para clasificar, arriba para favorito, abajo para compartir."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wähle ein Datum, tippe auf Start und wische. Links zum Verwerfen, rechts zum Sortieren, oben für Favoriten, unten zum Teilen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una fecha, toca Empezar y desliza. Izquierda para descartar, derecha para clasificar, arriba para favorito, abajo para compartir."
           }
         },
         "fr": {
@@ -5959,16 +6281,16 @@
     },
     "Pick a Photo": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elige una foto"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wähle ein Foto"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una foto"
           }
         },
         "fr": {
@@ -6005,16 +6327,16 @@
     },
     "Pick Another Photo": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elige otra foto"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wähle ein anderes Foto"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige otra foto"
           }
         },
         "fr": {
@@ -6051,16 +6373,16 @@
     },
     "Pinch to zoom in or out on any photo": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pellizca para acercar o alejar cualquier foto"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Ziehe zwei Finger zusammen oder auseinander, um zu zoomen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pellizca para acercar o alejar cualquier foto"
           }
         },
         "fr": {
@@ -6097,16 +6419,16 @@
     },
     "Privacy": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Privacidad"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Datenschutz"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidad"
           }
         },
         "fr": {
@@ -6146,16 +6468,16 @@
     },
     "Purchase failed": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error en la compra"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Kauf fehlgeschlagen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error en la compra"
           }
         },
         "fr": {
@@ -6192,16 +6514,16 @@
     },
     "Random": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aleatorio"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Zufällig"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aleatorio"
           }
         },
         "fr": {
@@ -6236,18 +6558,64 @@
         }
       }
     },
-    "Recover (%lld)": {
+    "Recently Updated": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recuperar (%lld)"
+            "value": "Actualizado recientemente"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "Zuletzt aktualisiert"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Récemment mis à jour"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiornato di recente"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近の更新"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atualizado recentemente"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近更新"
+          }
+        }
+      }
+    },
+    "Recover (%lld)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Wiederherstellen (%lld)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuperar (%lld)"
           }
         },
         "fr": {
@@ -6284,16 +6652,16 @@
     },
     "Recover All": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recuperar todo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alle wiederherstellen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recuperar todo"
           }
         },
         "fr": {
@@ -6330,16 +6698,16 @@
     },
     "Remaining": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restantes"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Verbleibend"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restantes"
           }
         },
         "fr": {
@@ -6376,16 +6744,16 @@
     },
     "Remove from Culla": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quitar de Culla"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Aus Culla entfernen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar de Culla"
           }
         },
         "fr": {
@@ -6422,16 +6790,16 @@
     },
     "Restart tutorial": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reiniciar tutorial"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tutorial neu starten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reiniciar tutorial"
           }
         },
         "fr": {
@@ -6468,16 +6836,16 @@
     },
     "Restore": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Restaurar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wiederherstellen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar"
           }
         },
         "fr": {
@@ -6514,16 +6882,16 @@
     },
     "Restore failed": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Error al restaurar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wiederherstellung fehlgeschlagen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al restaurar"
           }
         },
         "fr": {
@@ -6560,16 +6928,16 @@
     },
     "Search albums": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscar álbumes"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alben durchsuchen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar álbumes"
           }
         },
         "fr": {
@@ -6606,16 +6974,16 @@
     },
     "Search galleries": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscar galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerien durchsuchen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar galerías"
           }
         },
         "fr": {
@@ -6652,16 +7020,16 @@
     },
     "Search window: %@": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ventana de búsqueda: %@"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Suchfenster: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ventana de búsqueda: %@"
           }
         },
         "fr": {
@@ -6698,16 +7066,16 @@
     },
     "Select All": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seleccionar todo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alle auswählen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar todo"
           }
         },
         "fr": {
@@ -6744,16 +7112,16 @@
     },
     "Select Galleries": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seleccionar galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Galerien auswählen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar galerías"
           }
         },
         "fr": {
@@ -6790,16 +7158,16 @@
     },
     "Select More": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seleccionar más"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Mehr auswählen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleccionar más"
           }
         },
         "fr": {
@@ -6836,16 +7204,16 @@
     },
     "Series": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Series"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Serien"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Series"
           }
         },
         "fr": {
@@ -6882,16 +7250,16 @@
     },
     "Session Complete": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sesión completada"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Sitzung abgeschlossen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión completada"
           }
         },
         "fr": {
@@ -6928,16 +7296,16 @@
     },
     "Set Up a Gallery": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configura una galería"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Richte eine Galerie ein"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configura una galería"
           }
         },
         "fr": {
@@ -6974,16 +7342,16 @@
     },
     "Settings": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajustes"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Einstellungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
           }
         },
         "fr": {
@@ -7020,16 +7388,16 @@
     },
     "Show status bar": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mostrar barra de estado"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Statusleiste anzeigen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar barra de estado"
           }
         },
         "fr": {
@@ -7064,18 +7432,64 @@
         }
       }
     },
-    "Skip": {
+    "Sidebar colour": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Saltar"
+            "value": "Color de la barra lateral"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
+            "value": "Seitenleistenfarbe"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur de la barre latérale"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colore della barra laterale"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイドバーの色"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cor da barra lateral"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "边栏颜色"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
             "value": "Überspringen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saltar"
           }
         },
         "fr": {
@@ -7112,16 +7526,16 @@
     },
     "Skipped": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saltadas"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Übersprungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saltadas"
           }
         },
         "fr": {
@@ -7158,16 +7572,16 @@
     },
     "Sort": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clasificar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Sortieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasificar"
           }
         },
         "fr": {
@@ -7204,16 +7618,16 @@
     },
     "Sort mode": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modo de clasificación"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Sortiermodus"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo de clasificación"
           }
         },
         "fr": {
@@ -7250,16 +7664,16 @@
     },
     "Sort smarter. Keep what matters.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clasifica mejor. Conserva lo que importa."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Sortiere smarter. Behalte, was zählt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasifica mejor. Conserva lo que importa."
           }
         },
         "fr": {
@@ -7296,16 +7710,16 @@
     },
     "Sorted photos are removed from the source album.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las fotos clasificadas se eliminan del álbum de origen."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Sortierte Fotos werden aus dem Quellalbum entfernt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las fotos clasificadas se eliminan del álbum de origen."
           }
         },
         "fr": {
@@ -7342,16 +7756,16 @@
     },
     "Sorted photos stay in the source album too.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Las fotos clasificadas también permanecen en el álbum de origen."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Sortierte Fotos bleiben auch im Quellalbum."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las fotos clasificadas también permanecen en el álbum de origen."
           }
         },
         "fr": {
@@ -7388,16 +7802,16 @@
     },
     "Spin the wheel to choose a date. Culla shows your photos from that day. Tap the wheel to open a full calendar.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gira la rueda para elegir una fecha. Culla muestra tus fotos de ese día. Toca la rueda para abrir el calendario completo."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Drehe das Rad, um ein Datum zu wählen. Culla zeigt deine Fotos von diesem Tag. Tippe auf das Rad für den vollständigen Kalender."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gira la rueda para elegir una fecha. Culla muestra tus fotos de ese día. Toca la rueda para abrir el calendario completo."
           }
         },
         "fr": {
@@ -7434,16 +7848,16 @@
     },
     "Start %lld-day free trial": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empezar prueba gratuita de %lld días"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld Tage kostenlos testen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empezar prueba gratuita de %lld días"
           }
         },
         "fr": {
@@ -7480,16 +7894,16 @@
     },
     "Start Cullaing": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empezar con Culla"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Mit Culla loslegen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empezar con Culla"
           }
         },
         "fr": {
@@ -7526,16 +7940,16 @@
     },
     "Start sorting to see\nyour progress here": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empieza a clasificar para ver\ntu progreso aquí"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Beginne zu sortieren, um hier\ndeinen Fortschritt zu sehen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empieza a clasificar para ver\ntu progreso aquí"
           }
         },
         "fr": {
@@ -7572,16 +7986,16 @@
     },
     "Stream": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flujo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Stream"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flujo"
           }
         },
         "fr": {
@@ -7618,16 +8032,16 @@
     },
     "Style": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estilo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Stil"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estilo"
           }
         },
         "fr": {
@@ -7664,16 +8078,16 @@
     },
     "Sweep": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Barrer"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Bereinigen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barrer"
           }
         },
         "fr": {
@@ -7710,16 +8124,16 @@
     },
     "Sweep complete": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Barrido completado"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Bereinigung abgeschlossen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barrido completado"
           }
         },
         "fr": {
@@ -7756,16 +8170,16 @@
     },
     "Swipe photos into this gallery to see them here.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Desliza fotos a esta galería para verlas aquí."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Wische Fotos in diese Galerie, um sie hier zu sehen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desliza fotos a esta galería para verlas aquí."
           }
         },
         "fr": {
@@ -7802,16 +8216,16 @@
     },
     "System": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sistema"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "System"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
           }
         },
         "fr": {
@@ -7848,16 +8262,16 @@
     },
     "Tap + to create a new gallery, or use the menu to import an existing iPhone album.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca + para crear una nueva galería o usa el menú para importar un álbum existente del iPhone."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tippe auf +, um eine neue Galerie zu erstellen, oder importiere über das Menü ein vorhandenes iPhone-Album."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca + para crear una nueva galería o usa el menú para importar un álbum existente del iPhone."
           }
         },
         "fr": {
@@ -7894,16 +8308,16 @@
     },
     "Tap a circle to activate galleries for swiping": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca un círculo para activar galerías para deslizar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tippe auf einen Kreis, um Galerien zum Wischen zu aktivieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca un círculo para activar galerías para deslizar"
           }
         },
         "fr": {
@@ -7940,16 +8354,16 @@
     },
     "Tap Manage": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca Gestionar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tippe auf Verwalten"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca Gestionar"
           }
         },
         "fr": {
@@ -7986,16 +8400,16 @@
     },
     "Tap that icon to open your Galleries — the destinations photos fly into when you swipe right.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca ese icono para abrir tus galerías: los destinos a los que vuelan las fotos cuando deslizas a la derecha."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tippe auf dieses Symbol, um deine Galerien zu öffnen — die Ziele, in die Fotos beim Wischen nach rechts fliegen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca ese icono para abrir tus galerías: los destinos a los que vuelan las fotos cuando deslizas a la derecha."
           }
         },
         "fr": {
@@ -8032,16 +8446,16 @@
     },
     "Tap the color circle above to give this gallery a neon color (optional).": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca el círculo de color de arriba para darle a esta galería un color neón (opcional)."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tippe oben auf den Farbkreis, um dieser Galerie eine Neonfarbe zu geben (optional)."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca el círculo de color de arriba para darle a esta galería un color neón (opcional)."
           }
         },
         "fr": {
@@ -8078,16 +8492,16 @@
     },
     "Tap the icon above to open Galleries, then create a new one or import an existing iPhone album.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca el icono de arriba para abrir Galerías y crea una nueva o importa un álbum existente del iPhone."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Tippe oben auf das Symbol, um die Galerien zu öffnen, und erstelle eine neue oder importiere ein vorhandenes iPhone-Album."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca el icono de arriba para abrir Galerías y crea una nueva o importa un álbum existente del iPhone."
           }
         },
         "fr": {
@@ -8124,16 +8538,16 @@
     },
     "Terms": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Términos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Bedingungen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Términos"
           }
         },
         "fr": {
@@ -8170,16 +8584,16 @@
     },
     "Theme": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tema"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Design"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tema"
           }
         },
         "fr": {
@@ -8216,16 +8630,16 @@
     },
     "This Day": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Este día"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Dieser Tag"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este día"
           }
         },
         "fr": {
@@ -8262,16 +8676,16 @@
     },
     "Today": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hoy"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Heute"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoy"
           }
         },
         "fr": {
@@ -8308,16 +8722,16 @@
     },
     "Top this week": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Top de la semana"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Top der Woche"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top de la semana"
           }
         },
         "fr": {
@@ -8354,16 +8768,16 @@
     },
     "Track your cleanup progress over time": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sigue tu progreso de limpieza a lo largo del tiempo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Verfolge deinen Aufräum-Fortschritt über die Zeit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sigue tu progreso de limpieza a lo largo del tiempo"
           }
         },
         "fr": {
@@ -8400,16 +8814,16 @@
     },
     "Try again": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reintentar"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Erneut versuchen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
           }
         },
         "fr": {
@@ -8446,16 +8860,16 @@
     },
     "Try picking a different photo.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prueba a elegir otra foto."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Versuche es mit einem anderen Foto."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba a elegir otra foto."
           }
         },
         "fr": {
@@ -8492,16 +8906,16 @@
     },
     "Undo": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deshacer"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Widerrufen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer"
           }
         },
         "fr": {
@@ -8538,16 +8952,16 @@
     },
     "Undo (%lld)": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deshacer (%lld)"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Widerrufen (%lld)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer (%lld)"
           }
         },
         "fr": {
@@ -8584,16 +8998,16 @@
     },
     "Unfavorited": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quitada de favoritos"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Aus Favoriten entfernt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitada de favoritos"
           }
         },
         "fr": {
@@ -8630,16 +9044,16 @@
     },
     "Unlimited sorting": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clasificación ilimitada"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Unbegrenztes Sortieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clasificación ilimitada"
           }
         },
         "fr": {
@@ -8676,16 +9090,16 @@
     },
     "Version %@": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Versión %@"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Version %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión %@"
           }
         },
         "fr": {
@@ -8722,6 +9136,12 @@
     },
     "Version %@ (%@)": {
       "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %1$@ (%2$@)"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "new",
@@ -8732,12 +9152,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Versión %1$@ (%2$@)"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version %1$@ (%2$@)"
           }
         },
         "fr": {
@@ -8774,16 +9188,16 @@
     },
     "Welcome to Culla": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Te damos la bienvenida a Culla"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Willkommen bei Culla"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Te damos la bienvenida a Culla"
           }
         },
         "fr": {
@@ -8820,16 +9234,16 @@
     },
     "You're All Set": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todo listo"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Alles bereit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todo listo"
           }
         },
         "fr": {
@@ -8866,16 +9280,16 @@
     },
     "You've given Culla limited access but haven't selected any photos. Open Settings to choose which photos to share.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Has dado a Culla acceso limitado pero no has seleccionado ninguna foto. Abre Ajustes para elegir qué fotos compartir."
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Du hast Culla eingeschränkten Zugriff gegeben, aber keine Fotos ausgewählt. Öffne die Einstellungen, um Fotos auszuwählen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Has dado a Culla acceso limitado pero no has seleccionado ninguna foto. Abre Ajustes para elegir qué fotos compartir."
           }
         },
         "fr": {
@@ -8912,16 +9326,16 @@
     },
     "Your Culla Pro trial ends soon": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu prueba de Culla Pro termina pronto"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Deine Culla Pro-Testphase endet bald"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu prueba de Culla Pro termina pronto"
           }
         },
         "fr": {
@@ -8958,16 +9372,16 @@
     },
     "Your Galleries": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tus galerías"
-          }
-        },
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Deine Galerien"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus galerías"
           }
         },
         "fr": {
@@ -8998,98 +9412,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你的影集"
-          }
-        }
-      }
-    },
-    "Language": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idioma"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sprache"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Langue"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lingua"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "言語"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idioma"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "语言"
-          }
-        }
-      }
-    },
-    "App language": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idioma de la app"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "App-Sprache"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Langue de l'app"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lingua dell'app"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appの言語"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Idioma do app"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "App 语言"
           }
         }
       }
