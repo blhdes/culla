@@ -36,6 +36,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 
 ### Galleries
 - **Gallery management** — create, reorder, rename, recolor, import from existing albums
+- **Sort galleries** — a glass sort pill on both gallery sheets orders by Custom (manual), Name, Photo Count, Date Created, or Recently Updated; re-tap the active field to flip direction. The choice is shared across both sheets and remembered between launches
 - **Custom 18-swatch palette** — fully editable accent colors with adaptive light/dark output
 - **Live rename sync** — rename a gallery in-app and the iPhone album updates too
 - **Move or copy** — when sorting from an album, choose whether photos stay or get moved
@@ -44,6 +45,8 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 ### Design & theming
 - **Living-Glass design system** — a reusable set of glass surfaces (iOS 26 Liquid Glass, with an iOS 18 `.thinMaterial` fallback) shared across destination sheets and Settings; per-gallery color carries the "selected" state
 - **Dynamic photo carousel background** — animated mosaic adapts to the selected gallery or favourites, with off / monochrome options
+- **Adjustable background blur** — tune how soft the carousel backdrop is in Settings; duplicate-pair comparisons sharpen relative to it
+- **Sidebar colour modes** — per-gallery neon colours, or a single accent hue walked light→dark across the swipe panels
 - **Adaptive scrim** — text stays readable over any photo backdrop
 - **Random session accent** — a fresh neon accent on every launch, or pin one in Settings
 - **Liquid Glass action buttons** — iOS 26 styling on the toolbar
@@ -109,10 +112,10 @@ culla/
 │   ├── PhotoCardView.swift             # Single photo card (drag offset, opacity)
 │   ├── PhotoCarouselBackground.swift   # Dynamic mosaic background, adapts to mode
 │   ├── GallerySidebarView.swift        # Neon gallery panels + adaptive color palette
-│   ├── GallerySelectionSheet.swift     # Pick which galleries appear in sidebar
+│   ├── GallerySelectionSheet.swift     # Pick which galleries appear in sidebar (search + sort)
 │   ├── AlbumPickerView.swift           # Browse phone albums + unsorted + favourites
 │   ├── AlbumImportSheet.swift          # Import phone albums as app galleries
-│   ├── GalleriesView.swift             # Gallery list with reorder + custom delete menu
+│   ├── GalleriesView.swift             # Gallery list with sort, reorder + custom delete menu
 │   ├── GalleryDetailView.swift         # Photo grid for a single gallery
 │   ├── DuplicateSweepView.swift        # Side-by-side duplicate comparison + zoom preview
 │   ├── DismissedPhotosView.swift       # Grid of dismissed photos with batch actions
@@ -120,7 +123,7 @@ culla/
 │   ├── PhotoPreviewOverlay.swift       # Full-screen photo preview (long-press / zoom)
 │   ├── FocusTimerArcView.swift         # Circular progress timer for focus sessions
 │   ├── InsightsView.swift              # Stats dashboard + 7-day activity chart
-│   ├── SettingsView.swift              # Theme, accent, haptics, status bar, monochrome
+│   ├── SettingsView.swift              # Theme, accent, haptics, status bar, sidebar colour, background blur, app language
 │   ├── PaywallSheet.swift              # Custom paywall with staggered animations
 │   ├── CullaEyes.swift                 # Animated mascot on the date picker
 │   ├── SwipeDirectionsHint.swift       # Tooltip explaining swipe gestures
@@ -139,6 +142,8 @@ culla/
     ├── SettingsCard.swift              # "Calm" card surface for Settings/utility screens
     ├── GradientCapsuleButton.swift     # Gradient capsule CTA (tint/role for destructive actions)
     ├── HeroIconTile.swift              # Glass hero icon tile
+    ├── SortChip.swift                  # Reusable glass sort-menu pill + SortFieldProtocol
+    ├── GallerySorting.swift            # GallerySortField + shared Array<Gallery>.sortedBy
     ├── OnboardingManager.swift         # Tracks onboarding/tour completion
     ├── TourEnvironment.swift           # Active tour step + advance closure plumbing
     └── TourTarget.swift                # SwiftUI preferences for spotlight anchoring
