@@ -19,7 +19,7 @@ struct MosaicBackground: View {
 
     // Matches the carousel's 110 pt photo size so both styles feel related.
     private let tileSize: CGFloat = 110
-    private let tileGap: CGFloat = 2
+    private let tileGap: CGFloat = 0
 
     var body: some View {
         GeometryReader { geo in
