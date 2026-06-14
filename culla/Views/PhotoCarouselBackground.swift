@@ -154,6 +154,7 @@ struct PhotoCarouselBackground: View {
 
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("dynamicBackgroundStyle") private var backgroundStyle = "stream"
+    @AppStorage("backgroundBlur") private var backgroundBlur = 7.0
     @AppStorage("monochromeBackground") private var monochrome = false
     @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
@@ -164,6 +165,15 @@ struct PhotoCarouselBackground: View {
     @State private var revealOpacity: Double = 0
 
     private var effectiveMode: String { subscriptions.isPro ? backgroundMode : "off" }
+
+    // Duplicates pre-entry empties the foreground, so the wall steps forward:
+    // always a fraction of the user's chosen blur, never blurrier than it
+    // (a fixed value could invert when the user picks a low blur). 0.15 keeps
+    // the default 7 → ~1, matching the look before the blur became adjustable.
+    private var effectiveBlur: CGFloat {
+        let base = CGFloat(backgroundBlur)
+        return isSharpened ? base * 0.15 : base
+    }
 
     // Rows scroll horizontally (alternating direction) while the whole wall drifts upward.
     // X and Y are completely independent so no row ever moves faster/slower than another.
@@ -190,7 +200,7 @@ struct PhotoCarouselBackground: View {
                                 photoCanvas
                             }
                         }
-                        .blur(radius: isSharpened ? 1 : 7)
+                        .blur(radius: effectiveBlur)
                         .animation(.easeInOut(duration: 0.4), value: isSharpened)
                         .opacity(0.9)
                         .saturation(monochrome ? 0 : 1)

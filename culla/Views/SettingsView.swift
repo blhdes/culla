@@ -12,6 +12,7 @@ struct SettingsView: View {
     @AppStorage("customPaletteHexes") private var customPaletteHexes = ""
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("dynamicBackgroundStyle") private var backgroundStyle = "stream"
+    @AppStorage("backgroundBlur") private var backgroundBlur = 7.0
     @AppStorage("monochromeBackground") private var monochrome = false
 
     @Environment(\.dismiss) private var dismiss
@@ -196,6 +197,11 @@ struct SettingsView: View {
                         .init(id: "stream", label: "Stream"),
                         .init(id: "mosaic", label: "Mosaic")
                     ])
+                }
+                rowDivider
+                labeledControl("Blur") {
+                    Slider(value: $backgroundBlur, in: 0...20)
+                        .tint(accent)
                 }
                 rowDivider
                 SettingsToggleRow(title: "Monochrome", isOn: $monochrome)
