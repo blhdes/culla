@@ -10,6 +10,8 @@ struct InsightsView: View {
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
+    @AppStorage("statusBarVisible") private var statusBarVisible = false
+    @AppStorage("totalReclaimedBytes") private var totalReclaimedBytes = 0.0
 
     @State private var viewModel = InsightsViewModel()
     @State private var allDailyStats: [DailyStats] = []
@@ -53,6 +55,7 @@ struct InsightsView: View {
                 viewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
             }
         }
+        .statusBarHidden(!statusBarVisible)
     }
 
     // MARK: - Empty State
@@ -114,6 +117,13 @@ struct InsightsView: View {
 
                 // 7-day activity chart
                 activityChart
+
+                // Storage reclaimed — shown once any photos have been deleted.
+                // The photo count mirrors the Deleted row; bytes may still be 0
+                // for deletions made before byte-tracking existed.
+                if totalDeletedPhotos > 0 {
+                    storageHighlight
+                }
             }
             .padding(.horizontal, 18)
             .padding(.bottom, 40)
@@ -193,6 +203,31 @@ struct InsightsView: View {
             .chartLegend(position: .bottom, alignment: .center, spacing: 12)
             .frame(height: 180)
         }
+    }
+
+    /// Storage freed by deleting photos through Culla. Measured at delete time
+    /// in `PhotoLibraryService` and accumulated into `totalReclaimedBytes`.
+    private var storageHighlight: some View {
+        GlassPanel(icon: "internaldrive.fill", title: "Storage") {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(reclaimedText)
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                    Text("reclaimed")
+                        .font(.system(.headline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                Text("Freed by deleting \(totalDeletedPhotos) photos")
+                    .font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// Human-readable freed-space string, e.g. "2.3 GB".
+    private var reclaimedText: String {
+        ByteCountFormatter.string(fromByteCount: Int64(totalReclaimedBytes), countStyle: .file)
     }
 
     // MARK: - Computed Stats

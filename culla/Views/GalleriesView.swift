@@ -214,7 +214,9 @@ struct GalleriesView: View {
                 }
             }
         }
-        .sheet(isPresented: $showInsights) {
+        // Full-screen rather than a sheet — Insights reads as a focused
+        // destination, with no receded parent card peeking behind it.
+        .fullScreenCover(isPresented: $showInsights) {
             InsightsView()
         }
         .sheet(isPresented: $showPaywall) {

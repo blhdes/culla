@@ -260,10 +260,16 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         guard assets.count > 0 else { return 0 }
 
         let count = assets.count
+        // Measure freed space BEFORE deletion — the assets are gone afterwards.
+        var freedBytes: Int64 = 0
+        assets.enumerateObjects { asset, _, _ in
+            freedBytes += Self.assetByteSize(asset)
+        }
         do {
             try await PHPhotoLibrary.shared().performChanges {
                 PHAssetChangeRequest.deleteAssets(assets as NSFastEnumeration)
             }
+            Self.recordReclaimed(bytes: freedBytes)
             invalidateCalendarDataCache()
             evictThumbnails(for: identifiers)
             return count
@@ -271,6 +277,28 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             print("culla: Failed to delete photos: \(error)")
             return 0
         }
+    }
+
+    // MARK: - Reclaimed storage tracking
+
+    /// Best-effort byte size of an asset, summed across its resources. There is
+    /// no public PHAsset file-size API, so we read the `fileSize` resource value
+    /// via KVC; returns 0 when unavailable so the running total degrades
+    /// gracefully instead of throwing.
+    private static func assetByteSize(_ asset: PHAsset) -> Int64 {
+        PHAssetResource.assetResources(for: asset).reduce(Int64(0)) { total, resource in
+            total + ((resource.value(forKey: "fileSize") as? NSNumber)?.int64Value ?? 0)
+        }
+    }
+
+    /// Accumulates freed bytes into the running total the Insights "Storage"
+    /// card reads. Stored in UserDefaults so it survives relaunch, mirroring
+    /// `totalDeletedPhotos`. The photo count itself comes from
+    /// `totalDeletedPhotos`, so the two never desync.
+    private static func recordReclaimed(bytes: Int64) {
+        guard bytes > 0 else { return }
+        let defaults = UserDefaults.standard
+        defaults.set(defaults.double(forKey: "totalReclaimedBytes") + Double(bytes), forKey: "totalReclaimedBytes")
     }
 
     /// Removes a photo from an iPhone Photos album (does NOT delete the photo itself).
