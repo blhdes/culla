@@ -11,6 +11,7 @@ struct GallerySelectionSheet: View {
     @Environment(\.appAccent) private var accent
     @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
+    @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
 
     @State private var searchText = ""
     @State private var newGalleryName = ""
@@ -204,6 +205,9 @@ struct GallerySelectionSheet: View {
     private func galleryRow(_ gallery: Gallery) -> some View {
         let isSelected = selectedIDs.contains(gallery.id)
         let atLimit = selectedIDs.count >= maxSelection
+        // In "accent" sidebar mode per-gallery colours are off — every row
+        // shares the single app accent so selection reads as one cohesive hue.
+        let color = sidebarTintMode == "accent" ? accent : gallery.color
         let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
 
         Button {
@@ -215,18 +219,18 @@ struct GallerySelectionSheet: View {
                 showPaywall = true
             }
         } label: {
-            // Dark light-mode neons (deep teal/purple) become unreadable when
+            // Dark light-mode hues (deep teal/purple) become unreadable when
             // .primary text sits on the tinted glass — flip to white only when
             // luminance is low enough to need it.
             let labelColor: Color = isSelected
-                ? gallery.color.foregroundOnTintedGlass(in: colorScheme)
+                ? color.foregroundOnTintedGlass(in: colorScheme)
                 : .primary
 
             HStack(spacing: 14) {
                 Circle()
-                    .fill(gallery.color)
+                    .fill(color)
                     .frame(width: 12, height: 12)
-                    .shadow(color: gallery.color.opacity(0.6), radius: 5)
+                    .shadow(color: color.opacity(0.6), radius: 5)
 
                 Text(gallery.name)
                     .font(.system(.body, design: .rounded).weight(.semibold))
@@ -240,13 +244,13 @@ struct GallerySelectionSheet: View {
                     .foregroundStyle(isSelected ? labelColor.opacity(0.7) : .secondary)
 
                 // Multi-select idiom: empty circle ↔ filled check, swapping with
-                // a bounce so toggling feels landed. The check picks up the
-                // gallery's own color, but flips to the label color when the
-                // tint is dark so it stays visible against the wash.
+                // a bounce so toggling feels landed. The check picks up the tint
+                // colour, but flips to the label color when the tint is dark so
+                // it stays visible against the wash.
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(
                         isSelected
-                            ? (labelColor == .white ? labelColor : gallery.color)
+                            ? (labelColor == .white ? labelColor : color)
                             : Color.secondary.opacity(0.4)
                     )
                     .font(.title3)
@@ -256,10 +260,10 @@ struct GallerySelectionSheet: View {
             .padding(.vertical, 14)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
-            .glassSurface(in: shape, tint: isSelected ? gallery.color : nil)
+            .glassSurface(in: shape, tint: isSelected ? color : nil)
             .overlay(
                 shape.strokeBorder(
-                    isSelected ? gallery.color.opacity(0.5) : .white.opacity(0.06),
+                    isSelected ? color.opacity(0.5) : .white.opacity(0.06),
                     lineWidth: isSelected ? 1.4 : 1
                 )
             )

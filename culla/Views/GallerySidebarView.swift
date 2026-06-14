@@ -9,9 +9,29 @@ struct GallerySidebarView: View {
     var isLongPress: Bool = false
 
     @Environment(\.appAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
 
     /// Whether the user is actively dragging (any rightward movement).
     private var isDragging: Bool { dragProgress > 0 }
+
+    /// In "accent" mode the sidebar abandons per-gallery colours and instead
+    /// renders one accent hue walked from light (top) to dark (bottom). The
+    /// brightness range is fixed, so more galleries just means finer steps —
+    /// a richer, fuller gradient. Saturation/hue stay locked to the accent.
+    private func accentSpectrum(_ accent: Color, count: Int) -> [Color] {
+        guard count > 1 else { return [accent] }
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(accent).getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        // On white, a near-1.0 brightness washes out — start lower in light mode.
+        let top: CGFloat = colorScheme == .dark ? 0.95 : 0.82
+        let bottom: CGFloat = 0.45
+        return (0..<count).map { i in
+            let t = CGFloat(i) / CGFloat(count - 1)        // 0…1, top→bottom
+            let brightness = top + (bottom - top) * t
+            return Color(hue: Double(h), saturation: Double(s), brightness: Double(brightness))
+        }
+    }
 
     var body: some View {
         if galleries.isEmpty {
@@ -44,11 +64,14 @@ struct GallerySidebarView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .opacity(isDragging ? 0.6 + 0.4 * dragProgress : 0.55)
         } else {
+            let spectrum: [Color] = sidebarTintMode == "accent"
+                ? accentSpectrum(accent, count: galleries.count)
+                : []
             VStack(spacing: 0) {
                 ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
                     GallerySidebarItem(
                         gallery: gallery,
-                        neonColor: gallery.color,
+                        neonColor: spectrum.isEmpty ? gallery.color : spectrum[index],
                         isHighlighted: gallery.id == highlightedID,
                         isDragging: isDragging,
                         dragProgress: dragProgress,

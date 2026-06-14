@@ -13,6 +13,7 @@ struct GalleryDetailView: View {
     private let photoService = PhotoLibraryService.shared
 
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
+    @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
 
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
@@ -31,80 +32,93 @@ struct GalleryDetailView: View {
             } else {
                 VStack(spacing: 0) {
                     VStack(spacing: 8) {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                showColorPicker.toggle()
-                            }
-                        } label: {
+                        if sidebarTintMode == "accent" {
+                            // Accent sidebar mode switches per-gallery colours
+                            // off — there's nothing to customise, so the header
+                            // collapses to a plain, non-interactive photo count.
                             HStack(spacing: 10) {
-                                Circle()
-                                    .fill(gallery.color)
-                                    .frame(width: 18, height: 18)
-                                    .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
-                                    .shadow(color: gallery.color.opacity(0.5), radius: 5)
-
                                 Text("\(allIdentifiers.count) photos")
                                     .font(.system(.subheadline, design: .rounded).weight(.medium))
                                     .monospacedDigit()
                                     .foregroundStyle(.secondary)
-
                                 Spacer()
-
-                                Image(systemName: showColorPicker ? "chevron.up" : "paintpalette.fill")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.tertiary)
-                                    .contentTransition(.symbolEffect(.replace))
                             }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                        } else {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showColorPicker.toggle()
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Circle()
+                                        .fill(gallery.color)
+                                        .frame(width: 18, height: 18)
+                                        .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
+                                        .shadow(color: gallery.color.opacity(0.5), radius: 5)
 
-                        if showColorPicker {
-                            VStack(spacing: 12) {
-                                LazyVGrid(
-                                    columns: Array(repeating: GridItem(.flexible()), count: 9),
-                                    spacing: 10
-                                ) {
-                                    ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
-                                        Button {
-                                            gallery.colorHex = hex
-                                            try? modelContext.save()
-                                            withAnimation(.easeInOut(duration: 0.2)) {
-                                                showColorPicker = false
-                                            }
-                                            handleTourColorPicked()
-                                        } label: {
-                                            Circle()
-                                                .fill(Color.adaptiveNeon(hex: hex))
-                                                .frame(width: 26, height: 26)
-                                                .overlay {
-                                                    Circle()
-                                                        .stroke(.primary, lineWidth: gallery.colorHex == hex ? 2 : 0)
-                                                        .padding(-3)
+                                    Text("\(allIdentifiers.count) photos")
+                                        .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                        .monospacedDigit()
+                                        .foregroundStyle(.secondary)
+
+                                    Spacer()
+
+                                    Image(systemName: showColorPicker ? "chevron.up" : "paintpalette.fill")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.tertiary)
+                                        .contentTransition(.symbolEffect(.replace))
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            if showColorPicker {
+                                VStack(spacing: 12) {
+                                    LazyVGrid(
+                                        columns: Array(repeating: GridItem(.flexible()), count: 9),
+                                        spacing: 10
+                                    ) {
+                                        ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
+                                            Button {
+                                                gallery.colorHex = hex
+                                                try? modelContext.save()
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    showColorPicker = false
                                                 }
-                                                .shadow(color: gallery.colorHex == hex ? Color.adaptiveNeon(hex: hex).opacity(0.5) : .clear, radius: 5)
+                                                handleTourColorPicked()
+                                            } label: {
+                                                Circle()
+                                                    .fill(Color.adaptiveNeon(hex: hex))
+                                                    .frame(width: 26, height: 26)
+                                                    .overlay {
+                                                        Circle()
+                                                            .stroke(.primary, lineWidth: gallery.colorHex == hex ? 2 : 0)
+                                                            .padding(-3)
+                                                    }
+                                                    .shadow(color: gallery.colorHex == hex ? Color.adaptiveNeon(hex: hex).opacity(0.5) : .clear, radius: 5)
+                                            }
                                         }
                                     }
-                                }
 
-                                ColorPicker(
-                                    "Custom color",
-                                    selection: Binding(
-                                        get: { gallery.color },
-                                        set: { newColor in
-                                            gallery.colorHex = newColor.hexString
-                                            try? modelContext.save()
-                                            withAnimation(.easeInOut(duration: 0.2)) {
-                                                showColorPicker = false
+                                    ColorPicker(
+                                        "Custom color",
+                                        selection: Binding(
+                                            get: { gallery.color },
+                                            set: { newColor in
+                                                gallery.colorHex = newColor.hexString
+                                                try? modelContext.save()
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    showColorPicker = false
+                                                }
+                                                handleTourColorPicked()
                                             }
-                                            handleTourColorPicked()
-                                        }
-                                    ),
-                                    supportsOpacity: false
-                                )
-                                .font(.subheadline)
+                                        ),
+                                        supportsOpacity: false
+                                    )
+                                    .font(.subheadline)
+                                }
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                             }
-                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
                     .padding(.horizontal)

@@ -12,6 +12,7 @@ struct GalleriesView: View {
     @Environment(\.activeTourStep) private var tourStep
     @Environment(\.tourAdvance) private var tourAdvance
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
     @Query private var allSortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
     @State private var viewModel: GalleryViewModel?
@@ -302,6 +303,13 @@ struct GalleriesView: View {
 
     // MARK: - Selection
 
+    /// The colour a gallery presents in this sheet. In "accent" sidebar mode
+    /// per-gallery colours are switched off — every gallery uses the single
+    /// app accent, so selection reads as one cohesive hue.
+    private func tint(_ gallery: Gallery) -> Color {
+        sidebarTintMode == "accent" ? accent : gallery.color
+    }
+
     private func toggleSelection(_ gallery: Gallery) {
         if sidebarGalleryIDs.contains(gallery.id) {
             sidebarGalleryIDs.remove(gallery.id)
@@ -330,14 +338,15 @@ struct GalleriesView: View {
     @ViewBuilder
     private func selectionCircle(for gallery: Gallery) -> some View {
         let isSelected = sidebarGalleryIDs.contains(gallery.id)
+        let color = tint(gallery)
         ZStack {
             Circle()
-                .fill(isSelected ? gallery.color : Color.clear)
+                .fill(isSelected ? color : Color.clear)
                 .overlay(
-                    Circle().strokeBorder(gallery.color.opacity(isSelected ? 0 : 0.45), lineWidth: 1.5)
+                    Circle().strokeBorder(color.opacity(isSelected ? 0 : 0.45), lineWidth: 1.5)
                 )
                 .frame(width: 24, height: 24)
-                .shadow(color: isSelected ? gallery.color.opacity(0.45) : .clear, radius: 5)
+                .shadow(color: isSelected ? color.opacity(0.45) : .clear, radius: 5)
             if isSelected {
                 Image(systemName: "checkmark")
                     .font(.system(size: 12, weight: .bold))
@@ -356,14 +365,15 @@ struct GalleriesView: View {
         // color when active — Culla's per-gallery identity carrying the
         // "selected" state (vs. a generic accent halo).
         let isActive = sidebarGalleryIDs.contains(gallery.id)
+        let color = tint(gallery)
         let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
 
         HStack(spacing: 14) {
             if editMode == .active {
                 Circle()
-                    .fill(gallery.color)
+                    .fill(color)
                     .frame(width: 12, height: 12)
-                    .shadow(color: gallery.color.opacity(0.6), radius: 5)
+                    .shadow(color: color.opacity(0.6), radius: 5)
             } else {
                 Button { toggleSelection(gallery) } label: {
                     selectionCircle(for: gallery)
@@ -371,11 +381,11 @@ struct GalleriesView: View {
                 .buttonStyle(.plain)
             }
 
-            // When the row is active, the glass picks up `gallery.color` as
-            // tint — some neons are dark enough that .primary text collides.
+            // When the row is active, the glass picks up the tint colour —
+            // some hues are dark enough that .primary text collides.
             // `foregroundOnTintedGlass` flips to white only when needed.
             let labelColor: Color = isActive
-                ? gallery.color.foregroundOnTintedGlass(in: colorScheme)
+                ? color.foregroundOnTintedGlass(in: colorScheme)
                 : .primary
 
             if editMode == .active {
@@ -401,14 +411,14 @@ struct GalleriesView: View {
         .padding(.vertical, 14)
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity)
-        .glassSurface(in: shape, tint: isActive ? gallery.color : nil)
+        .glassSurface(in: shape, tint: isActive ? color : nil)
         .overlay(
             shape.strokeBorder(
-                isActive ? gallery.color.opacity(0.5) : .white.opacity(0.06),
+                isActive ? color.opacity(0.5) : .white.opacity(0.06),
                 lineWidth: isActive ? 1.4 : 1
             )
         )
-        .shadow(color: isActive ? gallery.color.opacity(0.3) : .clear, radius: 14, y: 6)
+        .shadow(color: isActive ? color.opacity(0.3) : .clear, radius: 14, y: 6)
         .animation(.snappy(duration: 0.25), value: isActive)
     }
 }

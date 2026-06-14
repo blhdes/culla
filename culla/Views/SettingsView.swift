@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("appColorScheme") private var colorSchemeString = "system"
     @AppStorage("accentColorMode") private var accentMode = "random"
     @AppStorage("customAccentHex") private var customAccentHex = ""
+    @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
     @AppStorage("statusBarVisible") private var statusBarVisible = false
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
@@ -165,6 +166,15 @@ struct SettingsView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: accentMode)
+
+            rowDivider
+
+            labeledControl("Sidebar colour") {
+                GlassChipPicker(selection: $sidebarTintMode, options: [
+                    .init(id: "gallery", label: "Per gallery"),
+                    .init(id: "accent",  label: "Accent")
+                ])
+            }
         }
     }
 
