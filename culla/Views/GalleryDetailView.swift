@@ -37,88 +37,11 @@ struct GalleryDetailView: View {
                             // off — there's nothing to customise, so the header
                             // collapses to a plain, non-interactive photo count.
                             HStack(spacing: 10) {
-                                Text("\(allIdentifiers.count) photos")
-                                    .font(.system(.subheadline, design: .rounded).weight(.medium))
-                                    .monospacedDigit()
-                                    .foregroundStyle(.secondary)
+                                photoCountLabel
                                 Spacer()
                             }
                         } else {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    showColorPicker.toggle()
-                                }
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Circle()
-                                        .fill(gallery.color)
-                                        .frame(width: 18, height: 18)
-                                        .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
-                                        .shadow(color: gallery.color.opacity(0.5), radius: 5)
-
-                                    Text("\(allIdentifiers.count) photos")
-                                        .font(.system(.subheadline, design: .rounded).weight(.medium))
-                                        .monospacedDigit()
-                                        .foregroundStyle(.secondary)
-
-                                    Spacer()
-
-                                    Image(systemName: showColorPicker ? "chevron.up" : "paintpalette.fill")
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.tertiary)
-                                        .contentTransition(.symbolEffect(.replace))
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-
-                            if showColorPicker {
-                                VStack(spacing: 12) {
-                                    LazyVGrid(
-                                        columns: Array(repeating: GridItem(.flexible()), count: 9),
-                                        spacing: 10
-                                    ) {
-                                        ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
-                                            Button {
-                                                gallery.colorHex = hex
-                                                try? modelContext.save()
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    showColorPicker = false
-                                                }
-                                                handleTourColorPicked()
-                                            } label: {
-                                                Circle()
-                                                    .fill(Color.adaptiveNeon(hex: hex))
-                                                    .frame(width: 26, height: 26)
-                                                    .overlay {
-                                                        Circle()
-                                                            .stroke(.primary, lineWidth: gallery.colorHex == hex ? 2 : 0)
-                                                            .padding(-3)
-                                                    }
-                                                    .shadow(color: gallery.colorHex == hex ? Color.adaptiveNeon(hex: hex).opacity(0.5) : .clear, radius: 5)
-                                            }
-                                        }
-                                    }
-
-                                    ColorPicker(
-                                        "Custom color",
-                                        selection: Binding(
-                                            get: { gallery.color },
-                                            set: { newColor in
-                                                gallery.colorHex = newColor.hexString
-                                                try? modelContext.save()
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    showColorPicker = false
-                                                }
-                                                handleTourColorPicked()
-                                            }
-                                        ),
-                                        supportsOpacity: false
-                                    )
-                                    .font(.subheadline)
-                                }
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                            }
+                            colorPickerSection
                         }
                     }
                     .padding(.horizontal)
@@ -226,6 +149,95 @@ struct GalleryDetailView: View {
         }
         .task {
             await syncAndLoad()
+        }
+    }
+
+    // MARK: - Header
+
+    /// Photo count shown in the gallery header. Shared by both sidebar-tint
+    /// modes so the label can't drift between them.
+    private var photoCountLabel: some View {
+        Text("\(allIdentifiers.count) photos")
+            .font(.system(.subheadline, design: .rounded).weight(.medium))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+    }
+
+    /// "Per gallery" mode header: a tappable row that discloses the neon swatch
+    /// grid + custom ColorPicker for this gallery's colour.
+    @ViewBuilder
+    private var colorPickerSection: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showColorPicker.toggle()
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(gallery.color)
+                    .frame(width: 18, height: 18)
+                    .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
+                    .shadow(color: gallery.color.opacity(0.5), radius: 5)
+
+                photoCountLabel
+
+                Spacer()
+
+                Image(systemName: showColorPicker ? "chevron.up" : "paintpalette.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+
+        if showColorPicker {
+            VStack(spacing: 12) {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible()), count: 9),
+                    spacing: 10
+                ) {
+                    ForEach(Array(Color.neonHexes.enumerated()), id: \.offset) { _, hex in
+                        Button {
+                            gallery.colorHex = hex
+                            try? modelContext.save()
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showColorPicker = false
+                            }
+                            handleTourColorPicked()
+                        } label: {
+                            Circle()
+                                .fill(Color.adaptiveNeon(hex: hex))
+                                .frame(width: 26, height: 26)
+                                .overlay {
+                                    Circle()
+                                        .stroke(.primary, lineWidth: gallery.colorHex == hex ? 2 : 0)
+                                        .padding(-3)
+                                }
+                                .shadow(color: gallery.colorHex == hex ? Color.adaptiveNeon(hex: hex).opacity(0.5) : .clear, radius: 5)
+                        }
+                    }
+                }
+
+                ColorPicker(
+                    "Custom color",
+                    selection: Binding(
+                        get: { gallery.color },
+                        set: { newColor in
+                            gallery.colorHex = newColor.hexString
+                            try? modelContext.save()
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showColorPicker = false
+                            }
+                            handleTourColorPicked()
+                        }
+                    ),
+                    supportsOpacity: false
+                )
+                .font(.subheadline)
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 
