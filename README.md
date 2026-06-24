@@ -1,12 +1,13 @@
 # Culla
 
-A native iOS app for organizing your photo library. Swipe through photos one by one — left to dismiss, right to sort into galleries. Think Tinder, but for your camera roll.
+A native iOS app for organizing your photo library. Swipe through your photos and videos one by one — left to dismiss, right to sort into galleries. Think Tinder, but for your camera roll.
 
 ## Why Culla?
 
 Most photo organizer apps let you keep or delete. Culla's core experience is **multi-gallery sorting** — drag a photo toward any of your galleries and it's instantly saved there. Your galleries sync with real iPhone Photos albums, so everything stays organized across your device.
 
-- 100% native Swift/SwiftUI — RevenueCat is the only third-party dependency
+- 100% native Swift/SwiftUI — RevenueCat is the only third-party dependency, and it's left dormant (never configured) in the current build
+- Privacy-first — no analytics and zero network calls at launch; App Privacy is *Data Not Collected*, declared via a bundled privacy manifest
 - Freemium model on the App Store — free tier with limits, one-time unlock for everything (**temporarily disabled in the current build — ships fully unlocked**)
 - Syncs with your iPhone Photos library
 - Minimalist, HIG-compliant design with a personal accent palette and a reusable Living-Glass surface system
@@ -18,6 +19,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Swipe sorting** — left to dismiss, right toward a gallery to sort, double-tap to skip
 - **Swipe up** — favorite/unfavorite a photo
 - **Swipe down** — share a photo
+- **Video sorting** — videos ride the same swipe stack as photos, auto-playing muted and looping on the top card with a duration badge; turn them off with "Include videos" in Settings
 - **Pinch to zoom** — magnify the current photo
 - **Long-press** — preview gallery panels at full opacity
 - **Full undo history** — undo every action in a session, not just the last one
@@ -44,7 +46,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 
 ### Design & theming
 - **Living-Glass design system** — a reusable set of glass surfaces (iOS 26 Liquid Glass, with an iOS 18 `.thinMaterial` fallback) shared across destination sheets and Settings; per-gallery color carries the "selected" state
-- **Dynamic photo carousel background** — animated mosaic adapts to the selected gallery or favourites, with off / monochrome options
+- **Dynamic background, two styles** — a **Stream** wall (rows of photos drifting upward while each row scrolls sideways) or a **Mosaic** wall (Album Artwork–style grid where one tile at a time 3D-flips to a new photo); both adapt to the selected gallery or favourites, with off / monochrome options
 - **Adjustable background blur** — tune how soft the carousel backdrop is in Settings; duplicate-pair comparisons sharpen relative to it
 - **Sidebar colour modes** — per-gallery neon colours, or a single accent hue walked light→dark across the swipe panels
 - **Adaptive scrim** — text stays readable over any photo backdrop
@@ -53,7 +55,8 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Light/Dark/System** theming with status-bar overrides
 
 ### Insights & utilities
-- **Sorting Insights** — total sorted, streaks, skipped, favourites, top gallery
+- **Sorting Insights** — total sorted, streaks, skipped, favourites, top gallery; opens full-screen
+- **Storage reclaimed** — running total of space freed by deleting photos through Culla (e.g. "2.3 GB reclaimed")
 - **7-day activity line chart** — track your sorting cadence
 - **Duplicate Sweep** — Vision-framework fingerprinting with side-by-side comparison and long-press zoom
 - **Dismissed Photos** — review, recover, or batch-delete; trash-icon badge persists across sessions
@@ -81,6 +84,7 @@ culla/
 ├── CullaApp.swift                      # Entry point, splash gate, random accent, model container
 ├── Localizable.xcstrings               # String Catalog — all UI strings in 8 languages
 ├── InfoPlist.xcstrings                 # Localized photo-permission prompts
+├── PrivacyInfo.xcprivacy               # Privacy manifest — declares the UserDefaults API reason; no tracking
 │
 ├── Models/
 │   ├── Gallery.swift                   # User-created gallery (SwiftData @Model)
@@ -110,7 +114,8 @@ culla/
 │   ├── PhotoGridPickerView.swift       # Scrollable photo grid for picking a start date
 │   ├── SwipeView.swift                 # Core swipe screen with gesture handling
 │   ├── PhotoCardView.swift             # Single photo card (drag offset, opacity)
-│   ├── PhotoCarouselBackground.swift   # Dynamic mosaic background, adapts to mode
+│   ├── PhotoCarouselBackground.swift   # Dynamic background — streaming photo wall (Stream style)
+│   ├── MosaicBackground.swift          # Dynamic background — Album Artwork-style flip-tile wall (Mosaic style)
 │   ├── GallerySidebarView.swift        # Neon gallery panels + adaptive color palette
 │   ├── GallerySelectionSheet.swift     # Pick which galleries appear in sidebar (search + sort)
 │   ├── AlbumPickerView.swift           # Browse phone albums + unsorted + favourites
@@ -123,7 +128,9 @@ culla/
 │   ├── PhotoPreviewOverlay.swift       # Full-screen photo preview (long-press / zoom)
 │   ├── FocusTimerArcView.swift         # Circular progress timer for focus sessions
 │   ├── InsightsView.swift              # Stats dashboard + 7-day activity chart
-│   ├── SettingsView.swift              # Theme, accent, haptics, status bar, sidebar colour, background blur, app language
+│   ├── SettingsView.swift              # Theme, accent, haptics, status bar, videos, sidebar colour, dynamic background, language
+│   ├── SettingsAppFooter.swift         # App icon + version/copyright signature line at the foot of Settings
+│   ├── AccentPalettePicker.swift       # Custom-accent swatch grid + colour editor (extracted from Settings)
 │   ├── PaywallSheet.swift              # Custom paywall with staggered animations
 │   ├── CullaEyes.swift                 # Animated mascot on the date picker
 │   ├── SwipeDirectionsHint.swift       # Tooltip explaining swipe gestures
@@ -135,6 +142,8 @@ culla/
 │
 └── Helpers/
     ├── PhotoImageLoader.swift          # Per-card async image loader
+    ├── VideoCardPlayer.swift           # Looping AVQueuePlayer for the top swipe card / preview
+    ├── VideoDurationBadge.swift        # "0:42"-style duration label for video thumbnails
     ├── AccentEnvironment.swift         # @Environment accent + on-tinted-glass text contrast
     ├── Haptics.swift                   # Centralized haptic generator + settings toggle
     ├── GlassSurface.swift              # .glassSurface() modifier + GlassStack (iOS 26 glass, iOS 18 fallback)
@@ -151,14 +160,15 @@ culla/
 
 ## Architecture
 
-**MVVM + SwiftData + PhotoKit + RevenueCat**
+**MVVM + SwiftData + PhotoKit + AVFoundation**
 
 - **SwiftData** persists galleries, sorted photos, dismissed photos, and daily stats. We never copy photo bytes — only store `PHAsset.localIdentifier` strings.
 - **PhotoKit** handles all interaction with the iPhone photo library: fetching, caching, album sync, and deletion.
 - **PHCachingImageManager** preloads the next 3 photos so transitions feel instant.
 - **@Observable** (iOS 17 Observation framework) drives reactive UI updates.
 - **Vision framework** powers duplicate detection via `VNGenerateImageFeaturePrintRequest`.
-- **RevenueCat** handles entitlements; the paywall UI is fully custom. *(Gating is temporarily disabled — `SubscriptionManager.isPro` returns `true` for everyone.)*
+- **AVFoundation** plays videos in the swipe stack — a single looping `AVQueuePlayer` owned by `VideoCardPlayer`, so at most one video ever plays at a time.
+- **RevenueCat** handles entitlements and the paywall UI is fully custom — but in the current build it's **never configured** (gating is disabled, `SubscriptionManager.isPro` returns `true` for everyone), so the app makes no network calls and App Privacy is *Data Not Collected*.
 - **Living-Glass design system** — shared glass surfaces in `Helpers/` (Liquid Glass on iOS 26, `.thinMaterial` fallback on iOS 18). Two tiers: *calm* (`SettingsCard`) for utility screens, *loud* (`GlassPanel`) for destination sheets; per-gallery color carries the selected state instead of a generic accent.
 - **Tour anchoring** uses SwiftUI `PreferenceKey` so spotlights track real on-screen elements through layout changes.
 - **Localization** via String Catalogs (`Localizable.xcstrings` + `InfoPlist.xcstrings`). Display text flows through `LocalizedStringKey` / `String(localized:)`; persisted identifiers (enum raw values, storage keys) stay English so translations never affect logic.
