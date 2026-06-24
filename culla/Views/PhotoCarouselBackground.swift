@@ -139,8 +139,34 @@ final class PhotoBackgroundManager {
                 contentMode: .aspectFill,
                 options: options
             ) { image, _ in
-                continuation.resume(returning: image)
+                // Square the thumbnail once, here, so the streaming wall and the
+                // mosaic can drop each photo straight into its square cell — no
+                // per-cell aspect-fill clip on every animation frame.
+                continuation.resume(returning: image.map(Self.squareCropped))
             }
+        }
+    }
+
+    /// Center-crops a thumbnail to a square at its native scale. Both background
+    /// styles draw into square cells, so doing the aspect-fill crop once at load
+    /// keeps the per-frame render free of any clipping work.
+    private nonisolated static func squareCropped(_ image: UIImage) -> UIImage {
+        let side = min(image.size.width, image.size.height)
+        guard side > 0 else { return image }
+        let target = CGSize(width: side, height: side)
+        let format = UIGraphicsImageRendererFormat.preferred()
+        format.opaque = true
+        format.scale = image.scale
+        let renderer = UIGraphicsImageRenderer(size: target, format: format)
+        return renderer.image { _ in
+            let scale = max(target.width / image.size.width, target.height / image.size.height)
+            let drawW = image.size.width * scale
+            let drawH = image.size.height * scale
+            image.draw(in: CGRect(
+                x: (target.width - drawW) / 2,
+                y: (target.height - drawH) / 2,
+                width: drawW, height: drawH
+            ))
         }
     }
 }
@@ -254,6 +280,14 @@ struct PhotoCarouselBackground: View {
                 let images = manager.images
                 guard !images.isEmpty else { return }
 
+                // Resolve each photo once per frame, then reuse it across every
+                // tile that repeats it. The old per-cell `draw(Image(uiImage:))`
+                // re-resolved the same handful of images dozens of times a frame
+                // (plus a fresh Image/Path/context-copy each time) — the main
+                // source of the stutter. Tiles arrive pre-squared, so each one
+                // drops into its cell with no clipping.
+                let resolved = images.map { context.resolve(Image(uiImage: $0)) }
+
                 let tRaw = timeline.date.timeIntervalSinceReferenceDate - timeOffset
 
                 // Vertical: whole wall drifts upward, resets seamlessly at tileSize
@@ -290,23 +324,12 @@ struct PhotoCarouselBackground: View {
                                 guard x + photoSize > 0, x < size.width else { continue }
 
                                 // Each row uses a unique photo slice: row 0 → 0‥5, row 1 → 6‥11, …
-                                let idx = (row * photosPerTile + col) % images.count
-                                let img = images[idx]
-
-                                let imgSize = img.size
-                                let scale = max(photoSize / imgSize.width, photoSize / imgSize.height)
-                                let drawW = imgSize.width * scale
-                                let drawH = imgSize.height * scale
-                                let drawRect = CGRect(
-                                    x: x + (photoSize - drawW) / 2,
-                                    y: y + (photoSize - drawH) / 2,
-                                    width: drawW, height: drawH
+                                // The tile is already square, so it fills the cell exactly.
+                                let idx = (row * photosPerTile + col) % resolved.count
+                                context.draw(
+                                    resolved[idx],
+                                    in: CGRect(x: x, y: y, width: photoSize, height: photoSize)
                                 )
-
-                                var clipped = context
-                                clipped.clip(to: Path(CGRect(x: x, y: y,
-                                                             width: photoSize, height: photoSize)))
-                                clipped.draw(Image(uiImage: img), in: drawRect)
                             }
                         }
                     }
