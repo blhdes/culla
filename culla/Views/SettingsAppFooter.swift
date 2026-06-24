@@ -1,43 +1,40 @@
 import SwiftUI
 
-/// Identity header for the top of Settings: app icon + "Culla" wordmark +
-/// version line. Replaces the old version footer that was stranded alone at the
-/// bottom, so the screen opens with a face — matching iOS's own per-app header
-/// convention. Stays in the calm Settings tier: no glass card, just a centred
-/// stack on the flat background.
-struct SettingsAppHeader: View {
+/// Identity footer for the bottom of Settings: a small app icon beside a single
+/// line carrying the wordmark, version, and copyright. It used to sit at the top
+/// as a tall stack, but that ate too much of the sheet's header space — so it's
+/// now a compact one-line signature at the foot of the screen. Stays in the calm
+/// Settings tier: no glass card, just a centred row on the flat background.
+struct SettingsAppFooter: View {
     var body: some View {
-        VStack(spacing: 10) {
+        HStack(spacing: 8) {
             if let icon = Self.appIcon {
                 Image(uiImage: icon)
                     .resizable()
-                    .frame(width: 64, height: 64)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(width: 26, height: 26)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(.white.opacity(0.12), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
                     )
-                    .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
             }
 
-            VStack(spacing: 3) {
-                Text("Culla")
-                    .font(.system(.title3, design: .rounded).weight(.semibold))
-                    .foregroundStyle(.primary)
-                Text(Self.versionLine)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text("© \(Self.year) Culla")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
+            Text(Self.infoLine)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 4)
-        .padding(.bottom, 6)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     // MARK: - Bundle info
+
+    /// Wordmark, version, and copyright collapsed onto one line with middot
+    /// separators, e.g. "Culla · Version 1.0 (123) · © 2026".
+    private static var infoLine: String {
+        "Culla · \(versionLine) · © \(year)"
+    }
 
     private static var versionLine: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
@@ -52,8 +49,8 @@ struct SettingsAppHeader: View {
     }
 
     /// The app's primary icon, read from the bundle. Returns `nil` if it can't
-    /// be resolved (e.g. some preview contexts) so the header degrades to a
-    /// wordmark-only layout instead of rendering a broken image.
+    /// be resolved (e.g. some preview contexts) so the footer degrades to a
+    /// text-only layout instead of rendering a broken image.
     private static var appIcon: UIImage? {
         if
             let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],

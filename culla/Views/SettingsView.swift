@@ -38,7 +38,6 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 22) {
-                    SettingsAppHeader()
                     appearanceCard
                     interfaceCard
                     dynamicBackgroundCard
@@ -57,6 +56,8 @@ struct SettingsView: View {
                     //         settingsButtonRow("Restore purchases") { Task { await restore() } }
                     //     }
                     // }
+
+                    SettingsAppFooter()
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 20)
