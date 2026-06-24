@@ -23,7 +23,15 @@ struct CullaApp: App {
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")
         }
-        SubscriptionManager.shared.configure()
+        // MARK: - FREEMIUM HIDDEN — restore in vNext
+        // RevenueCat is left un-configured while freemium is disabled. `isPro` is
+        // hard-coded to `true`, so the SDK's result is never read, yet `configure()`
+        // would still phone home and create an anonymous user ID — which contradicts
+        // our "nothing leaves your device, no third-party SDKs" privacy policy. Every
+        // `Purchases.shared` access lives inside the (unreachable) paywall flow, so
+        // skipping configuration is behaviour-identical. Restore this line when the
+        // paywall comes back.
+        // SubscriptionManager.shared.configure()
     }
 
     var body: some Scene {
