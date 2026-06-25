@@ -606,6 +606,18 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return await loadImage(for: asset.localIdentifier, targetSize: targetSize)
     }
 
+    /// Outcome of a single `requestImage` attempt, so the caller can tell a
+    /// transient failure (worth retrying) from a permanently unavailable asset.
+    private enum ImageRequestOutcome {
+        case image(UIImage)
+        /// Cancelled or errored mid-flight — usually transient under request
+        /// contention, so retrying tends to succeed.
+        case transient
+        /// Final delivery with no image and no error — the asset has no
+        /// renderable thumbnail (e.g. deleted). Retrying won't help.
+        case unavailable
+    }
+
     /// Loads a display-quality UIImage for the given asset identifier.
     func loadImage(
         for assetIdentifier: String,
@@ -623,10 +635,39 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         options.isNetworkAccessAllowed = true
         options.resizeMode = .fast
 
-        return await withCheckedContinuation { continuation in
+        // Flinging to the end of a grid fires many requests at once on the
+        // shared caching manager, which can answer some with a cancelled/empty
+        // result — leaving those cells stuck on the gray "photo" placeholder.
+        // Those failures are transient, so retry a couple of times (with a
+        // short backoff for the contention to clear) before giving up.
+        for attempt in 0..<3 {
+            if Task.isCancelled { return nil }
+
+            switch await requestImageOnce(for: asset, targetSize: targetSize, options: options) {
+            case .image(let image):
+                return image
+            case .unavailable:
+                return nil
+            case .transient:
+                if attempt < 2 {
+                    try? await Task.sleep(for: .milliseconds(120))
+                }
+            }
+        }
+        return nil
+    }
+
+    /// One `requestImage` round-trip, resolving to a single ``ImageRequestOutcome``.
+    private func requestImageOnce(
+        for asset: PHAsset,
+        targetSize: CGSize,
+        options: PHImageRequestOptions
+    ) async -> ImageRequestOutcome {
+        await withCheckedContinuation { continuation in
             // Holds a degraded preview received while waiting for the iCloud download.
             // Used as fallback if the final high-quality delivery fails.
             var degradedFallback: UIImage? = nil
+            var resumed = false
 
             imageManager.requestImage(
                 for: asset,
@@ -641,12 +682,24 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
                 if isDegraded {
                     // Save as fallback; keep waiting for the high-quality version.
                     degradedFallback = image
+                    return
+                }
+
+                guard !resumed else { return }
+                resumed = true
+
+                if let image {
+                    // High-quality delivery succeeded.
+                    continuation.resume(returning: .image(image))
+                } else if let degradedFallback {
+                    // Final delivery had no image, but we saved a preview earlier.
+                    continuation.resume(returning: .image(degradedFallback))
                 } else if isCancelled || hasError {
-                    // Final delivery failed — use the degraded preview if we got one.
-                    continuation.resume(returning: degradedFallback)
+                    // Dropped under contention — retryable.
+                    continuation.resume(returning: .transient)
                 } else {
-                    // High-quality delivery (image may still be nil in rare edge cases).
-                    continuation.resume(returning: image ?? degradedFallback)
+                    // Genuinely no thumbnail for this asset.
+                    continuation.resume(returning: .unavailable)
                 }
             }
         }
