@@ -62,8 +62,15 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
 
+    /// Goes up by one on every photo library change, so views can react (e.g. the
+    /// cleanup of records for deleted photos).
+    private(set) var libraryChangeCount = 0
+
     nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
         CalendarDataCache.shared.removeAll()
+        Task { @MainActor in
+            self.libraryChangeCount += 1
+        }
     }
 
     /// In-memory cache for calendar thumbnails — avoids re-fetching when scrolling back.
@@ -284,8 +291,22 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     /// How many of these photos still exist in the library. Tells a cancelled
     /// delete (photos still there) apart from photos that were already gone.
     func existingPhotoCount(identifiers: [String]) -> Int {
-        guard !identifiers.isEmpty else { return 0 }
-        return PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil).count
+        Self.existingIdentifiers(among: Set(identifiers)).count
+    }
+
+    /// Which of these photos still exist in the library. Hidden photos and every
+    /// shot of a burst count as existing — the default lookup skips them.
+    nonisolated static func existingIdentifiers(among identifiers: Set<String>) -> Set<String> {
+        guard !identifiers.isEmpty else { return [] }
+        let options = PHFetchOptions()
+        options.includeHiddenAssets = true
+        options.includeAllBurstAssets = true
+        options.includeAssetSourceTypes = [.typeUserLibrary, .typeCloudShared, .typeiTunesSynced]
+
+        var existing = Set<String>()
+        PHAsset.fetchAssets(withLocalIdentifiers: Array(identifiers), options: options)
+            .enumerateObjects { asset, _, _ in existing.insert(asset.localIdentifier) }
+        return existing
     }
 
     // MARK: - Reclaimed storage tracking

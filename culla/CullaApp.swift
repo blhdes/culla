@@ -95,6 +95,7 @@ private struct SplashGate: View {
             }
         }
         .animation(.easeOut(duration: 0.4), value: isReady)
+        .background { MissingPhotoCleanup() }
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(
                 onClose: { showPaywall = false },
