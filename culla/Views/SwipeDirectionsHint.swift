@@ -60,7 +60,7 @@ struct SwipeDirectionsHint: View {
 
     // Top / bottom direction items (chevron above or below)
     private func directionItem(
-        icon: String, label: String,
+        icon: String, label: LocalizedStringKey,
         color: Color, chevron: String, chevronOnTop: Bool
     ) -> some View {
         VStack(spacing: 5) {

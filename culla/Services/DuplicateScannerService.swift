@@ -73,16 +73,22 @@ final class DuplicateScannerService {
             return nil
         }
 
-        let request = VNGenerateImageFeaturePrintRequest()
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        // Vision's `perform` blocks until the analysis finishes. This class
+        // runs on the main thread by default, so do the heavy part in a
+        // background task — otherwise the "Finding duplicates…" screen
+        // stutters while up to 50 photos are fingerprinted.
+        return await Task.detached(priority: .userInitiated) {
+            let request = VNGenerateImageFeaturePrintRequest()
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
 
-        do {
-            try handler.perform([request])
-            return request.results?.first as? VNFeaturePrintObservation
-        } catch {
-            print("culla: Failed to generate fingerprint: \(error)")
-            return nil
-        }
+            do {
+                try handler.perform([request])
+                return request.results?.first as? VNFeaturePrintObservation
+            } catch {
+                print("culla: Failed to generate fingerprint: \(error)")
+                return nil
+            }
+        }.value
     }
 
     /// Fetches photo identifiers within ±timeWindow of a given date.

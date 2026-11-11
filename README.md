@@ -39,7 +39,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 ### Galleries
 - **Gallery management** — create, reorder, rename, recolor, import from existing albums
 - **Sort galleries** — a glass sort pill on both gallery sheets orders by Custom (manual), Name, Photo Count, Date Created, or Recently Updated; re-tap the active field to flip direction. The choice is shared across both sheets and remembered between launches
-- **Custom 18-swatch palette** — fully editable accent colors with adaptive light/dark output
+- **Gallery colours** — an 18-swatch neon palette per gallery (or any custom colour), with adaptive light/dark output
 - **Live rename sync** — rename a gallery in-app and the iPhone album updates too
 - **Move or copy** — when sorting from an album, choose whether photos stay or get moved
 - **Custom delete confirmation** — Messages-style menu with spring animation and three deletion modes (delete + photos, delete keep photos, remove from Culla); shared between the gallery list and gallery detail screen
@@ -50,7 +50,7 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 - **Adjustable background blur** — tune how soft the carousel backdrop is in Settings; duplicate-pair comparisons sharpen relative to it
 - **Sidebar colour modes** — per-gallery neon colours, or a single accent hue walked light→dark across the swipe panels
 - **Adaptive scrim** — text stays readable over any photo backdrop
-- **Random session accent** — a fresh neon accent on every launch, or pin one in Settings
+- **Random session accent** — a fresh neon accent on every launch, or pin one in Settings from an editable 12-swatch palette
 - **Liquid Glass action buttons** — iOS 26 styling on the toolbar
 - **Light/Dark/System** theming with status-bar overrides
 
@@ -67,14 +67,14 @@ Most photo organizer apps let you keep or delete. Culla's core experience is **m
 > **Note:** Freemium gating and the paywall are **temporarily disabled** in the current build — every user is treated as Pro (fully unlocked). The code is retained, and the items below describe the intended model.
 
 - **In-app spotlight tour** — anchored, auto-advancing walkthrough that introduces sorting, galleries, color picking, and swipe directions
-- **Two-phase review prompt** — `AppStore.requestReview(in:)` on iOS 18+, falls back to `SKStoreReviewController`
+- **Two-phase review prompt** — `AppStore.requestReview(in:)`, asked once after the first sorting milestone and once more later
 - **Custom paywall** — staggered animations, soft + hard gating via RevenueCat
 - **Freemium gates** — free tier limits enforced for unauthenticated users; trial reminders for lapsing trials
 
 ## Requirements
 
 - iOS 18.0+
-- Xcode 16+
+- Xcode 26+ (the Liquid Glass code needs the iOS 26 SDK to compile, even though the app still runs on iOS 18)
 - Photo Library access (read/write)
 
 ## Project Structure
@@ -153,6 +153,7 @@ culla/
     ├── HeroIconTile.swift              # Glass hero icon tile
     ├── SortChip.swift                  # Reusable glass sort-menu pill + SortFieldProtocol
     ├── GallerySorting.swift            # GallerySortField + shared Array<Gallery>.sortedBy
+    ├── SidebarSelection.swift          # Drops deleted galleries from the saved swipe-sidebar selection
     ├── OnboardingManager.swift         # Tracks onboarding/tour completion
     ├── TourEnvironment.swift           # Active tour step + advance closure plumbing
     └── TourTarget.swift                # SwiftUI preferences for spotlight anchoring
@@ -221,7 +222,7 @@ Queue:  [A] [B] [C] [D] [E] ...
       current   next  cache window (3 ahead)
 ```
 
-Old images are evicted from the cache as the window slides forward. Calendar mosaic thumbnails use a separate **disk cache** (PNG, atomic writes) so the calendar warms instantly on relaunch.
+Old images are evicted from the cache as the window slides forward. Calendar mosaic thumbnails use a separate **disk cache** (JPEG, atomic writes) so the calendar warms instantly on relaunch.
 
 ## Building
 

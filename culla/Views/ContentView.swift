@@ -24,7 +24,9 @@ struct ContentView: View {
             } else if let startDate {
                 SwipeView(
                     startDate: startDate,
-                    albumIdentifier: selectedAlbum?.collectionIdentifier,
+                    // This Day always searches the whole library; the album
+                    // filter only exists in Cullaing mode.
+                    albumIdentifier: isOnThisDay ? nil : selectedAlbum?.collectionIdentifier,
                     sortMode: sortMode,
                     focusDuration: focusDuration,
                     isOnThisDay: isOnThisDay,
@@ -33,9 +35,6 @@ struct ContentView: View {
                         self.startDate = nil
                         self.focusDuration = nil
                         self.isOnThisDay = false
-                    },
-                    onShowGalleries: {
-                        showGalleries = true
                     },
                     onSessionEnd: {
                         self.startDate = nil

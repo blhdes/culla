@@ -22,6 +22,10 @@ final class GalleryViewModel {
     // MARK: - Create
 
     func createGallery(name: String, iconName: String = "folder.fill", colorHex: String? = nil) {
+        // Other screens add galleries too (album import, the Manage sheet),
+        // so refresh first — a stale count would hand the new gallery an
+        // order number (and default colour) that's already taken.
+        fetchGalleries()
         let gallery = Gallery(
             name: name,
             iconName: iconName,
@@ -71,41 +75,43 @@ final class GalleryViewModel {
         }
     }
 
-    /// Removes the gallery, deletes the iPhone album, AND permanently deletes all photos.
-    func deleteGalleryAndPhotos(_ gallery: Gallery) {
+    /// Permanently deletes all the gallery's photos, then removes the gallery and its iPhone album.
+    /// Returns `false` — and changes nothing — when the user cancels the iOS prompt.
+    @discardableResult
+    func deleteGalleryAndPhotos(_ gallery: Gallery) async -> Bool {
         let identifiers = gallery.sortedPhotos.map(\.assetIdentifier)
-        let albumID = gallery.albumIdentifier
+        let service = PhotoLibraryService.shared
 
+        if !identifiers.isEmpty {
+            let deleted = await service.deletePhotos(identifiers: identifiers)
+            // Nothing deleted while the photos still exist = "Don't Allow" (or iOS failed).
+            // Leave the gallery and its album exactly as they were.
+            if deleted == 0 && service.existingPhotoCount(identifiers: identifiers) > 0 {
+                return false
+            }
+            // Recorded here so both entry points — the gallery list and the
+            // gallery screen — update Insights the same way.
+            if deleted > 0 {
+                let defaults = UserDefaults.standard
+                defaults.set(
+                    defaults.integer(forKey: "totalDeletedPhotos") + deleted,
+                    forKey: "totalDeletedPhotos"
+                )
+                DailyStats.upsert(in: modelContext, deletedDelta: deleted)
+            }
+        }
+
+        let albumID = gallery.albumIdentifier
         modelContext.delete(gallery)
         save()
         fetchGalleries()
         renumberDisplayOrder()
 
-        Task {
-            // Delete the photos from the phone library
-            let service = PhotoLibraryService.shared
-            if !identifiers.isEmpty {
-                _ = await service.deletePhotos(identifiers: identifiers)
-            }
-            // Delete the album itself
-            if let albumID {
-                await service.deleteAlbum(identifier: albumID)
-            }
+        // Not awaited, so callers can leave the gallery screen right away.
+        if let albumID {
+            Task { await service.deleteAlbum(identifier: albumID) }
         }
-    }
-
-    // MARK: - Rename
-
-    func renameGallery(_ gallery: Gallery, to newName: String) {
-        gallery.name = newName
-        save()
-    }
-
-    // MARK: - Reorder
-
-    func moveGallery(from source: IndexSet, to destination: Int) {
-        galleries.move(fromOffsets: source, toOffset: destination)
-        renumberDisplayOrder()
+        return true
     }
 
     // MARK: - Private

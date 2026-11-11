@@ -8,7 +8,8 @@ struct PhotoGridPickerView: View {
     @Binding var selectedDate: Date
     /// Called after a photo is picked. The parent uses this to dismiss the
     /// calendar sheet underneath, so the wheel jumps straight to the new date.
-    let onPick: () -> Void
+    /// Called with the exact creation date of the tapped photo.
+    let onPick: (Date) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appAccent) private var accent
@@ -64,7 +65,7 @@ struct PhotoGridPickerView: View {
     private func pick(_ item: GridPhoto) {
         Haptics.dateWheelTick()
         selectedDate = item.creationDate
-        onPick()
+        onPick(item.creationDate)
         dismiss()
     }
 

@@ -4,7 +4,9 @@ import SwiftUI
 
 // MARK: - Pre-computed Data Models
 
-struct DayInfo: Identifiable, Equatable {
+/// Plain data built on a background thread (see `buildMonths`), so it opts out
+/// of the app's default main-thread isolation.
+nonisolated struct DayInfo: Identifiable, Equatable {
     let id: Date
     let dayNumber: Int
     let isToday: Bool

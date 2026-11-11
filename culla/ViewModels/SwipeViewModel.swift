@@ -11,7 +11,6 @@ final class SwipeViewModel {
     var nextIdentifier: String?
     var isLoading = false
     var isEmpty = false
-    var showGalleryPicker = false
 
     // Progress
     private(set) var totalCount: Int = 0
@@ -38,8 +37,24 @@ final class SwipeViewModel {
     // MARK: - Queue
 
     private var identifierQueue: [String] = []
-    private let batchSize = 50
     private var cachedIdentifiers: [String] = []
+
+    // MARK: - Album Sync
+
+    /// The most recent iPhone-album write. Each new write waits for the one
+    /// before it, so a sort and its undo always reach Photos in the order the
+    /// user made them — even when undo is tapped before the sort has finished.
+    private var albumSyncTask: Task<Void, Never>?
+
+    /// The real iPhone album that photos are moved out of — nil when sorting
+    /// copies, or when the source is a virtual album with nothing to remove from.
+    private var moveSourceAlbum: String? {
+        guard sortMode == .move,
+              let albumIdentifier,
+              albumIdentifier != PhoneAlbum.unsortedIdentifier,
+              albumIdentifier != PhoneAlbum.favoritesIdentifier else { return nil }
+        return albumIdentifier
+    }
 
     // MARK: - Undo
 
@@ -102,28 +117,24 @@ final class SwipeViewModel {
 
         totalCount = fetched.count
 
-        // Take the first batch
-        let batch = Array(fetched.prefix(batchSize))
-        identifierQueue = Array(fetched.dropFirst(batchSize))
-
-        if batch.isEmpty {
+        guard !fetched.isEmpty else {
             isEmpty = true
             isLoading = false
             return
         }
 
-        var queue = batch
-        currentIdentifier = queue.removeFirst()
-        let info = photoService.assetInfo(for: currentIdentifier!)
+        // First photo is the top card, second waits behind it, the rest queue up.
+        var queue = fetched
+        let first = queue.removeFirst()
+        currentIdentifier = first
+        let info = photoService.assetInfo(for: first)
         currentPhotoDate = info?.creationDate
         currentPhotoIsFavorite = info?.isFavorite ?? false
 
         if !queue.isEmpty {
             nextIdentifier = queue.removeFirst()
         }
-
-        // Put remaining back at the front
-        identifierQueue = queue + identifierQueue
+        identifierQueue = queue
 
         // Preload upcoming photos
         let screenSize = UIScreen.main.bounds.size
@@ -159,47 +170,63 @@ final class SwipeViewModel {
         advance()
     }
 
-    /// Swipe right: show gallery picker (don't advance yet).
-    @MainActor
-    func sortCurrent() {
-        guard currentIdentifier != nil else { return }
-        showGalleryPicker = true
-    }
-
     /// Called when user sorts a photo into a gallery.
     @MainActor
     func assignToGallery(_ gallery: Gallery) {
         guard let identifier = currentIdentifier else { return }
 
-        let sorted = SortedPhoto(assetIdentifier: identifier, gallery: gallery)
-        modelContext.insert(sorted)
-        try? modelContext.save()
+        let change = recordSort(of: identifier, into: gallery)
 
-        actionHistory.append(.sorted(assetIdentifier: identifier, gallery: gallery, record: sorted))
+        actionHistory.append(.sorted(assetIdentifier: identifier, gallery: gallery, change: change))
         sessionSortedCount += 1
         sessionGalleries.insert(gallery.id)
-        showGalleryPicker = false
         advance()
 
         // Sync to iPhone Photos album (background, non-blocking)
-        Task {
-            let albumID = await ensureAlbumExists(for: gallery)
-            if let albumID {
+        enqueueAlbumSync { [self] in
+            if case .added = change, let albumID = await ensureAlbumExists(for: gallery) {
                 await photoService.addPhoto(assetIdentifier: identifier, toAlbum: albumID)
             }
 
             // If moving (not copying), remove from source album
-            if sortMode == .move, let sourceAlbum = albumIdentifier,
-               sourceAlbum != PhoneAlbum.unsortedIdentifier {
+            if let sourceAlbum = moveSourceAlbum {
                 await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: sourceAlbum)
             }
         }
     }
 
-    /// Cancel gallery picking (user dismissed the sheet).
+    /// Saves that `identifier` belongs to `gallery`. This Day and imported photos can
+    /// show a photo that is already in that gallery: then no second record is made
+    /// (it would show twice, and undoing it would take the photo out of the album).
     @MainActor
-    func cancelSort() {
-        showGalleryPicker = false
+    private func recordSort(of identifier: String, into gallery: Gallery) -> SortChange {
+        let existing = gallery.sortedPhotos.filter { $0.assetIdentifier == identifier }
+
+        if existing.contains(where: { !$0.isImported }) {
+            return .unchanged
+        }
+
+        if let imported = existing.first {
+            // It came in with an album import; from now on it counts as sorted by the user.
+            let previousSortedAt = imported.sortedAt
+            imported.isImported = false
+            imported.sortedAt = .now
+            saveContext()
+            return .confirmedImport(imported, previousSortedAt: previousSortedAt)
+        }
+
+        let sorted = SortedPhoto(assetIdentifier: identifier, gallery: gallery)
+        modelContext.insert(sorted)
+        saveContext()
+        return .added(sorted)
+    }
+
+    private func saveContext() {
+        do {
+            try modelContext.save()
+        } catch {
+            print("culla: Failed to save a sort: \(error)")
+        }
     }
 
     // MARK: - Undo
@@ -217,14 +244,31 @@ final class SwipeViewModel {
             sessionDismissedCount = max(sessionDismissedCount - 1, 0)
             pushBackToFront(identifier: identifier)
 
-        case .sorted(let identifier, let gallery, let record):
-            modelContext.delete(record)
-            try? modelContext.save()
+        case .sorted(let identifier, let gallery, let change):
+            switch change {
+            case .added(let record):
+                modelContext.delete(record)
+                saveContext()
+            case .confirmedImport(let record, let previousSortedAt):
+                record.isImported = true
+                record.sortedAt = previousSortedAt
+                saveContext()
+            case .unchanged:
+                break
+            }
             sessionSortedCount = max(sessionSortedCount - 1, 0)
             pushBackToFront(identifier: identifier)
-            if let albumID = gallery.albumIdentifier {
-                Task {
+            enqueueAlbumSync { [self] in
+                // Only a new sort added the photo to the album; otherwise it was
+                // already there and must stay. Read the album ID here, not before
+                // queueing: on a gallery's first sort the album may still be being
+                // created when undo is tapped, and it only gets its ID once that finishes.
+                if case .added = change, let albumID = gallery.albumIdentifier {
                     await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: albumID)
+                }
+                // A "move" took the photo out of its source album — put it back.
+                if let sourceAlbum = moveSourceAlbum {
+                    await photoService.addPhoto(assetIdentifier: identifier, toAlbum: sourceAlbum)
                 }
             }
 
@@ -312,15 +356,19 @@ final class SwipeViewModel {
     }
 
     private func fetchExcludedIdentifiers() -> Set<String> {
-        // Exclude photos the user has sorted (non-imports) and dismissed photos.
-        // Imported photos should still appear so the user can move/copy them to other galleries.
+        // Dismissed photos are always left out: they're waiting in the trash.
+        // Sorted photos (non-imports) are left out too, except in This Day, which
+        // revisits every photo from this date, sorted or not.
+        // Imported photos always appear so the user can move/copy them to other galleries.
         var excluded = Set<String>()
 
-        let sortedDescriptor = FetchDescriptor<SortedPhoto>(
-            predicate: #Predicate<SortedPhoto> { !$0.isImported }
-        )
-        if let sorted = try? modelContext.fetch(sortedDescriptor) {
-            excluded.formUnion(sorted.map(\.assetIdentifier))
+        if !isOnThisDay {
+            let sortedDescriptor = FetchDescriptor<SortedPhoto>(
+                predicate: #Predicate<SortedPhoto> { !$0.isImported }
+            )
+            if let sorted = try? modelContext.fetch(sortedDescriptor) {
+                excluded.formUnion(sorted.map(\.assetIdentifier))
+            }
         }
 
         let dismissedDescriptor = FetchDescriptor<DismissedPhoto>()
@@ -329,6 +377,15 @@ final class SwipeViewModel {
         }
 
         return excluded
+    }
+
+    /// Queues an iPhone-album write behind any write still in flight.
+    private func enqueueAlbumSync(_ work: @escaping @MainActor () async -> Void) {
+        let previous = albumSyncTask
+        albumSyncTask = Task {
+            await previous?.value
+            await work()
+        }
     }
 
     /// Creates the iPhone album for a gallery if it doesn't exist yet.
@@ -353,8 +410,18 @@ final class SwipeViewModel {
 
 enum SwipeAction {
     case dismissed(assetIdentifier: String, record: DismissedPhoto)
-    case sorted(assetIdentifier: String, gallery: Gallery, record: SortedPhoto)
+    case sorted(assetIdentifier: String, gallery: Gallery, change: SortChange)
     case skipped(assetIdentifier: String)
+}
+
+/// What sorting a photo changed, so undo reverses exactly that.
+enum SortChange {
+    /// A new record was saved and the photo added to the gallery's album.
+    case added(SortedPhoto)
+    /// The photo was in the gallery as an import; it now counts as sorted by the user.
+    case confirmedImport(SortedPhoto, previousSortedAt: Date)
+    /// The photo was already sorted into this gallery: nothing changed.
+    case unchanged
 }
 
 /// When sorting from an existing album, determines whether photos

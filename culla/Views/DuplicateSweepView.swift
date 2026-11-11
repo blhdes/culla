@@ -129,7 +129,7 @@ struct DuplicateSweepView: View {
                         action: {
                             guard keptID == nil else { return }
                             keptID = refID
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            Haptics.keepPhoto()
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                                 viewModel.keepReference()
                                 keptID = nil
@@ -149,7 +149,7 @@ struct DuplicateSweepView: View {
                         action: {
                             guard keptID == nil else { return }
                             keptID = dupID
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            Haptics.keepPhoto()
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                                 viewModel.keepDuplicate()
                                 keptID = nil
@@ -196,7 +196,7 @@ struct DuplicateSweepView: View {
     @ViewBuilder
     private func comparisonCard(
         identifier: String,
-        label: String,
+        label: LocalizedStringKey,
         isKept: Bool,
         action: @escaping () -> Void,
         onPreview: @escaping () -> Void
@@ -289,9 +289,8 @@ struct DuplicateSweepView: View {
                             if count > 0 {
                                 totalDeletedPhotos += count
                                 DailyStats.upsert(in: modelContext, deletedDelta: count)
+                                // The .deleteFeedback modifier hides this again by itself.
                                 deleteMessage = DeleteFeedback(sessionCount: count, totalCount: totalDeletedPhotos)
-                                try? await Task.sleep(for: .seconds(2.5))
-                                deleteMessage = nil
                             }
                         }
                     } label: {

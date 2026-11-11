@@ -45,6 +45,10 @@ struct DatePickerView: View {
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
     @State private var limitedBannerDismissed = false
+    /// Exact date of the photo last tapped in the photo grid. Lets a session start at
+    /// that very photo instead of at the beginning of its day.
+    @State private var pickedPhotoDate: Date?
+
     private var pickerIsToday: Bool {
         guard let earliest = earliestDate, let latest = latestDate else { return true }
         let target = min(max(Date.now, earliest), latest)
@@ -97,8 +101,12 @@ struct DatePickerView: View {
                         .allowsHitTesting(!pickerIsToday)
                         .animation(.easeInOut(duration: 0.25), value: pickerIsToday)
                     }
-                    .opacity(selectedMode != .duplicates ? 1 : 0)
-                    .allowsHitTesting(selectedMode != .duplicates)
+                    .opacity(selectedMode == .cullaing ? 1 : 0)
+                    .allowsHitTesting(selectedMode == .cullaing)
+
+                    thisDayHeader
+                        .opacity(selectedMode == .thisDay ? 1 : 0)
+                        .allowsHitTesting(false)
 
                     duplicateEntryButton
                         .opacity(selectedMode == .duplicates ? 1 : 0)
@@ -115,7 +123,11 @@ struct DatePickerView: View {
                     }
 
                     if selectedMode == .thisDay {
-                        sortModePicker
+                        Text("Photos already sorted into galleries also appear here.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                             .transition(.opacity)
                     }
 
@@ -307,7 +319,7 @@ struct DatePickerView: View {
         Haptics.startCullaing()
         switch selectedMode {
         case .cullaing:
-            selectedDate = pickerDate
+            selectedDate = sessionStartDate
             lastSelectedAlbumID = selectedAlbum?.collectionIdentifier ?? ""
         case .thisDay:
             isOnThisDay = true
@@ -315,6 +327,17 @@ struct DatePickerView: View {
         case .duplicates:
             showDuplicateSweep = true
         }
+    }
+
+    /// Where a Cullaing session begins. A photo picked in the grid starts at that exact
+    /// photo; every other choice (wheel, calendar, Today, defaults) starts at midnight of
+    /// that day, so the whole day is included rather than only photos after a clock time.
+    private var sessionStartDate: Date {
+        // `pickerDate` is persisted, so allow sub-second drift when comparing.
+        if let pickedPhotoDate, abs(pickerDate.timeIntervalSince(pickedPhotoDate)) < 1 {
+            return pickedPhotoDate
+        }
+        return Calendar.current.startOfDay(for: pickerDate)
     }
 
     private var actionButtonLabel: String {
@@ -418,14 +441,29 @@ struct DatePickerView: View {
             }
             .pickerStyle(.segmented)
 
-            Text(selectedMode == .thisDay
-                 ? "* Photos already sorted into other galleries will also appear here."
-                 : sortMode == .copy
-                     ? "Sorted photos stay in the source album too."
-                     : "Sorted photos are removed from the source album.")
+            Text(sortMode == .copy
+                 ? "Sorted photos stay in the source album too."
+                 : "Sorted photos are removed from the source album.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .padding(.horizontal)
+    }
+
+    // MARK: - This Day Header
+
+    /// This Day always looks at today's date in past years, so it shows that
+    /// date where Cullaing shows the wheel.
+    private var thisDayHeader: some View {
+        VStack(spacing: 8) {
+            Text(Date.now, format: .dateTime.day().month(.wide))
+                .font(.system(size: 44, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+            Text("Photos from this day in past years")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .multilineTextAlignment(.center)
         .padding(.horizontal)
     }
 
@@ -465,7 +503,10 @@ struct DatePickerView: View {
                         earliest: earliestDate,
                         latest: latestDate,
                         selectedDate: $pickerDate,
-                        onPick: { showFullCalendar = false }
+                        onPick: { photoDate in
+                            pickedPhotoDate = photoDate
+                            showFullCalendar = false
+                        }
                     )
                 }
             }

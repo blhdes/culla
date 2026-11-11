@@ -12,7 +12,6 @@ struct GalleryDetailView: View {
     @Environment(\.tourSetStep) private var tourSetStep
     private let photoService = PhotoLibraryService.shared
 
-    @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
     @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
 
     @State private var allIdentifiers: [String] = []
@@ -108,13 +107,16 @@ struct GalleryDetailView: View {
                     DeleteGalleryMenu(
                         galleryName: gallery.name,
                         onDeleteWithPhotos: {
-                            let count = allIdentifiers.count
-                            viewModel?.deleteGalleryAndPhotos(gallery)
-                            if count > 0 {
-                                totalDeletedPhotos += count
-                                DailyStats.upsert(in: modelContext, deletedDelta: count)
+                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                                showDeleteMenu = false
                             }
-                            dismiss()
+                            Task {
+                                // Leave only once iOS confirms; after "Don't Allow"
+                                // the gallery is untouched, so stay on it.
+                                if await viewModel?.deleteGalleryAndPhotos(gallery) == true {
+                                    dismiss()
+                                }
+                            }
                         },
                         onDeleteKeepPhotos: {
                             viewModel?.deleteGallery(gallery)
@@ -285,10 +287,14 @@ struct GalleryDetailView: View {
             }
         }
 
-        // Build the display list from SortedPhoto records
+        // Build the display list from SortedPhoto records. One photo can have
+        // two records here (imported with its album, then swiped into the same
+        // gallery by hand) — show it once, since the grid needs unique IDs.
+        var seen = Set<String>()
         allIdentifiers = gallery.sortedPhotos
             .sorted { $0.sortedAt < $1.sortedAt }
             .map(\.assetIdentifier)
+            .filter { seen.insert($0).inserted }
 
         hasSynced = true
     }

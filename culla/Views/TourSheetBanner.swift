@@ -4,7 +4,6 @@ import SwiftUI
 struct TourSheetBanner: View {
     let step: TourStep
     let galleriesCount: Int
-    let activeCount: Int
 
     @Environment(\.appAccent) private var accent
     @Environment(\.tourAdvance) private var tourAdvance

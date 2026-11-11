@@ -1,8 +1,8 @@
 # Calendar View Performance Audit
 
-> **Status:** Pending Implementation  
+> **Status:** Superseded (historical). The calendar was rewritten on UIKit (`UICollectionView`) on 2026-04-21, so the SwiftUI issues below (#1–#3, #6–#8) no longer exist, and #4 is done. Still open: #5 (`startCachingCalendarThumbnails` fetches assets on the main thread). The line numbers in this file refer to the old SwiftUI version.  
 > **Audited:** 2026-04-13  
-> **Revised:** 2026-04-14  
+> **Revised:** 2026-04-14 · status updated 2026-11-10  
 > **Files analysed:** `culla/Views/CalendarView.swift`, `culla/Services/PhotoLibraryService.swift`
 
 ---

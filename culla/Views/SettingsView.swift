@@ -261,7 +261,6 @@ struct SettingsView: View {
     private func restartTutorial() {
         let defaults = UserDefaults.standard
         defaults.set(false, forKey: OnboardingKey.walkthroughComplete)
-        defaults.set(false, forKey: OnboardingKey.calendarTooltipSeen)
         defaults.set(false, forKey: OnboardingKey.zoomTooltipSeen)
         defaults.set(false, forKey: OnboardingKey.swipeHintSeen)
         defaults.set(false, forKey: OnboardingKey.skipTooltipSeen)

@@ -10,14 +10,16 @@ struct GalleriesView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
     @Environment(\.activeTourStep) private var tourStep
-    @Environment(\.tourAdvance) private var tourAdvance
     @Environment(\.dismiss) private var dismiss
     @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
     // Shared with GallerySelectionSheet via the same keys, so the sort choice is
     // consistent across both gallery sheets and survives relaunch.
     @AppStorage("gallerySortField") private var sortFieldRaw = GallerySortField.custom.rawValue
     @AppStorage("gallerySortDescending") private var sortDescending = false
-    @Query private var allSortedPhotos: [SortedPhoto]
+    /// Only photos the user actually sorted — excludes imports. Filtered by the
+    /// database itself, so imported albums' photos are never loaded just to be
+    /// thrown away on every redraw.
+    @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     /// Bridges the persisted raw string to the typed field the `SortChip` binds.
@@ -37,11 +39,6 @@ struct GalleriesView: View {
     @State private var viewModel: GalleryViewModel?
     @State private var insightsViewModel = InsightsViewModel()
 
-    /// Only photos the user actually sorted — excludes imports.
-    private var sortedPhotos: [SortedPhoto] {
-        allSortedPhotos.filter { !$0.isImported }
-    }
-
     @State private var navPath: [Gallery] = []
     @State private var editMode: EditMode = .inactive
 
@@ -59,8 +56,7 @@ struct GalleriesView: View {
             if let step = tourStep, step == .setupGallery {
                 TourSheetBanner(
                     step: step,
-                    galleriesCount: galleries.count,
-                    activeCount: activeGalleryCount
+                    galleriesCount: galleries.count
                 )
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -193,8 +189,8 @@ struct GalleriesView: View {
                     DeleteGalleryMenu(
                         galleryName: gallery.name,
                         onDeleteWithPhotos: {
-                            viewModel?.deleteGalleryAndPhotos(gallery)
                             withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
+                            Task { await viewModel?.deleteGalleryAndPhotos(gallery) }
                         },
                         onDeleteKeepPhotos: {
                             viewModel?.deleteGallery(gallery)
@@ -230,6 +226,11 @@ struct GalleriesView: View {
         }
         .onChange(of: sortedPhotos.count) {
             insightsViewModel.calculateStreaks(from: sortedPhotos.map(\.sortedAt))
+        }
+        // Forget deleted galleries (on open, and whenever one is removed) so
+        // they stop counting toward the swipe-sidebar limit.
+        .onChange(of: galleries.map(\.id), initial: true) {
+            $sidebarGalleryIDs.pruneDeletedGalleries(keeping: galleries)
         }
         .onChange(of: editMode) { _, newMode in
             if newMode == .active {

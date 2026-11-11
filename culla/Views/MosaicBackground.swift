@@ -75,7 +75,9 @@ struct MosaicBackground: View {
     }
 
     private func runFlipLoop(tileCount: Int) async {
-        guard !images.isEmpty else { return }
+        // tileCount is 0 while the view has no size yet — picking a random
+        // tile from an empty range below would crash.
+        guard tileCount > 0, !images.isEmpty else { return }
         if tileImages.count != tileCount {
             seed(from: images, tileCount: tileCount)
         }
@@ -89,6 +91,8 @@ struct MosaicBackground: View {
             guard let fresh = await nextImage() else { continue }
             guard !Task.isCancelled else { return }
 
+            // The grid can be re-seeded while we were waiting — stay in bounds.
+            guard tileImages.count == tileCount else { continue }
             tileImages[Int.random(in: 0..<tileCount)] = fresh
         }
     }

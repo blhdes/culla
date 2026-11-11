@@ -19,7 +19,7 @@ final class DuplicateSweepViewModel {
 
     // Stats
     private(set) var totalDuplicatesFound: Int = 0
-    private(set) var markedForDeletion: Int = 0
+    var markedForDeletion: Int { markedIdentifiers.count }
     private(set) var currentIndex: Int = 0
 
     /// True when the reference photo is landscape (wider than tall).
@@ -28,6 +28,9 @@ final class DuplicateSweepViewModel {
     // MARK: - Private
 
     private var duplicateQueue: [String] = []
+    /// Photos sent to the trash in this sweep (across every reference photo picked).
+    /// "Delete N" deletes only these, not photos trashed earlier in swipe sessions.
+    private var markedIdentifiers: [String] = []
     private let scanner = DuplicateScannerService()
     private let photoService = PhotoLibraryService.shared
     private let modelContext: ModelContext
@@ -51,10 +54,15 @@ final class DuplicateSweepViewModel {
 
         updateOrientation(for: assetIdentifier)
 
+        // Photos already waiting in the trash don't need a second verdict —
+        // and dismissing one again would create a duplicate trash record.
+        let dismissedRecords = (try? modelContext.fetch(FetchDescriptor<DismissedPhoto>())) ?? []
+        let alreadyDismissed = Set(dismissedRecords.map(\.assetIdentifier))
+
         let matches = await scanner.findDuplicates(
             of: assetIdentifier,
             timeWindow: timeWindow,
-            excluding: []
+            excluding: alreadyDismissed
         )
 
         totalDuplicatesFound = matches.count
@@ -113,48 +121,59 @@ final class DuplicateSweepViewModel {
         switch action {
         case .dismissedDuplicate(let identifier):
             removeDismissedRecord(identifier: identifier)
-            markedForDeletion = max(markedForDeletion - 1, 0)
-            // Push current duplicate back and restore the undone one
-            if let current = currentDuplicateIdentifier {
-                duplicateQueue.insert(current, at: 0)
-            }
-            currentDuplicateIdentifier = identifier
-            currentIndex = max(currentIndex - 1, 1)
-            phase = .comparing
+            markedIdentifiers.removeAll { $0 == identifier }
+            restoreComparison(showing: identifier)
 
         case .dismissedReference(let identifier, let newReference):
             removeDismissedRecord(identifier: identifier)
-            markedForDeletion = max(markedForDeletion - 1, 0)
-            // Restore the old reference, push current duplicate back
+            markedIdentifiers.removeAll { $0 == identifier }
+            // Restore the old reference, and the layout that fits its shape
             referenceIdentifier = identifier
-            if let current = currentDuplicateIdentifier {
-                duplicateQueue.insert(current, at: 0)
-            }
-            currentDuplicateIdentifier = newReference
-            currentIndex = max(currentIndex - 1, 1)
-            phase = .comparing
+            updateOrientation(for: identifier)
+            restoreComparison(showing: newReference)
         }
 
         lastAction = nil
     }
 
-    /// Batch delete all dismissed photos. Returns the count deleted.
+    /// Puts `duplicate` back on screen after an undo. The pair that was
+    /// showing (if any) goes back to the front of the queue.
+    private func restoreComparison(showing duplicate: String) {
+        if let current = currentDuplicateIdentifier {
+            duplicateQueue.insert(current, at: 0)
+            currentIndex = max(currentIndex - 1, 1)
+        }
+        // No pair showing means we were on the "done" screen: the counter
+        // never moved past the last pair, so it already has the right number.
+        currentDuplicateIdentifier = duplicate
+        phase = .comparing
+    }
+
+    /// Deletes the photos marked in this sweep — and only those, so photos trashed
+    /// in swipe sessions keep waiting in the trash for review. Returns the count deleted.
     @MainActor
     func batchDelete() async -> Int {
-        let descriptor = FetchDescriptor<DismissedPhoto>()
-        guard let dismissed = try? modelContext.fetch(descriptor), !dismissed.isEmpty else {
-            return 0
-        }
+        guard !markedIdentifiers.isEmpty else { return 0 }
 
-        let identifiers = dismissed.map(\.assetIdentifier)
-        let deletedCount = await photoService.deletePhotos(identifiers: identifiers)
+        let marked = markedIdentifiers
+        let deletedCount = await photoService.deletePhotos(identifiers: marked)
+        // 0 means the user tapped "Don't Allow": keep everything marked.
+        guard deletedCount > 0 else { return 0 }
 
-        if deletedCount > 0 {
-            for record in dismissed {
+        let descriptor = FetchDescriptor<DismissedPhoto>(
+            predicate: #Predicate { marked.contains($0.assetIdentifier) }
+        )
+        do {
+            for record in try modelContext.fetch(descriptor) {
                 modelContext.delete(record)
             }
-            try? modelContext.save()
+            try modelContext.save()
+        } catch {
+            print("culla: Failed to clear deleted duplicates from the trash: \(error)")
         }
+        // Nothing is marked any more, which also hides the "Delete N" button.
+        markedIdentifiers.removeAll()
+        lastAction = nil
 
         return deletedCount
     }
@@ -187,7 +206,7 @@ final class DuplicateSweepViewModel {
         let dismissed = DismissedPhoto(assetIdentifier: identifier)
         modelContext.insert(dismissed)
         try? modelContext.save()
-        markedForDeletion += 1
+        markedIdentifiers.append(identifier)
     }
 
     private func removeDismissedRecord(identifier: String) {

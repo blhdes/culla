@@ -147,13 +147,6 @@ extension Color {
         })
     }
 
-    /// Adaptive neon palette — ready to render in any color scheme.
-    static let neons: [Color] = neonHexes.map { adaptiveNeon(hex: $0) }
-
-    static func neon(for index: Int) -> Color {
-        neons[index % neons.count]
-    }
-
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
         var rgb: UInt64 = 0

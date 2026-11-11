@@ -9,10 +9,33 @@ import UIKit
 /// Must match between loadThumbnail and startCachingCalendarThumbnails.
 let CalendarThumbnailSize = CGSize(width: 160, height: 160)
 
-// Session-scoped cache — avoids re-enumerating PHFetchResult every time CalendarView opens.
-// nonisolated(unsafe) because calendarData() is nonisolated and this is only written
-// from one Task.detached at a time (safe in practice).
-private nonisolated(unsafe) var _calendarDataCache: [String: (counts: [Date: Int], thumbnailIDs: [Date: [String]])] = [:]
+/// One album scope's calendar data: per-day photo counts and thumbnail identifiers.
+typealias CalendarData = (counts: [Date: Int], thumbnailIDs: [Date: [String]])
+
+/// Session-scoped cache — avoids re-enumerating PHFetchResult every time CalendarView opens.
+///
+/// Guarded by a lock because it is touched from three threads: background
+/// tasks (`calendarData`), the main thread (invalidation after a write), and
+/// PhotoKit's own queue (`photoLibraryDidChange`). A plain dictionary can crash
+/// when two of those overlap.
+private nonisolated final class CalendarDataCache: @unchecked Sendable {
+    static let shared = CalendarDataCache()
+
+    private let lock = NSLock()
+    private var storage: [String: CalendarData] = [:]
+
+    func value(for key: String) -> CalendarData? {
+        lock.withLock { storage[key] }
+    }
+
+    func set(_ value: CalendarData, for key: String) {
+        lock.withLock { storage[key] = value }
+    }
+
+    func removeAll() {
+        lock.withLock { storage.removeAll() }
+    }
+}
 
 @Observable
 final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
@@ -29,7 +52,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         // Observe library changes so the calendar cache is dropped whenever the
         // user changes their limited selection (in-app picker or Settings) or
         // the underlying photo set changes for any other reason. Without this,
-        // `_calendarDataCache` keeps stale identifiers and mosaic cells render
+        // `CalendarDataCache` keeps stale identifiers and mosaic cells render
         // as empty gray placeholders because `loadThumbnail` returns nil for
         // assets the user no longer has access to.
         PHPhotoLibrary.shared().register(self)
@@ -40,7 +63,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     }
 
     nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
-        _calendarDataCache = [:]
+        CalendarDataCache.shared.removeAll()
     }
 
     /// In-memory cache for calendar thumbnails — avoids re-fetching when scrolling back.
@@ -109,32 +132,8 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
 
     // MARK: - Date Range
 
-    /// Returns the creation dates of the earliest and latest photos in the library.
-    /// Ignores photos with creation dates before 2000-01-01 to filter out corrupted
-    /// EXIF dates (e.g. images saved from the web that inherit old embedded metadata).
-    /// Returns the creation date of the most recent photo in a given album.
+    /// Returns the creation date of the oldest photo in a given album.
     /// Pass `nil` for all photos, or a `PhoneAlbum` collection identifier for a specific album.
-    func latestPhotoDate(inAlbum albumIdentifier: String? = nil) -> Date? {
-        let options = PHFetchOptions()
-        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        options.fetchLimit = 1
-
-        if albumIdentifier == PhoneAlbum.favoritesIdentifier {
-            options.predicate = Self.mediaPredicate(and: NSPredicate(format: "isFavorite == YES"))
-            return PHAsset.fetchAssets(with: options).firstObject?.creationDate
-        } else if let albumIdentifier,
-                  albumIdentifier != PhoneAlbum.unsortedIdentifier,
-                  let collection = PHAssetCollection.fetchAssetCollections(
-                      withLocalIdentifiers: [albumIdentifier], options: nil
-                  ).firstObject {
-            options.predicate = Self.mediaPredicate()
-            return PHAsset.fetchAssets(in: collection, options: options).firstObject?.creationDate
-        } else {
-            options.predicate = Self.mediaPredicate()
-            return PHAsset.fetchAssets(with: options).firstObject?.creationDate
-        }
-    }
-
     func earliestPhotoDate(inAlbum albumIdentifier: String? = nil) -> Date? {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
@@ -156,6 +155,9 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         }
     }
 
+    /// Returns the creation dates of the earliest and latest photos in the library.
+    /// Ignores photos with creation dates before 2000-01-01 to filter out corrupted
+    /// EXIF dates (e.g. images saved from the web that inherit old embedded metadata).
     func photoDateRange() -> (earliest: Date, latest: Date)? {
         let floorDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!
 
@@ -277,6 +279,13 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             print("culla: Failed to delete photos: \(error)")
             return 0
         }
+    }
+
+    /// How many of these photos still exist in the library. Tells a cancelled
+    /// delete (photos still there) apart from photos that were already gone.
+    func existingPhotoCount(identifiers: [String]) -> Int {
+        guard !identifiers.isEmpty else { return 0 }
+        return PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil).count
     }
 
     // MARK: - Reclaimed storage tracking
@@ -509,15 +518,15 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     func unsortedPhotoCount(excluding excludedIDs: Set<String> = []) -> Int {
         let options = PHFetchOptions()
         options.predicate = Self.mediaPredicate()
-        let allAssets = PHAsset.fetchAssets(with: options)
+        let total = PHAsset.fetchAssets(with: options).count
+        guard !excludedIDs.isEmpty else { return total }
 
-        var count = 0
-        allAssets.enumerateObjects { asset, _, _ in
-            if !excludedIDs.contains(asset.localIdentifier) {
-                count += 1
-            }
-        }
-        return count
+        // Count only the excluded assets that still exist, then subtract —
+        // far cheaper than walking every photo in the library one by one.
+        let excludedStillInLibrary = PHAsset.fetchAssets(
+            withLocalIdentifiers: Array(excludedIDs), options: options
+        ).count
+        return max(total - excludedStillInLibrary, 0)
     }
 
     // MARK: - Favorites Fetching
@@ -707,9 +716,10 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
 
     // MARK: - Calendar Thumbnail Loading
 
-    /// Fast, local-only thumbnail load for calendar grid cells.
-    /// Uses fastFormat delivery (single callback, no iCloud wait) and aspectFill
-    /// so the image fills the cell without letterboxing.
+    /// Fast thumbnail load for calendar grid cells: memory cache, then disk
+    /// cache, then PhotoKit. Uses opportunistic delivery (first usable image
+    /// wins, no waiting on iCloud) and aspectFill so the image fills the cell
+    /// without letterboxing.
     func loadThumbnail(for assetIdentifier: String) async -> UIImage? {
         guard !Task.isCancelled else { return nil }
 
@@ -718,18 +728,14 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             return cached
         }
 
-        // Disk cache hit — much faster than PHImageManager
+        // Disk cache hit — much faster than PHImageManager. A missing file is
+        // the normal "not cached yet" case, and an unreadable one is simply
+        // overwritten by the fresh write below, so both fall through.
         let diskPath = diskCachePath(for: assetIdentifier)
-        do {
-            let data = try Data(contentsOf: diskPath)
-            if let diskImage = UIImage(data: data) {
-                let decoded = diskImage.preparingForDisplay() ?? diskImage
-                thumbnailCache.setObject(decoded, forKey: cacheKey)
-                return decoded
-            }
-        } catch {
-            // Disk read or decode failed — remove corrupted file and fall back to PHImageManager
-            try? FileManager.default.removeItem(at: diskPath)
+        if let data = try? Data(contentsOf: diskPath), let diskImage = UIImage(data: data) {
+            let decoded = diskImage.preparingForDisplay() ?? diskImage
+            thumbnailCache.setObject(decoded, forKey: cacheKey)
+            return decoded
         }
 
         guard let asset = PHAsset.fetchAssets(
@@ -782,7 +788,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         }
 
         if let image {
-            // Pre-decode pixels on this background thread so the main thread only composites.
+            // Pre-decode pixels now so drawing the cell later is only compositing.
             let decoded = image.preparingForDisplay() ?? image
             thumbnailCache.setObject(decoded, forKey: cacheKey)
 
@@ -799,13 +805,13 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
                     .image { _ in decoded.draw(at: .zero) }
                 guard let data = opaque.jpegData(compressionQuality: 0.85) else { return }
 
-                // Write to temp file, then atomic rename to avoid incomplete reads
-                let tempPath = pathForWrite.appendingPathExtension("tmp")
+                // `.atomic` already writes to a temp file and renames it into
+                // place, so readers never see a half-written file — and it
+                // replaces any unreadable file left from an earlier run.
                 do {
-                    try data.write(to: tempPath, options: .atomic)
-                    try FileManager.default.moveItem(at: tempPath, to: pathForWrite)
+                    try data.write(to: pathForWrite, options: .atomic)
                 } catch {
-                    try? FileManager.default.removeItem(at: tempPath)
+                    print("culla: Failed to write calendar thumbnail to disk cache: \(error)")
                 }
             }
 
@@ -821,10 +827,10 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     /// For days with more than 4 photos, 4 are picked randomly (stable per load).
     /// Respects album filtering: pass a collectionIdentifier to scope to an album,
     /// PhoneAlbum.favoritesIdentifier for favorites, or nil for all photos.
-    nonisolated func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> (counts: [Date: Int], thumbnailIDs: [Date: [String]]) {
+    nonisolated func calendarData(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) -> CalendarData {
         // includeVideos is part of the key so toggling the setting can't serve stale data.
         let cacheKey = "\(Self.includeVideos)|\(albumIdentifier ?? "")|\(earliest.timeIntervalSince1970)|\(latest.timeIntervalSince1970)"
-        if let cached = _calendarDataCache[cacheKey] {
+        if let cached = CalendarDataCache.shared.value(for: cacheKey) {
             return cached
         }
 
@@ -873,8 +879,8 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             thumbnailIDs[day] = ids.count <= 4 ? ids : Self.spreadPick(ids, count: 4)
         }
 
-        let calendarResult = (counts, thumbnailIDs)
-        _calendarDataCache[cacheKey] = calendarResult
+        let calendarResult: CalendarData = (counts, thumbnailIDs)
+        CalendarDataCache.shared.set(calendarResult, for: cacheKey)
         return calendarResult
     }
 
@@ -951,7 +957,12 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     /// Safe to call with .background priority — does not block the caller.
     /// Call this at app launch to ensure hot cache before user opens the calendar view.
     func warmCalendarCache(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) async {
-        let data = calendarData(from: earliest, to: latest, inAlbum: albumIdentifier)
+        // This class runs on the main thread by default, and `calendarData`
+        // walks the whole library — so hand that scan to a background task
+        // instead of freezing the UI right after launch.
+        let data = await Task.detached(priority: .background) {
+            self.calendarData(from: earliest, to: latest, inAlbum: albumIdentifier)
+        }.value
         let allIDs = data.thumbnailIDs.values.flatMap { $0 }
         guard !allIDs.isEmpty else { return }
 
@@ -993,7 +1004,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     // MARK: - Private
 
     private func invalidateCalendarDataCache() {
-        _calendarDataCache = [:]
+        CalendarDataCache.shared.removeAll()
     }
 
     private func evictThumbnails(for identifiers: [String]) {

@@ -16,17 +16,29 @@ enum Haptics {
     static func swipeUp()        { impact(.light)  }  // favourite
     static func swipeDown()      { impact(.light)  }  // share
 
+    // MARK: Duplicate Sweep
+    static func keepPhoto()      { impact(.medium) }  // tap the photo to keep
+
     // MARK: Trash Screen
     static func deleteConfirm()  { notification(.warning) }
 
     // MARK: - Engine (private)
+
+    /// Mirrors the Settings "Haptics" toggle, which is ON by default.
+    /// Uses object(forKey:) because bool(forKey:) returns false for a key
+    /// that was never written, which silently turned haptics OFF on a fresh
+    /// install while the toggle showed ON.
+    private static var isEnabled: Bool {
+        UserDefaults.standard.object(forKey: "hapticsEnabled") as? Bool ?? true
+    }
+
     private static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        guard UserDefaults.standard.bool(forKey: "hapticsEnabled") else { return }
+        guard isEnabled else { return }
         UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
 
     private static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        guard UserDefaults.standard.bool(forKey: "hapticsEnabled") else { return }
+        guard isEnabled else { return }
         UINotificationFeedbackGenerator().notificationOccurred(type)
     }
 }

@@ -185,11 +185,8 @@ struct DismissedPhotosView: View {
         guard count > 0 else { return }
         totalDeletedPhotos += count
         DailyStats.upsert(in: modelContext, deletedDelta: count)
+        // The .deleteFeedback modifier hides this again by itself.
         deleteMessage = DeleteFeedback(sessionCount: count, totalCount: totalDeletedPhotos)
-        Task {
-            try? await Task.sleep(for: .seconds(2.5))
-            deleteMessage = nil
-        }
     }
 }
 

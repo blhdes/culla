@@ -29,7 +29,8 @@ struct PhoneAlbum: Identifiable, Hashable {
     static func favorites(photoCount: Int) -> PhoneAlbum {
         PhoneAlbum(
             id: favoritesIdentifier,
-            name: "Favorites",
+            // Localized: this name is shown on the home screen's album button.
+            name: String(localized: "Favorites"),
             photoCount: photoCount,
             startDate: nil,
             endDate: nil,
@@ -41,7 +42,7 @@ struct PhoneAlbum: Identifiable, Hashable {
     static func unsorted(photoCount: Int) -> PhoneAlbum {
         PhoneAlbum(
             id: unsortedIdentifier,
-            name: "From the very first photo",
+            name: String(localized: "From the very first photo"),
             photoCount: photoCount,
             startDate: nil,
             endDate: nil,
@@ -52,7 +53,7 @@ struct PhoneAlbum: Identifiable, Hashable {
     init(collection: PHAssetCollection) {
         self.id = collection.localIdentifier
         self.collectionIdentifier = collection.localIdentifier
-        self.name = collection.localizedTitle ?? "Untitled"
+        self.name = collection.localizedTitle ?? String(localized: "Untitled")
         self.startDate = collection.startDate
         self.endDate = collection.endDate
 

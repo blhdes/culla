@@ -6,8 +6,8 @@ import SwiftUI
 /// caller-provided content.
 ///
 /// Sibling helpers in this file: `SettingsToggleRow` for labelled toggles and
-/// `ThemeChipPicker` for the three-option theme selector. They live here so
-/// the visual family stays in one file.
+/// `GlassChipPicker` for short option rows (theme, accent mode, background
+/// mode). They live here so the visual family stays in one file.
 
 // MARK: - GlassPanel
 

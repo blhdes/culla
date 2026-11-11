@@ -65,7 +65,18 @@ final class PhotoBackgroundManager {
             result = PHAsset.fetchAssets(with: fetchOptions)
         }
 
-        guard result.count > 0 else { return }
+        guard result.count > 0 else {
+            // Nothing to show for this scope (e.g. an album of only videos, or
+            // no favourites yet). Clear the pool so the wall doesn't keep
+            // showing the previous album's photos.
+            fetchResult = nil
+            shuffledOrder = []
+            cursor = 0
+            loadGeneration += 1
+            cacheManager.stopCachingImagesForAllAssets()
+            images = []
+            return
+        }
 
         // No awaits between here and the cache priming, so a superseded load
         // can't interleave its cursor reset with ours.

@@ -57,10 +57,10 @@ struct TourBubble: View {
             HStack {
                 Spacer()
                 if step == .readyToSwipe {
-                    nextButton(label: "Let's Go!", enabled: true)
+                    nextButton(label: "Let's Go!")
                         .onTapGesture { onComplete() }
                 } else {
-                    nextButton(label: "Next", enabled: true)
+                    nextButton(label: "Next")
                         .onTapGesture { onNext() }
                 }
             }
@@ -68,7 +68,7 @@ struct TourBubble: View {
         .padding(16)
     }
 
-    private func nextButton(label: LocalizedStringKey, enabled: Bool) -> some View {
+    private func nextButton(label: LocalizedStringKey) -> some View {
         HStack(spacing: 4) {
             Text(label)
             if step != .readyToSwipe {

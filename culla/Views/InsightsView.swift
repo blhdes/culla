@@ -3,8 +3,10 @@ import SwiftData
 import Charts
 
 struct InsightsView: View {
-    @Query private var allSortedPhotos: [SortedPhoto]
-    @Query private var dismissedPhotos: [DismissedPhoto]
+    /// Only photos the user actually sorted in the app — excludes imports.
+    /// Filtered by the database itself rather than re-filtering every photo
+    /// each time a stat on this screen is read.
+    @Query(filter: #Predicate<SortedPhoto> { !$0.isImported }) private var sortedPhotos: [SortedPhoto]
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
@@ -18,11 +20,6 @@ struct InsightsView: View {
     @State private var isLoaded = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-
-    /// Only photos the user actually sorted in the app — excludes imports.
-    private var sortedPhotos: [SortedPhoto] {
-        allSortedPhotos.filter { !$0.isImported }
-    }
 
     var body: some View {
         NavigationStack {
@@ -140,6 +137,14 @@ struct InsightsView: View {
         let series: String
     }
 
+    /// Translated legend names. Each one is also the key that picks its line colour below.
+    private enum Series {
+        static let sorted = String(localized: "Sorted")
+        static let skipped = String(localized: "Skipped")
+        static let deleted = String(localized: "Deleted")
+        static let favourited = String(localized: "Favourited")
+    }
+
     private var chartData: [ChartPoint] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
@@ -160,10 +165,10 @@ struct InsightsView: View {
             let deleted    = stats.reduce(0) { $0 + $1.deletedCount }
             let favourited = stats.reduce(0) { $0 + $1.favourited }
             return [
-                ChartPoint(date: day, count: sortedByDay[day] ?? 0, series: "Sorted"),
-                ChartPoint(date: day, count: skipped,               series: "Skipped"),
-                ChartPoint(date: day, count: deleted,               series: "Deleted"),
-                ChartPoint(date: day, count: favourited,            series: "Favourited"),
+                ChartPoint(date: day, count: sortedByDay[day] ?? 0, series: Series.sorted),
+                ChartPoint(date: day, count: skipped,               series: Series.skipped),
+                ChartPoint(date: day, count: deleted,               series: Series.deleted),
+                ChartPoint(date: day, count: favourited,            series: Series.favourited),
             ]
         }
     }
@@ -178,10 +183,10 @@ struct InsightsView: View {
                 .foregroundStyle(by: .value("Series", point.series))
             }
             .chartForegroundStyleScale([
-                "Sorted":     Color.blue,
-                "Skipped":    Color.orange,
-                "Deleted":    Color.red,
-                "Favourited": Color.green,
+                Series.sorted:     Color.blue,
+                Series.skipped:    Color.orange,
+                Series.deleted:    Color.red,
+                Series.favourited: Color.green,
             ])
             .chartXAxis {
                 AxisMarks(values: .stride(by: .day)) { value in

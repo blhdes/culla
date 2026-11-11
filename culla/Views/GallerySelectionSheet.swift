@@ -61,6 +61,11 @@ struct GallerySelectionSheet: View {
         .sheet(isPresented: $showPaywall) {
             PaywallSheet(onClose: { showPaywall = false })
         }
+        // Forget deleted galleries (on open, and whenever one is removed) so
+        // the "N of 10 selected" count only reflects galleries that exist.
+        .onChange(of: galleries.map(\.id), initial: true) {
+            $selectedIDs.pruneDeletedGalleries(keeping: galleries)
+        }
     }
 
     // MARK: - Empty State
@@ -125,7 +130,11 @@ struct GallerySelectionSheet: View {
                         galleryRow(gallery)
                     }
                     .onMove { source, destination in
-                        guard sortField.wrappedValue == .custom else { return }
+                        // Reordering needs the full list in its natural order:
+                        // while a search is filtering it, renumbering only the
+                        // visible rows would give them the same order numbers
+                        // as the hidden ones and scramble the saved order.
+                        guard sortField.wrappedValue == .custom, searchText.isEmpty else { return }
                         reorderGalleries(from: source, to: destination)
                     }
                 } header: {

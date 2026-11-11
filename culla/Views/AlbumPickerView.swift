@@ -148,17 +148,19 @@ struct AlbumPickerView: View {
             }
         }
 
-        result.sort { a, b in
-            let comparison: Bool
+        result.sort { lhs, rhs in
+            // Descending = the same comparison with the two sides swapped.
+            // (Negating the result instead says "a before b" AND "b before a"
+            // for equal values, which gives the sort no consistent answer.)
+            let (a, b) = sortAscending ? (lhs, rhs) : (rhs, lhs)
             switch sortOption {
             case .name:
-                comparison = a.name.localizedCompare(b.name) == .orderedAscending
+                return a.name.localizedCompare(b.name) == .orderedAscending
             case .photoCount:
-                comparison = a.photoCount < b.photoCount
+                return a.photoCount < b.photoCount
             case .dateCreated:
-                comparison = (a.startDate ?? .distantPast) < (b.startDate ?? .distantPast)
+                return (a.startDate ?? .distantPast) < (b.startDate ?? .distantPast)
             }
-            return sortAscending ? comparison : !comparison
         }
 
         return result

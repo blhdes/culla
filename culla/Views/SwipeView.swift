@@ -12,7 +12,6 @@ struct SwipeView: View {
     let isOnThisDay: Bool
     @Binding var sidebarGalleryIDs: Set<UUID>
     var onBack: (() -> Void)?
-    var onShowGalleries: (() -> Void)?
     var onSessionEnd: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
@@ -48,6 +47,11 @@ struct SwipeView: View {
     @State private var remainingSeconds: Int = 0
     @State private var timerActive: Bool = false
     @State private var showSessionSummary: Bool = false
+    /// One-second tick for the focus timer. Kept in @State so it's created
+    /// once: built inline in `body`, the timer was thrown away and restarted
+    /// on every redraw — and dragging a card redraws every frame, so the
+    /// countdown stalled whenever a finger was on the screen.
+    @State private var focusTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     // Share sheet
     @State private var shareItem: ShareItem?
@@ -82,11 +86,10 @@ struct SwipeView: View {
         subscriptions.isPro ? 10 : SubscriptionManager.freeGalleryLimit
     }
 
-    /// Only galleries the user has selected, in display order.
+    /// Only galleries the user has selected, in display order (the query
+    /// above already sorts by `displayOrder`, and filtering keeps that order).
     private var sidebarGalleries: [Gallery] {
-        galleries
-            .filter { sidebarGalleryIDs.contains($0.id) }
-            .sorted { $0.displayOrder < $1.displayOrder }
+        galleries.filter { sidebarGalleryIDs.contains($0.id) }
     }
 
     var body: some View {
@@ -152,7 +155,7 @@ struct SwipeView: View {
                 }
             }
         }
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+        .onReceive(focusTicker) { _ in
             guard timerActive, remainingSeconds > 0 else { return }
             remainingSeconds -= 1
             if remainingSeconds == 0 {
@@ -717,14 +720,11 @@ struct SwipeView: View {
                 if count > 0 {
                     totalDeletedPhotos += count
                     DailyStats.upsert(in: modelContext, deletedDelta: count)
+                    // The .deleteFeedback modifier hides this again by itself.
                     deleteMessage = DeleteFeedback(
                         sessionCount: count,
                         totalCount: totalDeletedPhotos
                     )
-                    // Auto-dismiss after 2.5 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                        deleteMessage = nil
-                    }
                 }
             }
         }
@@ -753,7 +753,11 @@ struct SwipeView: View {
                     summaryRow("Time", value: formatDuration(Int(focusDuration ?? 0)))
                     summaryRow("Reviewed", value: "\(viewModel.processedCount)")
                     summaryRow("Sorted", value: "\(viewModel.sessionSortedCount)")
-                    summaryRow("Dismissed", value: "\(viewModel.sessionDismissedCount)")
+                    // Own key: the "Dismissed" toast is singular in some languages, this count is plural.
+                    summaryRow(
+                        LocalizedStringResource("summary.dismissed", defaultValue: "Dismissed"),
+                        value: "\(viewModel.sessionDismissedCount)"
+                    )
                     summaryRow("Galleries", value: "\(viewModel.sessionGalleries.count)")
                 }
 
@@ -779,7 +783,7 @@ struct SwipeView: View {
         }
     }
 
-    private func summaryRow(_ label: String, value: String) -> some View {
+    private func summaryRow(_ label: LocalizedStringResource, value: String) -> some View {
         HStack {
             Text(label)
                 .foregroundStyle(.secondary)

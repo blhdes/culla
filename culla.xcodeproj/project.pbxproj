@@ -30,6 +30,7 @@
 		89D59CFB2F6F3B9100965721 /* Exceptions for "culla" folder in "culla" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				".claude/settings.local.json",
 				Info.plist,
 			);
 			target = 89D59CC42F6F360300965721 /* culla */;
