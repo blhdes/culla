@@ -100,8 +100,10 @@ struct CalendarView: View {
                 continue
             }
 
+            // Empty cells before day 1. The week starts on the user's region's
+            // first weekday (Monday in Spain, Sunday in the US).
             let rawWeekday = cal.component(.weekday, from: current)
-            let offset = (rawWeekday + 5) % 7
+            let offset = (rawWeekday - cal.firstWeekday + 7) % 7
 
             var grid: [DayInfo?] = Array(repeating: nil, count: 42)
             for day in range {
@@ -178,8 +180,11 @@ private struct CalendarCollectionView: UIViewRepresentable {
     }
 
     private func makeWeekdayHeader() -> UIStackView {
-        let symbols = Calendar.current.shortStandaloneWeekdaySymbols
-        let ordered = Array(symbols[1...]) + [symbols[0]]
+        // Rotated so the first column matches the grid's first weekday.
+        let calendar = Calendar.current
+        let symbols = calendar.shortStandaloneWeekdaySymbols
+        let first = calendar.firstWeekday - 1
+        let ordered = Array(symbols[first...]) + Array(symbols[..<first])
 
         let stack = UIStackView()
         stack.axis = .horizontal

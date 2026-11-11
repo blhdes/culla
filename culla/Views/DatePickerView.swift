@@ -41,6 +41,14 @@ struct DatePickerView: View {
     @State private var showPhotoGrid = false
     @State private var showDismissedPhotos = false
     @State private var showSettings = false
+
+    /// True while a sheet covers the home screen. The moving background then
+    /// stops drawing frames nobody can see, which saves battery. (The photo
+    /// grid opens from inside the calendar sheet, so the calendar covers it.)
+    private var isCoveredBySheet: Bool {
+        showSettings || showFullCalendar || showAlbumPicker
+            || showDismissedPhotos || showPaywall || showGalleries
+    }
     @State private var permissionDenied = false
     @State private var noPhotosAvailable = false
     @State private var limitedBannerDismissed = false
@@ -194,7 +202,13 @@ struct DatePickerView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { PhotoCarouselBackground(albumIdentifier: selectedAlbum?.collectionIdentifier, isSharpened: selectedMode == .duplicates) }
+        .background {
+            PhotoCarouselBackground(
+                albumIdentifier: selectedAlbum?.collectionIdentifier,
+                isPaused: isCoveredBySheet,
+                isSharpened: selectedMode == .duplicates
+            )
+        }
         .animation(.easeInOut(duration: 0.25), value: selectedMode)
         .animation(.easeIn(duration: 0.2), value: earliestDate != nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: selectedAlbum?.collectionIdentifier)

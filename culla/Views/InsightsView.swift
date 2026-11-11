@@ -148,8 +148,9 @@ struct InsightsView: View {
     private var chartData: [ChartPoint] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        let startDay = calendar.date(byAdding: .day, value: -7, to: today)!
-        let days = (0..<8).map { calendar.date(byAdding: .day, value: $0, to: startDay)! }
+        // Today plus the 6 days before it = 7 days.
+        let startDay = calendar.date(byAdding: .day, value: -6, to: today)!
+        let days = (0..<7).map { calendar.date(byAdding: .day, value: $0, to: startDay)! }
 
         // Group sorted photos by day
         let sortedByDay = Dictionary(

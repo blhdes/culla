@@ -57,29 +57,32 @@ struct TourBubble: View {
             HStack {
                 Spacer()
                 if step == .readyToSwipe {
-                    nextButton(label: "Let's Go!")
-                        .onTapGesture { onComplete() }
+                    nextButton(label: "Let's Go!", action: onComplete)
                 } else {
-                    nextButton(label: "Next")
-                        .onTapGesture { onNext() }
+                    nextButton(label: "Next", action: onNext)
                 }
             }
         }
         .padding(16)
     }
 
-    private func nextButton(label: LocalizedStringKey) -> some View {
-        HStack(spacing: 4) {
-            Text(label)
-            if step != .readyToSwipe {
-                Image(systemName: "chevron.right").imageScale(.small)
+    /// A real Button (not a tap gesture), so VoiceOver reads it as a button
+    /// and can activate it. The plain style keeps the custom look.
+    private func nextButton(label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Text(label)
+                if step != .readyToSwipe {
+                    Image(systemName: "chevron.right").imageScale(.small)
+                }
             }
+            .font(.footnote.weight(.semibold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(accent, in: RoundedRectangle(cornerRadius: 8))
+            .foregroundStyle(.white)
         }
-        .font(.footnote.weight(.semibold))
-        .padding(.horizontal, 14)
-        .padding(.vertical, 7)
-        .background(accent, in: RoundedRectangle(cornerRadius: 8))
-        .foregroundStyle(.white)
+        .buttonStyle(.plain)
     }
 }
 
