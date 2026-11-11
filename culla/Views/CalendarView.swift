@@ -74,8 +74,6 @@ struct CalendarView: View {
                 return (months, data)
             }.value
 
-            service.startCachingCalendarThumbnails(data.thumbnailIDs.values.flatMap { $0 })
-
             viewData = CalendarViewData(
                 months: months,
                 photoCounts: data.counts,

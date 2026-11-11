@@ -17,6 +17,7 @@ struct AlbumImportSheet: View {
     @State private var selectedAlbumIDs: Set<String> = []
     @State private var searchText = ""
     @State private var isLoading = true
+    @State private var isImporting = false
     @State private var sortOption: AlbumSortOption = .name
 
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
@@ -91,17 +92,28 @@ struct AlbumImportSheet: View {
             }
             .navigationTitle("Import Albums")
             .navigationBarTitleDisplayMode(.inline)
+            // Closing mid-import would still create the galleries a moment later.
+            .interactiveDismissDisabled(isImporting)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
+                        .disabled(isImporting)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     let label: LocalizedStringKey = selectedAlbumIDs.isEmpty
                         ? "Import"
                         : "Import (\(selectedAlbumIDs.count))"
-                    Button(label) { importSelected() }
-                        .fontWeight(.semibold)
-                        .disabled(selectedAlbumIDs.isEmpty)
+                    Button {
+                        Task { await importSelected() }
+                    } label: {
+                        if isImporting {
+                            ProgressView()
+                        } else {
+                            Text(label)
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(selectedAlbumIDs.isEmpty || isImporting)
                 }
             }
             .task {
@@ -196,13 +208,25 @@ struct AlbumImportSheet: View {
 
     // MARK: - Import
 
-    private func importSelected() {
+    private func importSelected() async {
+        guard !isImporting else { return }
+        isImporting = true
+
         let existingCount = galleries.count
         let albumsToImport = availableAlbums.filter { selectedAlbumIDs.contains($0.id) }
+        let albumIDs = albumsToImport.map(\.collectionIdentifier)
         let service = PhotoLibraryService.shared
+
+        // Listing the photos of big albums takes a moment, so do it in the
+        // background while the button shows a spinner. Saving the records
+        // below stays on the main thread, where the database context lives.
+        let identifiersPerAlbum = await Task.detached(priority: .userInitiated) {
+            albumIDs.map { service.fetchAssetIdentifiers(from: .distantPast, excluding: [], inAlbum: $0) }
+        }.value
+
         var newGalleryIDs: [UUID] = []
 
-        for (index, album) in albumsToImport.enumerated() {
+        for (index, (album, identifiers)) in zip(albumsToImport, identifiersPerAlbum).enumerated() {
             let gallery = Gallery(
                 name: album.name,
                 displayOrder: existingCount + index,
@@ -211,11 +235,6 @@ struct AlbumImportSheet: View {
             modelContext.insert(gallery)
             newGalleryIDs.append(gallery.id)
 
-            let identifiers = service.fetchAssetIdentifiers(
-                from: .distantPast,
-                excluding: [],
-                inAlbum: album.collectionIdentifier
-            )
             for id in identifiers {
                 let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery, isImported: true)
                 modelContext.insert(sorted)

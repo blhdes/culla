@@ -94,26 +94,26 @@ final class SwipeViewModel {
 
     @MainActor
     func loadInitialBatch() async {
-        guard identifierQueue.isEmpty, currentIdentifier == nil else { return }
+        guard !isLoading, identifierQueue.isEmpty, currentIdentifier == nil else { return }
         isLoading = true
         actionHistory.removeAll()
 
         let excludedIDs = fetchExcludedIdentifiers()
-        let fetched: [String]
-        if isOnThisDay {
-            fetched = photoService.fetchOnThisDayIdentifiers(
-                excluding: excludedIDs,
-                inAlbum: albumIdentifier
-            )
-        } else {
-            // "From the very first photo" uses no album membership filter — same as culling all photos.
-            let effectiveAlbum = albumIdentifier == PhoneAlbum.unsortedIdentifier ? nil : albumIdentifier
-            fetched = photoService.fetchAssetIdentifiers(
-                from: startDate,
-                excluding: excludedIDs,
-                inAlbum: effectiveAlbum
-            )
-        }
+        let service = photoService
+        let onThisDay = isOnThisDay
+        let start = startDate
+        let album = albumIdentifier
+        // "From the very first photo" uses no album membership filter — same as culling all photos.
+        let effectiveAlbum = album == PhoneAlbum.unsortedIdentifier ? nil : album
+
+        // Walking a big library takes a moment, so do it in the background:
+        // the screen keeps showing "Loading photos..." instead of freezing.
+        let fetched = await Task.detached(priority: .userInitiated) { () -> [String] in
+            if onThisDay {
+                return service.fetchOnThisDayIdentifiers(excluding: excludedIDs, inAlbum: album)
+            }
+            return service.fetchAssetIdentifiers(from: start, excluding: excludedIDs, inAlbum: effectiveAlbum)
+        }.value
 
         totalCount = fetched.count
 
