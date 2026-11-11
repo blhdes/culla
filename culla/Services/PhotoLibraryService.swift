@@ -233,7 +233,12 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     func deletePhotos(identifiers: [String]) async -> Int {
         guard !identifiers.isEmpty else { return 0 }
 
-        let assets = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
+        // Same lookup as `existingIdentifiers`, so hidden photos get deleted too.
+        // With the default lookup they were skipped, and a gallery made only of
+        // hidden photos looked like a cancelled delete forever.
+        let assets = PHAsset.fetchAssets(
+            withLocalIdentifiers: identifiers, options: Self.lookupOptions()
+        )
         guard assets.count > 0 else { return 0 }
 
         let count = assets.count
@@ -266,9 +271,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     /// shot of a burst count as existing — the default lookup skips them.
     nonisolated static func existingIdentifiers(among identifiers: Set<String>) -> Set<String> {
         guard !identifiers.isEmpty else { return [] }
-        let options = PHFetchOptions()
-        options.includeHiddenAssets = true
-        options.includeAllBurstAssets = true
+        let options = lookupOptions()
         options.includeAssetSourceTypes = [.typeUserLibrary, .typeCloudShared, .typeiTunesSynced]
 
         var existing = Set<String>()
@@ -277,15 +280,27 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         return existing
     }
 
+    /// Looks photos up by identifier without skipping hidden photos or the
+    /// extra shots of a burst, which the default lookup leaves out.
+    nonisolated private static func lookupOptions() -> PHFetchOptions {
+        let options = PHFetchOptions()
+        options.includeHiddenAssets = true
+        options.includeAllBurstAssets = true
+        return options
+    }
+
     // MARK: - Reclaimed storage tracking
 
     /// Best-effort byte size of an asset, summed across its resources. There is
-    /// no public PHAsset file-size API, so we read the `fileSize` resource value
-    /// via KVC; returns 0 when unavailable so the running total degrades
-    /// gracefully instead of throwing.
+    /// no public PHAsset file-size API, so we read the undocumented `fileSize`
+    /// resource value via KVC. Reading a key that doesn't exist crashes (Swift
+    /// can't catch that error), so we first check that iOS still has it and
+    /// return 0 otherwise: the Storage card just stops growing.
     private static func assetByteSize(_ asset: PHAsset) -> Int64 {
-        PHAssetResource.assetResources(for: asset).reduce(Int64(0)) { total, resource in
-            total + ((resource.value(forKey: "fileSize") as? NSNumber)?.int64Value ?? 0)
+        let fileSizeSelector = NSSelectorFromString("fileSize")
+        return PHAssetResource.assetResources(for: asset).reduce(Int64(0)) { total, resource in
+            guard resource.responds(to: fileSizeSelector) else { return total }
+            return total + ((resource.value(forKey: "fileSize") as? NSNumber)?.int64Value ?? 0)
         }
     }
 

@@ -185,7 +185,9 @@ struct AlbumImportSheet: View {
 
     private var availableAlbums: [PhoneAlbum] {
         let importedIDs = Set(galleries.compactMap(\.albumIdentifier))
-        return phoneAlbums.filter { !importedIDs.contains($0.collectionIdentifier) }
+        // Smart albums (Screenshots…) can't take new photos, so a gallery
+        // built on one would silently stop matching its iPhone album.
+        return phoneAlbums.filter { $0.canAddPhotos && !importedIDs.contains($0.collectionIdentifier) }
     }
 
     private var filteredAlbums: [PhoneAlbum] {

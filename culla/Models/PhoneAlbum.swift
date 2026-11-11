@@ -13,6 +13,11 @@ struct PhoneAlbum: Identifiable, Hashable {
     /// The underlying PhotoKit collection identifier, used to fetch photos from this album.
     let collectionIdentifier: String
 
+    /// Whether iOS lets apps add photos to this album. False for smart albums
+    /// (Screenshots, Selfies…), shared albums and albums synced from a computer,
+    /// so they can't back a gallery that Culla writes into.
+    let canAddPhotos: Bool
+
     /// Sentinel identifier for the "Unsorted Photos" virtual album.
     nonisolated static let unsortedIdentifier = "__culla_unsorted__"
 
@@ -56,6 +61,7 @@ struct PhoneAlbum: Identifiable, Hashable {
         self.name = collection.localizedTitle ?? String(localized: "Untitled")
         self.startDate = collection.startDate
         self.endDate = collection.endDate
+        self.canAddPhotos = collection.canPerform(.addContent)
 
         // estimatedAssetCount can return NSNotFound for smart albums,
         // so we do a real count in that case.
@@ -75,7 +81,8 @@ struct PhoneAlbum: Identifiable, Hashable {
         photoCount: Int,
         startDate: Date?,
         endDate: Date?,
-        collectionIdentifier: String
+        collectionIdentifier: String,
+        canAddPhotos: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -83,6 +90,7 @@ struct PhoneAlbum: Identifiable, Hashable {
         self.startDate = startDate
         self.endDate = endDate
         self.collectionIdentifier = collectionIdentifier
+        self.canAddPhotos = canAddPhotos
     }
 }
 
