@@ -123,7 +123,7 @@ private struct GridThumbnailCell: View {
             }
             .clipped()
             .task(id: assetID) {
-                image = await PhotoLibraryService.shared.loadThumbnail(for: assetID)
+                image = await CalendarThumbnailCache.shared.image(for: assetID)
             }
     }
 }

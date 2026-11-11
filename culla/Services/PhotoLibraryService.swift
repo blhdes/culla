@@ -2,12 +2,6 @@ import AVFoundation
 import Photos
 import UIKit
 
-/// Shared pixel size for all calendar cell thumbnails.
-/// The mosaic is 44pt tall; the largest cell (1-photo, widest iPhone) is ~57pt wide.
-/// At @3x that's ~171×132px. 160×160px covers that with a small buffer while keeping
-/// the 4-photo 2×2 case (78×66px) from fetching excess pixels.
-nonisolated let CalendarThumbnailSize = CGSize(width: 160, height: 160)
-
 /// One album scope's calendar data: per-day photo counts and thumbnail identifiers.
 typealias CalendarData = (counts: [Date: Int], thumbnailIDs: [Date: [String]])
 
@@ -52,7 +46,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         // user changes their limited selection (in-app picker or Settings) or
         // the underlying photo set changes for any other reason. Without this,
         // `CalendarDataCache` keeps stale identifiers and mosaic cells render
-        // as empty gray placeholders because `loadThumbnail` returns nil for
+        // as empty gray placeholders because `CalendarThumbnailCache` returns nil for
         // assets the user no longer has access to.
         PHPhotoLibrary.shared().register(self)
     }
@@ -70,31 +64,6 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         Task { @MainActor in
             self.libraryChangeCount += 1
         }
-    }
-
-    /// In-memory cache for calendar thumbnails — avoids re-fetching when scrolling back.
-    /// NSCache auto-evicts under memory pressure, so this is safe.
-    private let thumbnailCache: NSCache<NSString, UIImage> = {
-        let cache = NSCache<NSString, UIImage>()
-        cache.countLimit = 500
-        cache.totalCostLimit = 50_000_000  // ~50 MB
-        return cache
-    }()
-
-    /// Persistent disk cache for decoded thumbnails — survives app restarts.
-    /// Located in ~/Library/Caches/CalendarThumbnails/. iOS auto-evicts under pressure.
-    private static let diskCacheDir: URL = {
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
-        let dir = caches.appendingPathComponent("CalendarThumbnails", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }()
-
-    /// Returns the disk cache file path for an asset identifier.
-    /// PHAsset identifiers contain "/" — replace with "-" to make filename-safe.
-    private func diskCachePath(for id: String) -> URL {
-        let safe = id.replacingOccurrences(of: "/", with: "-")
-        return Self.diskCacheDir.appendingPathComponent("\(safe).jpg")
     }
 
     // MARK: - Authorization
@@ -279,7 +248,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
             }
             Self.recordReclaimed(bytes: freedBytes)
             invalidateCalendarDataCache()
-            evictThumbnails(for: identifiers)
+            CalendarThumbnailCache.shared.evict(identifiers)
             return count
         } catch {
             print("culla: Failed to delete photos: \(error)")
@@ -742,125 +711,6 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         }
     }
 
-    // MARK: - Calendar Thumbnail Loading
-
-    /// Fast thumbnail load for calendar grid cells: memory cache, then disk
-    /// cache, then PhotoKit. Only the memory-cache lookup runs on the main
-    /// thread; reading, requesting and decoding all happen in the background,
-    /// so the launch warm-up and a fast-scrolled calendar don't stall the UI.
-    func loadThumbnail(for assetIdentifier: String) async -> UIImage? {
-        guard !Task.isCancelled else { return nil }
-
-        let cacheKey = assetIdentifier as NSString
-        if let cached = thumbnailCache.object(forKey: cacheKey) {
-            return cached
-        }
-
-        let diskPath = diskCachePath(for: assetIdentifier)
-        if let diskImage = await Self.readDiskThumbnail(at: diskPath) {
-            thumbnailCache.setObject(diskImage, forKey: cacheKey)
-            return diskImage
-        }
-
-        guard let decoded = await Self.requestCalendarThumbnail(for: assetIdentifier) else {
-            return nil
-        }
-        thumbnailCache.setObject(decoded, forKey: cacheKey)
-
-        // Write to disk in background — don't await, return immediately
-        Task.detached(priority: .background) {
-            // PHImageManager delivers images with AlphaLast pixel format even for opaque
-            // photos. JPEG has no alpha channel, so redraw into an opaque context first
-            // to avoid doubled decode memory and bloated file sizes.
-            let format = UIGraphicsImageRendererFormat()
-            format.opaque = true
-            format.scale = 1
-            let opaque = UIGraphicsImageRenderer(size: decoded.size, format: format)
-                .image { _ in decoded.draw(at: .zero) }
-            guard let data = opaque.jpegData(compressionQuality: 0.85) else { return }
-
-            // `.atomic` already writes to a temp file and renames it into
-            // place, so readers never see a half-written file — and it
-            // replaces any unreadable file left from an earlier run.
-            do {
-                try data.write(to: diskPath, options: .atomic)
-            } catch {
-                print("culla: Failed to write calendar thumbnail to disk cache: \(error)")
-            }
-        }
-
-        return decoded
-    }
-
-    /// Reads and decodes a disk-cached thumbnail in the background. A missing
-    /// file is the normal "not cached yet" case, and an unreadable one is simply
-    /// overwritten by the next fresh write, so both return nil.
-    @concurrent
-    private nonisolated static func readDiskThumbnail(at url: URL) async -> UIImage? {
-        guard let data = try? Data(contentsOf: url),
-              let image = UIImage(data: data) else { return nil }
-        // Decode the pixels now so drawing the cell later is only compositing.
-        return image.preparingForDisplay() ?? image
-    }
-
-    /// Asks PhotoKit for a calendar thumbnail and decodes it, all in the
-    /// background. Uses opportunistic delivery (first usable image wins, no
-    /// waiting on iCloud) and aspectFill so the image fills the cell without
-    /// letterboxing.
-    @concurrent
-    private nonisolated static func requestCalendarThumbnail(for assetIdentifier: String) async -> UIImage? {
-        guard let asset = PHAsset.fetchAssets(
-            withLocalIdentifiers: [assetIdentifier],
-            options: nil
-        ).firstObject else { return nil }
-
-        guard !Task.isCancelled else { return nil }
-
-        let options = PHImageRequestOptions()
-        // opportunistic: delivers the best locally-available thumbnail immediately,
-        // then a higher-quality version if needed. Works when fastFormat returns nil
-        // (e.g. limited-access assets whose preheating was cancelled by startCachingImages).
-        options.deliveryMode = .opportunistic
-        options.isNetworkAccessAllowed = true
-        options.resizeMode = .fast
-        options.isSynchronous = false
-
-        // Use PHImageManager.default() rather than the shared PHCachingImageManager,
-        // which the swipe preloading uses: requests on the caching manager can cancel
-        // its own preheat for the same asset and silently drop the callback.
-        let image: UIImage? = await withCheckedContinuation { continuation in
-            var resumed = false
-            PHImageManager.default().requestImage(
-                for: asset,
-                targetSize: CalendarThumbnailSize,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, info in
-                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
-                let hasError = info?[PHImageErrorKey] != nil
-
-                if let image {
-                    // Accept first non-nil result (degraded or not) — good enough for
-                    // a calendar thumbnail; prevents waiting for a slow iCloud download.
-                    guard !resumed else { return }
-                    resumed = true
-                    continuation.resume(returning: image)
-                } else if !isDegraded || isCancelled || hasError {
-                    // Final callback with nil (truly unavailable) or an error.
-                    guard !resumed else { return }
-                    resumed = true
-                    continuation.resume(returning: nil)
-                }
-                // nil + isDegraded → still downloading; wait for the next callback.
-            }
-        }
-
-        guard let image else { return nil }
-        // Decode the pixels now so drawing the cell later is only compositing.
-        return image.preparingForDisplay() ?? image
-    }
-
     // MARK: - Calendar Data
 
     /// Returns photo counts and up to 4 thumbnail asset identifiers per calendar day.
@@ -992,11 +842,9 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         )
     }
 
-
-    /// Pre-loads all calendar thumbnails into NSCache and disk for a given date range.
-    /// Runs concurrent background tasks to populate memory cache from disk (or PHImageManager on first load).
-    /// Safe to call with .background priority — does not block the caller.
-    /// Call this at app launch to ensure hot cache before user opens the calendar view.
+    /// Pre-loads all calendar thumbnails for a given date range into
+    /// `CalendarThumbnailCache` (memory and disk). Call this at app launch so
+    /// the calendar opens with its cells already filled.
     func warmCalendarCache(from earliest: Date, to latest: Date, inAlbum albumIdentifier: String? = nil) async {
         // This class runs on the main thread by default, and `calendarData`
         // walks the whole library — so hand that scan to a background task
@@ -1007,32 +855,13 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         let allIDs = data.thumbnailIDs.values.flatMap { $0 }
         guard !allIDs.isEmpty else { return }
 
-        await withTaskGroup(of: Void.self) { group in
-            var inFlight = 0
-            for id in allIDs {
-                if inFlight >= 50 {
-                    await group.next()
-                    inFlight -= 1
-                }
-                group.addTask(priority: .background) { [self] in
-                    _ = await self.loadThumbnail(for: id)
-                }
-                inFlight += 1
-            }
-        }
+        await CalendarThumbnailCache.shared.preload(allIDs)
     }
 
     // MARK: - Private
 
     private func invalidateCalendarDataCache() {
         CalendarDataCache.shared.removeAll()
-    }
-
-    private func evictThumbnails(for identifiers: [String]) {
-        for id in identifiers {
-            thumbnailCache.removeObject(forKey: id as NSString)
-            try? FileManager.default.removeItem(at: diskCachePath(for: id))
-        }
     }
 
     /// Picks `count` evenly-distributed items from `ids` in O(1) — no full-array copy.

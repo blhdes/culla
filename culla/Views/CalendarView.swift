@@ -580,11 +580,11 @@ private final class MosaicView: UIView {
 
         setNeedsLayout()
 
-        let service = PhotoLibraryService.shared
+        let thumbnails = CalendarThumbnailCache.shared
         for (i, assetID) in thumbnailIDs.prefix(4).enumerated() {
             let task = Task { @MainActor [weak self] in
                 guard let self, !Task.isCancelled else { return }
-                var image = await service.loadThumbnail(for: assetID)
+                var image = await thumbnails.image(for: assetID)
                 if monochrome, let img = image { image = toGrayscale(img) }
                 guard !Task.isCancelled, i < self.imageViews.count else { return }
                 self.imageViews[i].image = image
