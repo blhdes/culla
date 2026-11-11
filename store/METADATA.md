@@ -3,7 +3,7 @@
 Copy-paste sources for the App Store listing. Character limits noted in `[brackets]`.
 Fill the `<<…>>` placeholders before submitting.
 
-> **This is an update** (version 3.0.0, build 4) to an app that already exists on the
+> **This is an update** (version 3.5.0, build 7) to an app that already exists on the
 > Store — bundle `agu.culla`. You're editing the existing record, not creating a new one.
 > The paywall is dormant this release, so the listing is written as a **free, fully
 > unlocked app** — there is no mention of "Pro", unlocks, or subscriptions on purpose.
@@ -144,7 +144,7 @@ device").
 
 ## Build / version
 
-- **Marketing version**: `3.0.0`  •  **Build**: `4`  (Xcode → target → General)
+- **Marketing version**: `3.5.0`  •  **Build**: `7`  (Xcode → target → General)
 - **Min iOS**: `18.0`  •  **Devices**: Universal (iPhone + iPad)  •  **Orientation**: Portrait
 - **Encryption**: `ITSAppUsesNonExemptEncryption = false` is in the build, so the export-compliance question is auto-answered as exempt.
 - **Team**: `56BK7T2JG7` (automatic signing).

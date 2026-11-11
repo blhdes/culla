@@ -233,4 +233,4 @@ Old images are evicted from the cache as the window slides forward. Calendar mos
 
 ## License
 
-Open source. Freemium on the App Store — free tier with limits, one-time unlock for everything else, no subscriptions. *(Freemium gating is temporarily disabled in the current build.)*
+All rights reserved. The source code is public so you can read it, but it may not be copied, modified or redistributed without permission. Freemium on the App Store — free tier with limits, one-time unlock for everything else, no subscriptions. *(Freemium gating is temporarily disabled in the current build.)*

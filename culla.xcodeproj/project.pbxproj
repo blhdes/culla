@@ -10,19 +10,8 @@
 		8946BA2F2F9919E80052269A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 8946BA2E2F9919E80052269A /* RevenueCat */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		8975AEE72F7861CD00A3BC95 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 89D59CBD2F6F360300965721 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 89D59CC42F6F360300965721;
-			remoteInfo = culla;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		8975AEE12F7861CD00A3BC95 /* CullaScreenshots.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CullaScreenshots.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		8975AEF02F7868B500A3BC95 /* CullaScreenshots.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = CullaScreenshots.xctestplan; sourceTree = "<group>"; };
 		89D59CC52F6F360300965721 /* culla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = culla.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -38,11 +27,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8975AEE22F7861CD00A3BC95 /* CullaScreenshots */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CullaScreenshots;
-			sourceTree = "<group>";
-		};
 		89D59CC72F6F360300965721 /* culla */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -54,13 +38,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		8975AEDE2F7861CD00A3BC95 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		89D59CC22F6F360300965721 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -75,9 +52,7 @@
 		89D59CBC2F6F360300965721 = {
 			isa = PBXGroup;
 			children = (
-				8975AEF02F7868B500A3BC95 /* CullaScreenshots.xctestplan */,
 				89D59CC72F6F360300965721 /* culla */,
-				8975AEE22F7861CD00A3BC95 /* CullaScreenshots */,
 				89D59CC62F6F360300965721 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -86,7 +61,6 @@
 			isa = PBXGroup;
 			children = (
 				89D59CC52F6F360300965721 /* culla.app */,
-				8975AEE12F7861CD00A3BC95 /* CullaScreenshots.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -94,29 +68,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8975AEE02F7861CD00A3BC95 /* CullaScreenshots */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8975AEEB2F7861CD00A3BC95 /* Build configuration list for PBXNativeTarget "CullaScreenshots" */;
-			buildPhases = (
-				8975AEDD2F7861CD00A3BC95 /* Sources */,
-				8975AEDE2F7861CD00A3BC95 /* Frameworks */,
-				8975AEDF2F7861CD00A3BC95 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8975AEE82F7861CD00A3BC95 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				8975AEE22F7861CD00A3BC95 /* CullaScreenshots */,
-			);
-			name = CullaScreenshots;
-			packageProductDependencies = (
-			);
-			productName = CullaScreenshots;
-			productReference = 8975AEE12F7861CD00A3BC95 /* CullaScreenshots.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 		89D59CC42F6F360300965721 /* culla */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 89D59CD22F6F360500965721 /* Build configuration list for PBXNativeTarget "culla" */;
@@ -150,10 +101,6 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					8975AEE02F7861CD00A3BC95 = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 89D59CC42F6F360300965721;
-					};
 					89D59CC42F6F360300965721 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -184,19 +131,11 @@
 			projectRoot = "";
 			targets = (
 				89D59CC42F6F360300965721 /* culla */,
-				8975AEE02F7861CD00A3BC95 /* CullaScreenshots */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		8975AEDF2F7861CD00A3BC95 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		89D59CC32F6F360300965721 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -207,13 +146,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		8975AEDD2F7861CD00A3BC95 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		89D59CC12F6F360300965721 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -223,55 +155,8 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		8975AEE82F7861CD00A3BC95 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 89D59CC42F6F360300965721 /* culla */;
-			targetProxy = 8975AEE72F7861CD00A3BC95 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		8975AEE92F7861CD00A3BC95 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 56BK7T2JG7;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = agu.CullaScreenshots;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = culla;
-			};
-			name = Debug;
-		};
-		8975AEEA2F7861CD00A3BC95 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 56BK7T2JG7;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = agu.CullaScreenshots;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = culla;
-			};
-			name = Release;
-		};
 		89D59CD02F6F360500965721 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -480,15 +365,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8975AEEB2F7861CD00A3BC95 /* Build configuration list for PBXNativeTarget "CullaScreenshots" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8975AEE92F7861CD00A3BC95 /* Debug */,
-				8975AEEA2F7861CD00A3BC95 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		89D59CC02F6F360300965721 /* Build configuration list for PBXProject "culla" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

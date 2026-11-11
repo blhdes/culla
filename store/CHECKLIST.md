@@ -1,4 +1,4 @@
-# Culla — submission runbook (version 3.0.0, build 4)
+# Culla — submission runbook (version 3.5.0, build 7)
 
 This is an **update** to an app that's already on the Store (builds 1–2 shipped as a paid
 app). You're uploading a new build and refreshing the existing listing — not creating a new
@@ -9,7 +9,7 @@ app record. ✅ = already done in the repo. 👉 = you do it.
 - ✅ App builds green in Release and passes Xcode's store validation.
 - ✅ Privacy manifest (`culla/PrivacyInfo.xcprivacy`) — UserDefaults required-reason (`CA92.1`), tracking off.
 - ✅ `ITSAppUsesNonExemptEncryption = false` (in `Info.plist`) — export-compliance auto-exempt.
-- ✅ Version `3.0.0`, build `4`; portrait-locked; **universal (iPhone + iPad)**.
+- ✅ Version `3.5.0`, build `7`; portrait-locked; **universal (iPhone + iPad)**.
 - ✅ App icon present (1024).
 - ✅ App localized into 8 languages in-app.
 - ✅ Listing text ready in `store/METADATA.md` (English) and `store/METADATA-es.md` (Spanish).
@@ -35,7 +35,7 @@ the exact pixels.)
 
 ## 3. Build & upload 👉 (on your Mac)
 
-1. Open `culla.xcodeproj`. Confirm version `3.0.0`, build `4` (bump the build number if `4`
+1. Open `culla.xcodeproj`. Confirm version `3.5.0`, build `7` (bump the build number if `7`
    was already uploaded once — every upload needs a higher build number).
 2. Signing team is `56BK7T2JG7`, automatic signing.
 3. Destination: **Any iOS Device (arm64)**.
@@ -45,7 +45,7 @@ the exact pixels.)
 
 ## 4. Update the listing 👉 (appstoreconnect.apple.com)
 
-1. Open the existing **Culla** app → **(+) Version or Platform** → new iOS version **3.0.0**.
+1. Open the existing **Culla** app → **(+) Version or Platform** → new iOS version **3.5.0**.
 2. Paste from `store/METADATA.md` (English, U.S.): subtitle, promotional text, description,
    keywords, **What's New** (trim it to what's genuinely new since your last public build).
 3. **Add Spanish:** in the version's localization dropdown, add **Spanish** (and/or Spanish
@@ -56,7 +56,7 @@ the exact pixels.)
    **tracking = No** (RevenueCat is disabled this build — see the Privacy section in `METADATA.md`).
    Set the Privacy Policy URL (`https://culla.app/#privacy`) here too.
 7. Upload the **iPhone 6.9"** and **iPad 13"** screenshots.
-8. **Build**: select build `4` once it finishes processing (~15 min after upload).
+8. **Build**: select build `7` once it finishes processing (~15 min after upload).
 9. Pricing: **Free**.
 
 ## 5. Submit 👉
@@ -77,7 +77,7 @@ the exact pixels.)
 ---
 
 ### Quick reference
-- Bundle ID: `agu.culla` • Team: `56BK7T2JG7` • Version/build: `3.0.0 (4)`
+- Bundle ID: `agu.culla` • Team: `56BK7T2JG7` • Version/build: `3.5.0 (7)`
 - Devices: iPhone + iPad • Orientation: Portrait • Min iOS: 18.0
 - Category: Photo & Video • Age: 4+ • Price: Free (paywall dormant)
 - Privacy: **Data Not Collected** • Tracking: No • RevenueCat disabled this build

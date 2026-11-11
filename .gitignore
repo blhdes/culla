@@ -16,7 +16,6 @@ build/
 # Swift Package Manager
 .build/
 Packages/
-Package.resolved
 
 # macOS
 .DS_Store
@@ -28,8 +27,3 @@ Package.resolved
 *.swp
 *~
 xcuserdata/
-
-# Fastlane
-fastlane/README.md
-fastlane/report.xml
-fastlane/screenshots/

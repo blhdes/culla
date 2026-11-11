@@ -28,7 +28,6 @@ struct DatePickerView: View {
     @AppStorage("lastSelectedDate") private var pickerDate = Date()
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
     @AppStorage("showCullaEyes") private var showCullaEyes = false
-    @AppStorage("duplicateTimeWindow") private var duplicateTimeWindowSeconds: Double = 3600
     @AppStorage("includeVideos") private var includeVideos = true
 
     private let photoService = PhotoLibraryService.shared
@@ -544,28 +543,6 @@ struct DatePickerView: View {
             }
         }
         .buttonStyle(.plain)
-    }
-
-    // MARK: - Duplicate Time Window Slider
-
-    private var duplicateTimeSlider: some View {
-        VStack(spacing: 6) {
-            Slider(value: $duplicateTimeWindowSeconds, in: 720...18000)
-                .tint(accent)
-            Text("Search window: \(formatTimeWindow(duplicateTimeWindowSeconds))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal)
-    }
-
-    private func formatTimeWindow(_ seconds: Double) -> String {
-        if seconds < 3600 {
-            return "\(Int(seconds / 60)) min"
-        } else {
-            let hours = seconds / 3600
-            return hours == hours.rounded() ? "\(Int(hours)) hr" : String(format: "%.1f hr", hours)
-        }
     }
 
     // MARK: - Limited Access Banner

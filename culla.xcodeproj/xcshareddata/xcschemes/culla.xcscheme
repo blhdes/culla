@@ -30,17 +30,6 @@
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8975AEE02F7861CD00A3BC95"
-               BuildableName = "CullaScreenshots.xctest"
-               BlueprintName = "CullaScreenshots"
-               ReferencedContainer = "container:culla.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
