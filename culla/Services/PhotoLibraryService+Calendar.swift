@@ -112,10 +112,12 @@ extension PhotoLibraryService {
         let data = await Task.detached(priority: .background) {
             self.calendarData(from: earliest, to: latest, inAlbum: albumIdentifier)
         }.value
-        let allIDs = data.thumbnailIDs.values.flatMap { $0 }
-        guard !allIDs.isEmpty else { return }
+        // Newest day first: the calendar opens on the latest date, so those
+        // thumbnails matter most (a dictionary hands its keys back in random order).
+        let newestFirst = data.thumbnailIDs.keys.sorted(by: >).flatMap { data.thumbnailIDs[$0] ?? [] }
+        guard !newestFirst.isEmpty else { return }
 
-        await CalendarThumbnailCache.shared.preload(allIDs)
+        await CalendarThumbnailCache.shared.preload(newestFirst)
     }
 
     /// Drops the cached calendar data. `nonisolated` because PhotoKit calls it

@@ -27,6 +27,7 @@ struct DatePickerView: View {
     @AppStorage("lastSelectedAlbumID") private var lastSelectedAlbumID: String = ""
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("includeVideos") private var includeVideos = true
+    @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
 
     private let photoService = PhotoLibraryService.shared
     @State private var earliestDate: Date?
@@ -38,6 +39,8 @@ struct DatePickerView: View {
     @State private var showFullCalendar = false
     @State private var showDismissedPhotos = false
     @State private var showSettings = false
+    /// The running calendar warm-up, so a newer one can replace it.
+    @State private var warmUpTask: Task<Void, Never>?
 
     /// True while a sheet covers the home screen. The moving background then
     /// stops drawing frames nobody can see, which saves battery. (The photo
@@ -317,6 +320,9 @@ struct DatePickerView: View {
         .onChange(of: includeVideos) {
             Task { await loadLibrary() }
         }
+        .onChange(of: hasCompletedWalkthrough) { _, done in
+            if done { scheduleCalendarWarmUp() }
+        }
     }
 
     // MARK: - Actions
@@ -420,11 +426,20 @@ struct DatePickerView: View {
         unsortedCount = extras.unsorted
         favoritesCount = extras.favorites
 
-        // Fire background pre-warm of calendar thumbnails — don't await
-        let warmEarliest = range.earliest
-        let warmLatest = range.latest
-        Task.detached(priority: .background) {
-            await service.warmCalendarCache(from: warmEarliest, to: warmLatest)
+        scheduleCalendarWarmUp()
+    }
+
+    /// Fills the calendar thumbnail cache in the background. It waits a moment so the
+    /// home screen can settle, and it never runs while the first-launch tour is showing:
+    /// on a fresh install it has thousands of thumbnails to make, which made the tour stutter.
+    private func scheduleCalendarWarmUp() {
+        guard hasCompletedWalkthrough, let earliest = earliestDate, let latest = latestDate else { return }
+        warmUpTask?.cancel()
+        let service = photoService
+        warmUpTask = Task.detached(priority: .background) {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            await service.warmCalendarCache(from: earliest, to: latest)
         }
     }
 }

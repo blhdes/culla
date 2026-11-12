@@ -30,7 +30,7 @@ final class CalendarThumbnailCache {
 
     /// Persistent disk cache for decoded thumbnails — survives app restarts.
     /// Located in ~/Library/Caches/CalendarThumbnails/. iOS auto-evicts under pressure.
-    private static let diskCacheDir: URL = {
+    private nonisolated static let diskCacheDir: URL = {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         let dir = caches.appendingPathComponent("CalendarThumbnails", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -85,13 +85,21 @@ final class CalendarThumbnailCache {
         return decoded
     }
 
-    /// Loads many thumbnails into memory and disk ahead of time, at most 50 at once.
-    /// Used at launch so the calendar opens with its cells already filled.
+    /// Makes sure every calendar thumbnail is saved on disk, at most 8 at a time.
+    /// The newest ones (first in the list) are also kept in memory, because the
+    /// calendar opens on them. Thumbnails already on disk are skipped.
     func preload(_ identifiers: [String]) async {
+        let keepInMemory = 400   // stays under the memory cache's limit of 500
+        let onDisk = await Self.identifiersOnDisk(among: identifiers)
+        let work = identifiers.enumerated().compactMap { index, id in
+            index < keepInMemory || !onDisk.contains(id) ? id : nil
+        }
+
         await withTaskGroup(of: Void.self) { group in
             var inFlight = 0
-            for id in identifiers {
-                if inFlight >= 50 {
+            for id in work {
+                if Task.isCancelled { break }
+                if inFlight >= 8 {
                     await group.next()
                     inFlight -= 1
                 }
@@ -101,6 +109,13 @@ final class CalendarThumbnailCache {
                 inFlight += 1
             }
         }
+    }
+
+    /// Which of these thumbnails already have a file in the disk cache.
+    @concurrent
+    private nonisolated static func identifiersOnDisk(among identifiers: [String]) async -> Set<String> {
+        let fileManager = FileManager.default
+        return Set(identifiers.filter { fileManager.fileExists(atPath: diskPath(for: $0).path) })
     }
 
     /// Forgets the thumbnails of deleted photos, in memory and on disk.
@@ -116,7 +131,7 @@ final class CalendarThumbnailCache {
 
     /// Returns the disk cache file path for an asset identifier.
     /// PHAsset identifiers contain "/" — replace with "-" to make filename-safe.
-    private static func diskPath(for id: String) -> URL {
+    private nonisolated static func diskPath(for id: String) -> URL {
         let safe = id.replacingOccurrences(of: "/", with: "-")
         return diskCacheDir.appendingPathComponent("\(safe).jpg")
     }
