@@ -168,7 +168,7 @@ struct AlbumImportSheet: View {
                     isLoading = false
                     return
                 }
-                phoneAlbums = service.fetchAlbums()
+                phoneAlbums = await Task.detached { service.fetchAlbums() }.value
                 isLoading = false
             }
         }

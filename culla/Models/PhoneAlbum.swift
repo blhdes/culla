@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Represents an album from the user's phone photo library.
 /// Not persisted — fetched fresh from PhotoKit each time.
-struct PhoneAlbum: Identifiable, Hashable {
+nonisolated struct PhoneAlbum: Identifiable, Hashable {
     let id: String
     let name: String
     let photoCount: Int

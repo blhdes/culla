@@ -16,7 +16,7 @@ extension PhotoLibraryService {
     /// Returns the creation dates of the earliest and latest photos in the library.
     /// Ignores photos with creation dates before 2000-01-01 to filter out corrupted
     /// EXIF dates (e.g. images saved from the web that inherit old embedded metadata).
-    func photoDateRange() -> (earliest: Date, latest: Date)? {
+    nonisolated func photoDateRange() -> (earliest: Date, latest: Date)? {
         let floorDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1))!
 
         let earliestOptions = PHFetchOptions()
@@ -71,7 +71,7 @@ extension PhotoLibraryService {
     // MARK: - Album Fetching
 
     /// Fetches all user-created and smart albums that contain at least one photo.
-    func fetchAlbums() -> [PhoneAlbum] {
+    nonisolated func fetchAlbums() -> [PhoneAlbum] {
         var albums: [PhoneAlbum] = []
 
         let userAlbums = PHAssetCollection.fetchAssetCollections(
@@ -213,14 +213,14 @@ extension PhotoLibraryService {
     }
 
     /// Returns the count of favorited photos.
-    func favoritesPhotoCount() -> Int {
+    nonisolated func favoritesPhotoCount() -> Int {
         let options = PHFetchOptions()
         options.predicate = Self.mediaPredicate(and: NSPredicate(format: "isFavorite == YES"))
         return PHAsset.fetchAssets(with: options).count
     }
 
     /// Returns the count of all photos not yet sorted into a gallery (excludes already-sorted identifiers).
-    func unsortedPhotoCount(excluding excludedIDs: Set<String> = []) -> Int {
+    nonisolated func unsortedPhotoCount(excluding excludedIDs: Set<String> = []) -> Int {
         let options = PHFetchOptions()
         options.predicate = Self.mediaPredicate()
         let total = PHAsset.fetchAssets(with: options).count

@@ -386,9 +386,17 @@ struct DatePickerView: View {
 
     /// Fetches date range, albums, and counts. Resets empty/error states
     /// so the view reflects the current authorized photo set.
+    /// The home screen shows as soon as the date range is known. Albums and
+    /// counts only feed the album picker, so they load afterwards.
     @MainActor
     private func loadLibrary() async {
-        guard let range = photoService.photoDateRange() else {
+        let service = photoService
+        // PhotoKit can be slow the first time it is asked. Keep it off the main thread.
+        let range = await Task.detached(priority: .userInitiated) {
+            service.photoDateRange()
+        }.value
+
+        guard let range else {
             earliestDate = nil
             latestDate = nil
             noPhotosAvailable = true
@@ -399,20 +407,24 @@ struct DatePickerView: View {
         noPhotosAvailable = false
         earliestDate = range.earliest
         latestDate = range.latest
+        isReady = true
 
-        albums = photoService.fetchAlbums()
+        // Albums and counts only feed the album picker. Load them once the screen is up.
         let excludedIDs = Set(sortedPhotos.map(\.assetIdentifier))
-        unsortedCount = photoService.unsortedPhotoCount(excluding: excludedIDs)
-        favoritesCount = photoService.favoritesPhotoCount()
+        let extras = await Task.detached(priority: .utility) {
+            (albums: service.fetchAlbums(),
+             unsorted: service.unsortedPhotoCount(excluding: excludedIDs),
+             favorites: service.favoritesPhotoCount())
+        }.value
+        albums = extras.albums
+        unsortedCount = extras.unsorted
+        favoritesCount = extras.favorites
 
         // Fire background pre-warm of calendar thumbnails — don't await
-        let service = photoService
         let warmEarliest = range.earliest
         let warmLatest = range.latest
         Task.detached(priority: .background) {
             await service.warmCalendarCache(from: warmEarliest, to: warmLatest)
         }
-
-        isReady = true
     }
 }
