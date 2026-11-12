@@ -2,8 +2,10 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+/// `nonisolated` so the background `AlbumImporter` can create galleries too.
+/// Without it, the app's main-thread default would tie this type to the screen.
 @Model
-final class Gallery {
+nonisolated final class Gallery {
     var id: UUID
     var name: String
     var iconName: String
@@ -19,7 +21,8 @@ final class Gallery {
     var sortedPhotos: [SortedPhoto]
 
     /// The gallery's display color — adapts automatically for light/dark mode.
-    var color: Color {
+    /// Only drawn on screen, so it stays on the main thread.
+    @MainActor var color: Color {
         Color.adaptiveNeon(hex: colorHex)
     }
 
@@ -33,13 +36,19 @@ final class Gallery {
         self.id = UUID()
         self.name = name
         self.iconName = iconName
-        // Pick a neon default based on position if no color was provided
-        let neonHexes = Color.neonHexes
-        self.colorHex = colorHex ?? neonHexes[displayOrder % neonHexes.count]
+        self.colorHex = colorHex ?? Self.defaultColorHex(forDisplayOrder: displayOrder)
         self.displayOrder = displayOrder
         self.colorIndex = displayOrder
         self.createdAt = .now
         self.albumIdentifier = albumIdentifier
         self.sortedPhotos = []
+    }
+
+    /// The neon a new gallery gets when no color is chosen: one per position,
+    /// in palette order. The import screen uses it too, so each album's
+    /// progress shows in the color its gallery is about to get.
+    static func defaultColorHex(forDisplayOrder displayOrder: Int) -> String {
+        let neonHexes = Color.neonHexes
+        return neonHexes[displayOrder % neonHexes.count]
     }
 }

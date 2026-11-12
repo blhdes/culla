@@ -22,6 +22,9 @@ enum Haptics {
     // MARK: Trash Screen
     static func deleteConfirm()  { notification(.warning) }
 
+    // MARK: Album Import
+    static func importFinished() { notification(.success) }
+
     // MARK: - Engine (private)
 
     /// Mirrors the Settings "Haptics" toggle, which is ON by default.

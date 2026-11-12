@@ -98,7 +98,8 @@ struct GallerySidebarView: View {
 extension Color {
 
     /// Canonical palette — stored in SwiftData and used as identity keys.
-    static let neonHexes: [String] = [
+    /// `nonisolated` because `Gallery.init` reads it from the background importer.
+    nonisolated static let neonHexes: [String] = [
         "#FF2D78", "#00B4FF", "#39FF14", "#BF00FF",
         "#FFE600", "#FF6600", "#00FFEE", "#FF0040",
         "#CCFF00", "#FF00FF",

@@ -1,8 +1,10 @@
 import Foundation
 import SwiftData
 
+/// `nonisolated` so the background `AlbumImporter` can create records too.
+/// Without it, the app's main-thread default would tie this type to the screen.
 @Model
-final class SortedPhoto {
+nonisolated final class SortedPhoto {
     var id: UUID
     var assetIdentifier: String
     var sortedAt: Date

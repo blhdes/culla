@@ -18,6 +18,19 @@ struct AlbumImportSheet: View {
     @State private var searchText = ""
     @State private var isLoading = true
     @State private var isImporting = false
+    /// Live progress from the background importer (nil before it starts).
+    @State private var importProgress: AlbumImportProgress?
+    /// True once every album is saved: the capsule shows "Done" before closing.
+    @State private var importFinished = false
+    /// Each album being imported, by its position in the import. These albums
+    /// stay listed until the sheet closes, even after their gallery is saved,
+    /// so the grid doesn't shift mid-import.
+    @State private var importIndexByAlbumID: [String: Int] = [:]
+    /// Display order of the first new gallery, which sets each one's color.
+    @State private var importStartingOrder = 0
+    /// Set when an import stops early: the name of the album that failed
+    /// ("" when it isn't known). Shows the error alert.
+    @State private var failedAlbumName: String?
     @State private var sortOption: AlbumSortOption = .name
 
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
@@ -80,12 +93,33 @@ struct AlbumImportSheet: View {
 
                             LazyVGrid(columns: columns, spacing: 20) {
                                 ForEach(sortedAlbums) { album in
-                                    albumCell(album)
+                                    AlbumImportCell(
+                                        album: album,
+                                        isSelected: selectedAlbumIDs.contains(album.id),
+                                        importState: importState(for: album)
+                                    ) {
+                                        toggleSelection(of: album)
+                                    }
                                 }
                             }
                             .padding(.horizontal)
                         }
                         .padding(.vertical, 8)
+                        // The picks are locked in once the import starts.
+                        .allowsHitTesting(!isImporting)
+                    }
+                    .safeAreaInset(edge: .bottom) {
+                        if isImporting, let importProgress {
+                            AlbumImportProgressCapsule(
+                                progress: importProgress,
+                                isFinished: importFinished,
+                                currentAlbumIdentifier: currentImportAlbumID,
+                                color: galleryColor(forImportIndex: importProgress.albumIndex)
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 8)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
                     }
                     .searchable(text: $searchText, prompt: "Search albums")
                 }
@@ -103,17 +137,28 @@ struct AlbumImportSheet: View {
                     let label: LocalizedStringKey = selectedAlbumIDs.isEmpty
                         ? "Import"
                         : "Import (\(selectedAlbumIDs.count))"
-                    Button {
+                    // The progress capsule at the bottom shows the import,
+                    // so the button just stays disabled while it runs.
+                    Button(label) {
                         Task { await importSelected() }
-                    } label: {
-                        if isImporting {
-                            ProgressView()
-                        } else {
-                            Text(label)
-                        }
                     }
                     .fontWeight(.semibold)
                     .disabled(selectedAlbumIDs.isEmpty || isImporting)
+                }
+            }
+            .alert(
+                "Import Stopped",
+                isPresented: Binding(
+                    get: { failedAlbumName != nil },
+                    set: { if !$0 { failedAlbumName = nil } }
+                )
+            ) {
+                Button("OK") { dismiss() }
+            } message: {
+                if let failedAlbumName, !failedAlbumName.isEmpty {
+                    Text("“\(failedAlbumName)” couldn’t be saved. The albums before it were imported.")
+                } else {
+                    Text("Some albums couldn’t be saved. Please try again.")
                 }
             }
             .task {
@@ -129,56 +174,44 @@ struct AlbumImportSheet: View {
         }
     }
 
-    // MARK: - Grid Cell
+    // MARK: - Selection
 
-    @ViewBuilder
-    private func albumCell(_ album: PhoneAlbum) -> some View {
-        let isSelected = selectedAlbumIDs.contains(album.id)
-
-        Button {
-            if isSelected {
-                selectedAlbumIDs.remove(album.id)
-            } else {
-                selectedAlbumIDs.insert(album.id)
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Color.clear
-                    .aspectRatio(1, contentMode: .fit)
-                    .overlay {
-                        AlbumThumbnailView(albumIdentifier: album.collectionIdentifier)
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(isSelected ? accent : Color.white.opacity(0.08), lineWidth: isSelected ? 3 : 1)
-                    }
-                    .overlay(alignment: .topTrailing) {
-                        if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.title3)
-                                .foregroundStyle(.white, accent)
-                                .padding(6)
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    .shadow(color: isSelected ? accent.opacity(0.35) : .clear, radius: 12, y: 5)
-                    .scaleEffect(isSelected ? 0.96 : 1.0)
-
-                Text(album.name)
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-
-                Text("\(album.photoCount) photos")
-                    .font(.system(.caption2, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
+    private func toggleSelection(of album: PhoneAlbum) {
+        if selectedAlbumIDs.contains(album.id) {
+            selectedAlbumIDs.remove(album.id)
+        } else {
+            selectedAlbumIDs.insert(album.id)
         }
-        .buttonStyle(.plain)
-        .contentShape(Rectangle())
-        .animation(.snappy(duration: 0.22), value: isSelected)
+    }
+
+    // MARK: - Import State
+
+    /// Where an album stands in the running import, for its grid cell.
+    private func importState(for album: PhoneAlbum) -> AlbumImportCell.ImportState {
+        guard isImporting else { return .idle }
+        guard let index = importIndexByAlbumID[album.collectionIdentifier] else { return .skipped }
+        let finishedCount = importProgress?.albumsFinished ?? 0
+        if importFinished || index < finishedCount {
+            return .imported(color: galleryColor(forImportIndex: index))
+        }
+        if index == importProgress?.albumIndex {
+            return .importing(
+                fraction: importProgress?.albumFraction ?? 0,
+                color: galleryColor(forImportIndex: index)
+            )
+        }
+        return .waiting
+    }
+
+    /// The album being imported right now, for the capsule's cover.
+    private var currentImportAlbumID: String? {
+        guard let index = importProgress?.albumIndex else { return nil }
+        return importIndexByAlbumID.first { $0.value == index }?.key
+    }
+
+    /// The color the gallery for the album at `index` in this import will get.
+    private func galleryColor(forImportIndex index: Int) -> Color {
+        Color.adaptiveNeon(hex: Gallery.defaultColorHex(forDisplayOrder: importStartingOrder + index))
     }
 
     // MARK: - Filtering & Sorting
@@ -187,7 +220,9 @@ struct AlbumImportSheet: View {
         let importedIDs = Set(galleries.compactMap(\.albumIdentifier))
         // Smart albums (Screenshots…) can't take new photos, so a gallery
         // built on one would silently stop matching its iPhone album.
-        return phoneAlbums.filter { $0.canAddPhotos && !importedIDs.contains($0.collectionIdentifier) }
+        return phoneAlbums.filter {
+            $0.canAddPhotos && (!importedIDs.contains($0.collectionIdentifier) || importIndexByAlbumID[$0.collectionIdentifier] != nil)
+        }
     }
 
     private var filteredAlbums: [PhoneAlbum] {
@@ -210,70 +245,71 @@ struct AlbumImportSheet: View {
 
     // MARK: - Import
 
+    /// How long "Done" stays on screen before the sheet closes.
+    /// Tuned in the design workshop (`doneHold: 0.8`).
+    private static let doneHold: Duration = .seconds(0.8)
+
     private func importSelected() async {
         guard !isImporting else { return }
-        isImporting = true
 
-        let existingCount = galleries.count
         let albumsToImport = availableAlbums.filter { selectedAlbumIDs.contains($0.id) }
-        let albumIDs = albumsToImport.map(\.collectionIdentifier)
-        let service = PhotoLibraryService.shared
-
-        // Listing the photos of big albums takes a moment, so do it in the
-        // background while the button shows a spinner. Saving the records
-        // below stays on the main thread, where the database context lives.
-        let identifiersPerAlbum = await Task.detached(priority: .userInitiated) {
-            albumIDs.map { service.fetchAssetIdentifiers(from: .distantPast, excluding: [], inAlbum: $0) }
-        }.value
-
-        var newGalleryIDs: [UUID] = []
-
-        for (index, (album, identifiers)) in zip(albumsToImport, identifiersPerAlbum).enumerated() {
-            let gallery = Gallery(
-                name: album.name,
-                displayOrder: existingCount + index,
-                albumIdentifier: album.collectionIdentifier
+        guard let firstAlbum = albumsToImport.first else { return }
+        let requests = albumsToImport.map {
+            AlbumImportRequest(
+                name: $0.name,
+                albumIdentifier: $0.collectionIdentifier,
+                estimatedPhotoCount: $0.photoCount
             )
-            modelContext.insert(gallery)
-            newGalleryIDs.append(gallery.id)
+        }
+        let startingOrder = galleries.count
+        let container = modelContext.container
+        let report: @MainActor @Sendable (AlbumImportProgress) -> Void = { importProgress = $0 }
 
-            for id in identifiers {
-                let sorted = SortedPhoto(assetIdentifier: id, gallery: gallery, isImported: true)
-                modelContext.insert(sorted)
-            }
+        importStartingOrder = startingOrder
+        importIndexByAlbumID = Dictionary(
+            uniqueKeysWithValues: albumsToImport.enumerated().map { ($1.collectionIdentifier, $0) }
+        )
+        // Show the capsule right away, before the first report arrives.
+        importProgress = AlbumImportProgress(
+            albumName: firstAlbum.name,
+            albumCount: requests.count,
+            photosTotal: requests.reduce(0) { $0 + $1.estimatedPhotoCount }
+        )
+        withAnimation(.snappy) { isImporting = true }
+
+        let newGalleryIDs: [UUID]
+        do {
+            // Everything (reading albums, creating and saving records) runs in
+            // the background, so the screen keeps moving during big imports.
+            newGalleryIDs = try await Task.detached(priority: .userInitiated) {
+                let importer = AlbumImporter(modelContainer: container)
+                return try await importer.importAlbums(
+                    requests,
+                    startingDisplayOrder: startingOrder,
+                    onProgress: report
+                )
+            }.value
+        } catch let failure as AlbumImportFailure {
+            print("culla: Album import stopped at \"\(failure.albumName)\": \(failure.underlying)")
+            onImport?(failure.importedGalleryIDs)
+            failedAlbumName = failure.albumName
+            return
+        } catch {
+            print("culla: Album import failed: \(error)")
+            failedAlbumName = ""
+            return
         }
 
-        try? modelContext.save()
         onImport?(newGalleryIDs)
+        importFinished = true
+        Haptics.importFinished()
+
+        // Let "Done" register before the sheet slides away.
+        do {
+            try await Task.sleep(for: Self.doneHold)
+        } catch {
+            print("culla: The pause before closing Import Albums was cut short: \(error)")
+        }
         dismiss()
-    }
-}
-
-// MARK: - Thumbnail View
-
-private struct AlbumThumbnailView: View {
-    let albumIdentifier: String
-    @State private var thumbnail: UIImage?
-
-    var body: some View {
-        ZStack {
-            Color(.systemGray5)
-
-            if let thumbnail {
-                Image(uiImage: thumbnail)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                Image(systemName: "photo")
-                    .foregroundStyle(.tertiary)
-                    .font(.title2)
-            }
-        }
-        .task {
-            thumbnail = await PhotoLibraryService.shared.fetchAlbumThumbnail(
-                albumIdentifier: albumIdentifier,
-                targetSize: CGSize(width: 300, height: 300)
-            )
-        }
     }
 }
