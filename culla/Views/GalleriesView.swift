@@ -54,7 +54,7 @@ struct GalleriesView: View {
     var body: some View {
         NavigationStack(path: $navPath) {
         List {
-            if let step = tourStep, step == .setupGallery {
+            if let step = tourStep, step == .galleries {
                 TourSheetBanner(
                     step: step,
                     galleriesCount: galleries.count
@@ -242,27 +242,17 @@ struct GalleriesView: View {
             }
         }
         } // NavigationStack
-        .environment(\.tourActivateGallery) { gallery in
-            if sidebarGalleryIDs.count < maxSidebarGalleries {
-                sidebarGalleryIDs.insert(gallery.id)
+        .onChange(of: galleries.map(\.id)) { oldIDs, newIDs in
+            // During the tour a new gallery is switched on for swiping right away,
+            // so the first session has somewhere to put photos.
+            guard tourStep == .galleries else { return }
+            for id in newIDs where !oldIDs.contains(id) && sidebarGalleryIDs.count < maxSidebarGalleries {
+                sidebarGalleryIDs.insert(id)
             }
         }
-        .onChange(of: tourStep) { _, newStep in
-            switch newStep {
-            case .changeColor:
-                // Auto-push the first gallery so the user can colour it without reopening
-                if let first = galleries.first {
-                    navPath = [first]
-                }
-            case .readyToSwipe:
-                // All gallery setup steps done — close the sheet
-                Task {
-                    try? await Task.sleep(for: .milliseconds(300))
-                    dismiss()
-                }
-            default:
-                break
-            }
+        .onChange(of: tourStep) { oldStep, newStep in
+            // "Continue" on the banner moved the tour on. Close the sheet so the Start button shows.
+            if oldStep == .galleries, newStep == .start { dismiss() }
         }
     }
 

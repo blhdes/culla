@@ -69,7 +69,7 @@ private struct SplashGate: View {
     @AppStorage(OnboardingKey.walkthroughComplete) private var hasCompletedWalkthrough = false
     @State private var showPaywall = false
     @State private var showWalkthrough = false
-    @State private var currentTourStep: TourStep = .welcome
+    @State private var currentTourStep: TourStep = TourStep.flow[0]
     /// The pending tour start. Several events can ask for the tour at once,
     /// so a new request replaces the old one and the tour only starts once.
     @State private var tourStartTask: Task<Void, Never>?
@@ -133,11 +133,6 @@ private struct SplashGate: View {
         }
         .environment(\.activeTourStep, showWalkthrough ? currentTourStep : nil)
         .environment(\.tourAdvance, showWalkthrough ? { advanceTour() } : nil)
-        .environment(\.tourSetStep, showWalkthrough ? { newStep in
-            withAnimation(.easeInOut(duration: 0.25)) {
-                currentTourStep = newStep
-            }
-        } : nil)
         .onChange(of: isReady) { _, ready in
             guard ready else { return }
             if subscriptions.subscriptionExpired {
@@ -170,15 +165,11 @@ private struct SplashGate: View {
         }
     }
 
+    /// Moves the tour on from outside the card (the banner in the Galleries sheet).
+    /// The tour animates the change with its own spring.
     private func advanceTour() {
-        let all = TourStep.allCases
-        guard let i = all.firstIndex(of: currentTourStep), i + 1 < all.count else {
-            finishTour()
-            return
-        }
-        withAnimation(.easeInOut(duration: 0.25)) {
-            currentTourStep = all[i + 1]
-        }
+        guard let next = currentTourStep.next else { finishTour(); return }
+        currentTourStep = next
     }
 
     private func scheduleWalkthroughIfNeeded() {
@@ -192,7 +183,7 @@ private struct SplashGate: View {
             // Let the splash fade out (0.4 s) and the date wheel finish drawing.
             try? await Task.sleep(for: .seconds(0.9))
             guard !Task.isCancelled, !showWalkthrough else { return }
-            currentTourStep = .welcome
+            currentTourStep = TourStep.flow[0]
             withAnimation(.easeOut(duration: 0.35)) { showWalkthrough = true }
         }
     }

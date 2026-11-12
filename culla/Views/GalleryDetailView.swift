@@ -7,9 +7,6 @@ struct GalleryDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.activeTourStep) private var tourStep
-    @Environment(\.tourActivateGallery) private var tourActivateGallery
-    @Environment(\.tourSetStep) private var tourSetStep
     private let photoService = PhotoLibraryService.shared
 
     @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
@@ -18,7 +15,6 @@ struct GalleryDetailView: View {
     @State private var hasSynced = false
     @State private var showColorPicker = false
     @State private var showDeleteConfirmation = false
-    @State private var tourHintDismissed = false
     @State private var previewIdentifier: String?
     @Namespace private var heroNamespace
 
@@ -46,13 +42,6 @@ struct GalleryDetailView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                     .background(Color(.systemBackground))
-
-                    if tourStep == .changeColor && !showColorPicker && !tourHintDismissed {
-                        // Override tourAdvance so the Continue button follows the same
-                        // path as picking a color (activate + jump to readyToSwipe).
-                        TourColorHint()
-                            .environment(\.tourAdvance) { handleTourColorPicked() }
-                    }
 
                     if allIdentifiers.isEmpty {
                         ContentUnavailableView(
@@ -179,7 +168,6 @@ struct GalleryDetailView: View {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 showColorPicker = false
                             }
-                            handleTourColorPicked()
                         } label: {
                             Circle()
                                 .fill(Color.adaptiveNeon(hex: hex))
@@ -204,7 +192,6 @@ struct GalleryDetailView: View {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 showColorPicker = false
                             }
-                            handleTourColorPicked()
                         }
                     ),
                     supportsOpacity: false
@@ -212,21 +199,6 @@ struct GalleryDetailView: View {
                 .font(.subheadline)
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
-        }
-    }
-
-    /// During the tour, picking a color implies the user is configuring this gallery
-    /// for swiping — auto-activate it and skip ahead to the final step instead of
-    /// making them tap Continue twice and navigate back manually.
-    private func handleTourColorPicked() {
-        guard tourStep == .changeColor else { return }
-        withAnimation(.easeOut(duration: 0.3)) {
-            tourHintDismissed = true
-        }
-        tourActivateGallery?(gallery)
-        Task {
-            try? await Task.sleep(for: .milliseconds(500))
-            tourSetStep?(.readyToSwipe)
         }
     }
 

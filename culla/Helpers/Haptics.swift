@@ -25,6 +25,9 @@ enum Haptics {
     // MARK: Album Import
     static func importFinished() { notification(.success) }
 
+    // MARK: Tour
+    static func tourStep()       { impact(.light)  }
+
     // MARK: - Engine (private)
 
     /// Mirrors the Settings "Haptics" toggle, which is ON by default.
