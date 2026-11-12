@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 import Photos
 import Combine
-import LinkPresentation
 
 struct SwipeView: View {
     let startDate: Date
@@ -15,7 +14,6 @@ struct SwipeView: View {
     var onSessionEnd: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.appAccent) private var accent
     @Environment(SubscriptionManager.self) private var subscriptions
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
@@ -101,7 +99,14 @@ struct SwipeView: View {
                 if viewModel.isLoading {
                     ProgressView("Loading photos...")
                 } else if viewModel.isEmpty {
-                    emptyStateView
+                    SwipeEmptyStateView(
+                        dismissedCount: viewModel.dismissedCount,
+                        isDeleting: isDeleting,
+                        onDelete: { performBatchDelete(viewModel: viewModel) },
+                        onBack: onBack
+                    )
+                    .swipeTopNav(onBack: onBack)
+                    .deleteFeedback($deleteMessage)
                 } else {
                     swipeContent(viewModel: viewModel)
                 }
@@ -175,23 +180,18 @@ struct SwipeView: View {
                 dismissHints()
             }
         }
-        .onChange(of: galleries.count) {
-            // On first gallery creation, auto-add to sidebar (skip if already populated)
-            if !hasInitializedSidebar, !galleries.isEmpty {
-                if sidebarGalleryIDs.isEmpty {
-                    sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
-                }
-                hasInitializedSidebar = true
-            }
+        .onChange(of: galleries.count) { initializeSidebarIfNeeded() }
+        .onAppear { initializeSidebarIfNeeded() }
+    }
+
+    /// On first gallery creation, auto-add galleries to the sidebar
+    /// (skipped if the user already picked some).
+    private func initializeSidebarIfNeeded() {
+        guard !hasInitializedSidebar, !galleries.isEmpty else { return }
+        if sidebarGalleryIDs.isEmpty {
+            sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
         }
-        .onAppear {
-            if !hasInitializedSidebar, !galleries.isEmpty {
-                if sidebarGalleryIDs.isEmpty {
-                    sidebarGalleryIDs = Set(galleries.prefix(maxSidebarGalleries).map(\.id))
-                }
-                hasInitializedSidebar = true
-            }
-        }
+        hasInitializedSidebar = true
     }
 
     // MARK: - Swipe Content
@@ -326,43 +326,14 @@ struct SwipeView: View {
         .deleteFeedback($deleteMessage)
         // Counter + toast at top
         .overlay(alignment: .top) {
-            VStack(spacing: 6) {
-                if focusDuration != nil, timerActive {
-                    FocusTimerArcView(
-                        remainingSeconds: remainingSeconds,
-                        totalSeconds: Int(focusDuration ?? 0)
-                    )
-                }
-                if viewModel.totalCount > 0 {
-                    Text("\(viewModel.processedCount + 1) / \(viewModel.totalCount)")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial, in: Capsule())
-                }
-                // FREEMIUM HIDDEN — restore in vNext
-                // Daily swipe counter hidden while the freemium model is disabled.
-                // if !subscriptions.isPro {
-                //     Text("\(subscriptions.todaySwipeCount) / \(SubscriptionManager.dailySwipeLimit) today")
-                //         .font(.caption)
-                //         .fontWeight(.medium)
-                //         .foregroundStyle(.secondary)
-                //         .padding(.horizontal, 12)
-                //         .padding(.vertical, 6)
-                //         .background(.ultraThinMaterial, in: Capsule())
-                // }
-                if let toastMessage {
-                    Text(toastMessage)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
-                }
-            }
+            SwipeTopStatus(
+                showsFocusTimer: focusDuration != nil && timerActive,
+                remainingSeconds: remainingSeconds,
+                totalSeconds: Int(focusDuration ?? 0),
+                processedCount: viewModel.processedCount,
+                totalCount: viewModel.totalCount,
+                toastMessage: toastMessage
+            )
             .padding(.top, 8)
             .opacity(chromeOpacity)
             .animation(.easeInOut(duration: 0.25), value: toastMessage)
@@ -370,37 +341,35 @@ struct SwipeView: View {
         // Focus session summary
         .overlay {
             if showSessionSummary {
-                sessionSummaryOverlay(viewModel: viewModel)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                SessionSummaryView(
+                    durationSeconds: Int(focusDuration ?? 0),
+                    reviewedCount: viewModel.processedCount,
+                    sortedCount: viewModel.sessionSortedCount,
+                    dismissedCount: viewModel.sessionDismissedCount,
+                    galleriesCount: viewModel.sessionGalleries.count,
+                    onKeepGoing: { showSessionSummary = false },
+                    onDone: {
+                        showSessionSummary = false
+                        onSessionEnd?()
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
         }
         .animation(.easeInOut(duration: 0.4), value: showSessionSummary)
         // Photo date + undo at bottom
         .overlay(alignment: .bottom) {
-            VStack(spacing: 10) {
-                if let date = viewModel.currentPhotoDate {
-                    Button {
-                        guard viewModel.canUndo else { return }
-                        flashUndo()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(date, format: .dateTime.month(.wide).day().year())
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            if viewModel.currentPhotoIsFavorite {
-                                Image(systemName: "heart.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.pink)
-                            }
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-                undoButton(viewModel: viewModel)
-            }
+            SwipeBottomBar(
+                photoDate: viewModel.currentPhotoDate,
+                isFavorite: viewModel.currentPhotoIsFavorite,
+                showsUndo: viewModel.canUndo && showUndo,
+                undoCount: viewModel.actionHistory.count,
+                onDateTap: {
+                    guard viewModel.canUndo else { return }
+                    flashUndo()
+                },
+                onUndo: { performUndo(viewModel: viewModel) }
+            )
             .padding(.bottom, 32)
             .opacity(chromeOpacity)
         }
@@ -550,13 +519,15 @@ struct SwipeView: View {
                 snapBack()
                 Task {
                     guard let identifier = viewModel.currentIdentifier else { return }
+                    // Read now: after the loads below, the stack may have moved on.
+                    let date = viewModel.currentPhotoDate
                     let screenSize = UIScreen.main.bounds.size
                     let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
                     // nil for images and for iCloud-only videos without a local file —
                     // those fall back to sharing the poster frame below.
                     let videoURL = await photoService.loadVideoURL(for: identifier)
                     if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
-                        shareItem = ShareItem(image: image, videoURL: videoURL, date: viewModel.currentPhotoDate)
+                        shareItem = ShareItem(image: image, videoURL: videoURL, date: date)
                     }
                 }
                 return
@@ -656,34 +627,17 @@ struct SwipeView: View {
         return nil
     }
 
-    // MARK: - Undo Button
+    // MARK: - Undo
 
-    @ViewBuilder
-    private func undoButton(viewModel: SwipeViewModel) -> some View {
-        if viewModel.canUndo, showUndo {
-            Button {
-                if case .skipped = viewModel.actionHistory.last {
-                    totalSkippedPhotos = max(0, totalSkippedPhotos - 1)
-                    DailyStats.upsert(in: modelContext, skippedDelta: -1)
-                }
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    viewModel.undo()
-                }
-                flashUndo()
-            } label: {
-                let count = viewModel.actionHistory.count
-                Label(
-                    count > 1 ? "Undo (\(count))" : "Undo",
-                    systemImage: "arrow.uturn.backward"
-                )
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial, in: Capsule())
-            }
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+    private func performUndo(viewModel: SwipeViewModel) {
+        if case .skipped = viewModel.actionHistory.last {
+            totalSkippedPhotos = max(0, totalSkippedPhotos - 1)
+            DailyStats.upsert(in: modelContext, skippedDelta: -1)
         }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            viewModel.undo()
+        }
+        flashUndo()
     }
 
     private func dismissHints() {
@@ -729,224 +683,4 @@ struct SwipeView: View {
             }
         }
     }
-
-
-    // MARK: - Session Summary
-
-    @ViewBuilder
-    private func sessionSummaryOverlay(viewModel: SwipeViewModel) -> some View {
-        ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-                .onTapGesture { }
-
-            VStack(spacing: 20) {
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.primary)
-
-                Text("Session Complete")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-
-                VStack(spacing: 12) {
-                    summaryRow("Time", value: formatDuration(Int(focusDuration ?? 0)))
-                    summaryRow("Reviewed", value: "\(viewModel.processedCount)")
-                    summaryRow("Sorted", value: "\(viewModel.sessionSortedCount)")
-                    // Own key: the "Dismissed" toast is singular in some languages, this count is plural.
-                    summaryRow(
-                        LocalizedStringResource("summary.dismissed", defaultValue: "Dismissed"),
-                        value: "\(viewModel.sessionDismissedCount)"
-                    )
-                    summaryRow("Galleries", value: "\(viewModel.sessionGalleries.count)")
-                }
-
-                VStack(spacing: 12) {
-                    Button("Keep Going") {
-                        showSessionSummary = false
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                    .tint(accent)
-
-                    Button("Done") {
-                        showSessionSummary = false
-                        onSessionEnd?()
-                    }
-                    .font(.subheadline)
-                }
-                .padding(.top, 8)
-            }
-            .padding(32)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-            .padding(.horizontal, 40)
-        }
-    }
-
-    private func summaryRow(_ label: LocalizedStringResource, value: String) -> some View {
-        HStack {
-            Text(label)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .fontWeight(.medium)
-                .monospacedDigit()
-        }
-        .font(.body)
-    }
-
-    private func formatDuration(_ totalSeconds: Int) -> String {
-        let m = totalSeconds / 60
-        let s = totalSeconds % 60
-        if s == 0 { return "\(m) min" }
-        return "\(m)m \(s)s"
-    }
-
-    // MARK: - Empty State
-
-    @ViewBuilder
-    private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Spacer()
-
-            Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-
-            Text("No more photos")
-                .font(.title3)
-                .fontWeight(.medium)
-
-            Text("All photos from this date have been sorted or dismissed.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-
-            Spacer()
-
-            VStack(spacing: 12) {
-                if let viewModel, viewModel.dismissedCount > 0 {
-                    Button {
-                        performBatchDelete(viewModel: viewModel)
-                    } label: {
-                        Text("Delete \(viewModel.dismissedCount)")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .controlSize(.large)
-                    .disabled(isDeleting)
-                    .padding(.horizontal, 40)
-                }
-
-                Button {
-                    onBack?()
-                } label: {
-                    Text("Back to Calendar")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .padding(.horizontal, 40)
-            }
-            .padding(.bottom, 40)
-        }
-        .swipeTopNav(onBack: onBack)
-        .deleteFeedback($deleteMessage)
-    }
 }
-
-// MARK: - Top Nav Buttons
-
-private struct TopNavButtons: ViewModifier {
-    let onBack: (() -> Void)?
-    var opacity: Double = 1.0
-
-    func body(content: Content) -> some View {
-        content
-            .overlay(alignment: .topLeading) {
-                circleButton("chevron.left", action: onBack)
-                    .padding(.leading, 16)
-                    .padding(.top, 8)
-                    .opacity(opacity)
-            }
-    }
-
-    private func circleButton(_ icon: String, action: (() -> Void)?) -> some View {
-        Button { action?() } label: {
-            Image(systemName: icon)
-                .font(.title3)
-                .frame(width: 24, height: 24)
-                .padding(10)
-                .background(.ultraThinMaterial, in: Circle())
-        }
-    }
-}
-
-private extension View {
-    func swipeTopNav(onBack: (() -> Void)?, opacity: Double = 1.0) -> some View {
-        modifier(TopNavButtons(onBack: onBack, opacity: opacity))
-    }
-}
-
-// MARK: - Share Sheet
-
-struct ShareItem: Identifiable {
-    let id = UUID()
-    let image: UIImage
-    var videoURL: URL? = nil
-    let date: Date?
-}
-
-final class SharePhotoItem: NSObject, UIActivityItemSource {
-    let image: UIImage
-    let title: String
-
-    init(image: UIImage, title: String) {
-        self.image = image
-        self.title = title
-    }
-
-    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
-        image
-    }
-
-    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
-        image
-    }
-
-    func activityViewController(_ activityViewController: UIActivityViewController, subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
-        title
-    }
-
-    func activityViewControllerLinkMetadata(_ activityViewController: UIActivityViewController) -> LPLinkMetadata? {
-        let metadata = LPLinkMetadata()
-        metadata.title = title
-        metadata.imageProvider = NSItemProvider(object: image)
-        return metadata
-    }
-}
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let image: UIImage
-    var videoURL: URL? = nil
-    let date: Date?
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        // Videos share the actual movie file; images keep the rich-preview source.
-        if let videoURL {
-            return UIActivityViewController(activityItems: [videoURL], applicationActivities: nil)
-        }
-        let source = SharePhotoItem(image: image, title: Self.title(for: date))
-        return UIActivityViewController(activityItems: [source], applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-
-    private static func title(for date: Date?) -> String {
-        guard let date else { return "Culla" }
-        return String(localized: "Culla · \(date.formatted(date: .abbreviated, time: .omitted))")
-    }
-}
-
