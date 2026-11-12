@@ -70,6 +70,9 @@ private struct SplashGate: View {
     @State private var showPaywall = false
     @State private var showWalkthrough = false
     @State private var currentTourStep: TourStep = .welcome
+    /// The pending tour start. Several events can ask for the tour at once,
+    /// so a new request replaces the old one and the tour only starts once.
+    @State private var tourStartTask: Task<Void, Never>?
     @State private var paywallDismissible = true
     @State private var sidebarGalleryIDs: Set<UUID> = {
         guard let data = UserDefaults.standard.data(forKey: "sidebarGalleryIDs"),
@@ -121,11 +124,9 @@ private struct SplashGate: View {
                         targetFrame: { target in
                             anchors[target].map { proxy[$0] }
                         },
-                        onComplete: {
-                            hasCompletedWalkthrough = true
-                            showWalkthrough = false
-                        }
+                        onComplete: { finishTour() }
                     )
+                    .transition(.opacity)
                 }
             }
             .ignoresSafeArea()
@@ -172,8 +173,7 @@ private struct SplashGate: View {
     private func advanceTour() {
         let all = TourStep.allCases
         guard let i = all.firstIndex(of: currentTourStep), i + 1 < all.count else {
-            hasCompletedWalkthrough = true
-            showWalkthrough = false
+            finishTour()
             return
         }
         withAnimation(.easeInOut(duration: 0.25)) {
@@ -183,14 +183,24 @@ private struct SplashGate: View {
 
     private func scheduleWalkthroughIfNeeded() {
         let photoStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        guard !hasCompletedWalkthrough,
+        guard isReady, !showWalkthrough, !hasCompletedWalkthrough,
               !subscriptions.subscriptionExpired,
               photoStatus == .authorized || photoStatus == .limited else { return }
-        Task {
-            try? await Task.sleep(for: .seconds(0.6))
+        // Several events can ask for the tour at once. Only the last request counts.
+        tourStartTask?.cancel()
+        tourStartTask = Task {
+            // Let the splash fade out (0.4 s) and the date wheel finish drawing.
+            try? await Task.sleep(for: .seconds(0.9))
+            guard !Task.isCancelled, !showWalkthrough else { return }
             currentTourStep = .welcome
-            showWalkthrough = true
+            withAnimation(.easeOut(duration: 0.35)) { showWalkthrough = true }
         }
+    }
+
+    /// Ends the tour for good and fades it out.
+    private func finishTour() {
+        hasCompletedWalkthrough = true
+        withAnimation(.easeOut(duration: 0.25)) { showWalkthrough = false }
     }
 
     private var splashView: some View {
