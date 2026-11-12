@@ -46,7 +46,9 @@ struct GalleriesView: View {
     @State private var showAlbumImport = false
     @State private var showInsights = false
     @State private var showPaywall = false
-    @State private var galleryToDelete: Gallery?
+    /// The gallery whose row is asking "Delete …?". An id, not the model:
+    /// the gallery is deleted while its row is still on its way out.
+    @State private var deletingID: UUID?
     @State private var namesBeforeEdit: [UUID: String] = [:]
 
     var body: some View {
@@ -102,16 +104,25 @@ struct GalleriesView: View {
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
+                        // A plain role, not .destructive: that role slides the
+                        // row away before the answer. No full swipe, so a long
+                        // swipe can't skip the question.
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button {
-                                withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                                    galleryToDelete = gallery
-                                }
+                                deletingID = gallery.id
                             } label: {
                                 Image(systemName: "trash")
                             }
                             .tint(.red)
                         }
+                        // On the row, not the list, so the question opens beside it.
+                        .deleteGalleryConfirmation(
+                            name: gallery.name,
+                            isPresented: isDeleting(gallery),
+                            onDeleteWithPhotos: { await viewModel?.deleteGalleryAndPhotos(gallery) },
+                            onDeleteKeepPhotos: { viewModel?.deleteGallery(gallery) },
+                            onUnlink: { viewModel?.unlinkGallery(gallery) }
+                        )
                     }
                     .onMove { source, destination in
                         // Manual reorder only makes sense in the natural order —
@@ -193,42 +204,6 @@ struct GalleriesView: View {
                 newGalleryName = ""
             }
         }
-        .overlay {
-            if let gallery = galleryToDelete {
-                ZStack {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                                galleryToDelete = nil
-                            }
-                        }
-
-                    DeleteGalleryMenu(
-                        galleryName: gallery.name,
-                        onDeleteWithPhotos: {
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
-                            Task { await viewModel?.deleteGalleryAndPhotos(gallery) }
-                        },
-                        onDeleteKeepPhotos: {
-                            viewModel?.deleteGallery(gallery)
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
-                        },
-                        onUnlink: {
-                            viewModel?.unlinkGallery(gallery)
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
-                        },
-                        onCancel: {
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) { galleryToDelete = nil }
-                        }
-                    )
-                    .frame(maxWidth: 300)
-                    .padding(.horizontal, 16)
-                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
-                }
-            }
-        }
         // Full-screen rather than a sheet — Insights reads as a focused
         // destination, with no receded parent card peeking behind it.
         .fullScreenCover(isPresented: $showInsights) {
@@ -298,6 +273,15 @@ struct GalleriesView: View {
     /// app accent, so selection reads as one cohesive hue.
     private func tint(_ gallery: Gallery) -> Color {
         sidebarTintMode == "accent" ? accent : gallery.color
+    }
+
+    /// True only for the swiped row, so only its question is up.
+    private func isDeleting(_ gallery: Gallery) -> Binding<Bool> {
+        let id = gallery.id
+        return Binding(
+            get: { deletingID == id },
+            set: { if !$0 { deletingID = nil } }
+        )
     }
 
     private func toggleSelection(_ gallery: Gallery) {

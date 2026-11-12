@@ -17,7 +17,7 @@ struct GalleryDetailView: View {
     @State private var allIdentifiers: [String] = []
     @State private var hasSynced = false
     @State private var showColorPicker = false
-    @State private var showDeleteMenu = false
+    @State private var showDeleteConfirmation = false
     @State private var tourHintDismissed = false
     @State private var previewIdentifier: String?
     @Namespace private var heroNamespace
@@ -84,58 +84,30 @@ struct GalleryDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(role: .destructive) {
-                    withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                        showDeleteMenu = true
-                    }
+                    showDeleteConfirmation = true
                 } label: {
                     Image(systemName: "trash")
                 }
-            }
-        }
-        .overlay {
-            if showDeleteMenu {
-                ZStack {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                                showDeleteMenu = false
-                            }
-                        }
-
-                    DeleteGalleryMenu(
-                        galleryName: gallery.name,
-                        onDeleteWithPhotos: {
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                                showDeleteMenu = false
-                            }
-                            Task {
-                                // Leave only once iOS confirms; after "Don't Allow"
-                                // the gallery is untouched, so stay on it.
-                                if await viewModel?.deleteGalleryAndPhotos(gallery) == true {
-                                    dismiss()
-                                }
-                            }
-                        },
-                        onDeleteKeepPhotos: {
-                            viewModel?.deleteGallery(gallery)
+                // On the button, not the screen, so the question opens beside it.
+                .deleteGalleryConfirmation(
+                    name: gallery.name,
+                    isPresented: $showDeleteConfirmation,
+                    onDeleteWithPhotos: {
+                        // Leave only once iOS confirms; after "Don't Allow"
+                        // the gallery is untouched, so stay on it.
+                        if await viewModel?.deleteGalleryAndPhotos(gallery) == true {
                             dismiss()
-                        },
-                        onUnlink: {
-                            viewModel?.unlinkGallery(gallery)
-                            dismiss()
-                        },
-                        onCancel: {
-                            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                                showDeleteMenu = false
-                            }
                         }
-                    )
-                    .frame(maxWidth: 300)
-                    .padding(.horizontal, 16)
-                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
-                }
+                    },
+                    onDeleteKeepPhotos: {
+                        viewModel?.deleteGallery(gallery)
+                        dismiss()
+                    },
+                    onUnlink: {
+                        viewModel?.unlinkGallery(gallery)
+                        dismiss()
+                    }
+                )
             }
         }
         .fullScreenCover(item: Binding(
