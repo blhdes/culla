@@ -7,7 +7,6 @@ struct GalleriesView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appAccent) private var accent
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(SubscriptionManager.self) private var subscriptions
     @Environment(\.activeTourStep) private var tourStep
     @Environment(\.dismiss) private var dismiss
@@ -63,8 +62,21 @@ struct GalleriesView: View {
                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 4, trailing: 0))
             }
 
-            // Stats header
-            statsHeader
+            GalleriesStatsHeader(
+                sortedCount: sortedPhotos.count,
+                currentStreak: insightsViewModel.currentStreak,
+                isPro: subscriptions.isPro,
+                onTap: {
+                    if subscriptions.isPro {
+                        showInsights = true
+                    } else {
+                        showPaywall = true
+                    }
+                }
+            )
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 6, trailing: 16))
 
             if galleries.isEmpty {
                 ContentUnavailableView(
@@ -78,7 +90,14 @@ struct GalleriesView: View {
                 Section {
                     ForEach(sortedGalleries) { gallery in
                         NavigationLink(value: gallery) {
-                            galleryRow(gallery)
+                            GalleriesRow(
+                                gallery: gallery,
+                                isActive: sidebarGalleryIDs.contains(gallery.id),
+                                color: tint(gallery),
+                                isEditing: editMode == .active,
+                                onToggleSelection: { toggleSelection(gallery) },
+                                onSubmitName: { try? modelContext.save() }
+                            )
                         }
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
@@ -272,64 +291,6 @@ struct GalleriesView: View {
         }
     }
 
-    // MARK: - Stats Header
-
-    private var statsHeader: some View {
-        Button {
-            if subscriptions.isPro {
-                showInsights = true
-            } else {
-                showPaywall = true
-            }
-        } label: {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(sortedPhotos.count)")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                        .animation(.snappy, value: sortedPhotos.count)
-                    Text("photos sorted")
-                        .font(.system(.caption, design: .rounded))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                if insightsViewModel.currentStreak > 0 {
-                    HStack(spacing: 5) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(.orange)
-                            .symbolEffect(.bounce, value: insightsViewModel.currentStreak)
-                        Text("\(insightsViewModel.currentStreak)")
-                            .font(.system(.headline, design: .rounded).weight(.bold))
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .glassSurface(in: Capsule())
-                }
-
-                Image(systemName: subscriptions.isPro ? "chevron.right" : "lock.fill")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 18)
-            .frame(maxWidth: .infinity)
-            .glassSurface(in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(.white.opacity(0.06), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 6, trailing: 16))
-    }
-
     // MARK: - Selection
 
     /// The colour a gallery presents in this sheet. In "accent" sidebar mode
@@ -363,147 +324,4 @@ struct GalleriesView: View {
         }
         return String(localized: "\(active) of \(galleries.count) active for swiping")
     }
-
-    @ViewBuilder
-    private func selectionCircle(for gallery: Gallery) -> some View {
-        let isSelected = sidebarGalleryIDs.contains(gallery.id)
-        let color = tint(gallery)
-        ZStack {
-            Circle()
-                .fill(isSelected ? color : Color.clear)
-                .overlay(
-                    Circle().strokeBorder(color.opacity(isSelected ? 0 : 0.45), lineWidth: 1.5)
-                )
-                .frame(width: 24, height: 24)
-                .shadow(color: isSelected ? color.opacity(0.45) : .clear, radius: 5)
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-        }
-        .animation(.easeInOut(duration: 0.18), value: isSelected)
-    }
-
-    // MARK: - Row
-
-    @ViewBuilder
-    private func galleryRow(_ gallery: Gallery) -> some View {
-        @Bindable var gallery = gallery
-        // Active = selected for swiping. The card glows with the gallery's own
-        // color when active — Culla's per-gallery identity carrying the
-        // "selected" state (vs. a generic accent halo).
-        let isActive = sidebarGalleryIDs.contains(gallery.id)
-        let color = tint(gallery)
-        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
-
-        HStack(spacing: 14) {
-            if editMode == .active {
-                Circle()
-                    .fill(color)
-                    .frame(width: 12, height: 12)
-                    .shadow(color: color.opacity(0.6), radius: 5)
-            } else {
-                Button { toggleSelection(gallery) } label: {
-                    selectionCircle(for: gallery)
-                }
-                .buttonStyle(.plain)
-            }
-
-            // When the row is active, the glass picks up the tint colour —
-            // some hues are dark enough that .primary text collides.
-            // `foregroundOnTintedGlass` flips to white only when needed.
-            let labelColor: Color = isActive
-                ? color.foregroundOnTintedGlass(in: colorScheme)
-                : .primary
-
-            if editMode == .active {
-                TextField("Gallery name", text: $gallery.name)
-                    .font(.system(.body, design: .rounded).weight(.semibold))
-                    .foregroundStyle(labelColor)
-                    .onSubmit {
-                        try? modelContext.save()
-                    }
-            } else {
-                Text(gallery.name)
-                    .font(.system(.body, design: .rounded).weight(.semibold))
-                    .foregroundStyle(labelColor)
-            }
-
-            Spacer()
-
-            Text("\(gallery.sortedPhotos.count)")
-                .font(.system(.subheadline, design: .rounded).weight(.medium))
-                .monospacedDigit()
-                .foregroundStyle(isActive ? labelColor.opacity(0.7) : .secondary)
-        }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity)
-        .glassSurface(in: shape, tint: isActive ? color : nil)
-        .overlay(
-            shape.strokeBorder(
-                isActive ? color.opacity(0.5) : .white.opacity(0.06),
-                lineWidth: isActive ? 1.4 : 1
-            )
-        )
-        .shadow(color: isActive ? color.opacity(0.3) : .clear, radius: 14, y: 6)
-        .animation(.snappy(duration: 0.25), value: isActive)
-    }
 }
-
-private struct DeleteMenuGlass: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        } else {
-            content.background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        }
-    }
-}
-
-struct DeleteGalleryMenu: View {
-    let galleryName: String
-    let onDeleteWithPhotos: () -> Void
-    let onDeleteKeepPhotos: () -> Void
-    let onUnlink: () -> Void
-    let onCancel: () -> Void
-
-    var body: some View {
-        VStack(spacing: 8) {
-            VStack(spacing: 4) {
-                Text("Delete \"\(galleryName)\"?")
-                    .font(.subheadline.weight(.semibold))
-                Text("\"Remove from Culla\" just hides it here — your iPhone album stays intact.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 8)
-            .padding(.top, 12)
-            .padding(.bottom, 4)
-
-            menuButton(title: "Delete Gallery & Photos", color: .red, action: onDeleteWithPhotos)
-            menuButton(title: "Delete Gallery, Keep Photos", color: .red, action: onDeleteKeepPhotos)
-            menuButton(title: "Remove from Culla", color: .primary, action: onUnlink)
-            menuButton(title: "Cancel", color: .primary, action: onCancel)
-        }
-        .padding(8)
-        .modifier(DeleteMenuGlass())
-        .shadow(color: .black.opacity(0.15), radius: 24, y: 6)
-    }
-
-    @ViewBuilder
-    private func menuButton(title: LocalizedStringKey, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(color)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color(.tertiarySystemFill), in: Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
