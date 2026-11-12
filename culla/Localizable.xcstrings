@@ -1981,52 +1981,6 @@
         }
       }
     },
-    "Culla helps you sort your photo library one swipe at a time. Let's take a quick tour." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla hilft dir, deine Fotomediathek Wisch für Wisch zu sortieren. Machen wir eine kurze Tour."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla te ayuda a ordenar tu fototeca deslizando una foto a la vez. Hagamos un recorrido rápido."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla vous aide à trier votre photothèque un balayage à la fois. Faisons un tour rapide."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla ti aiuta a smistare la tua libreria foto uno swipe alla volta. Facciamo un rapido tour."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cullaはスワイプひとつで写真ライブラリを仕分けできます。簡単なツアーを始めましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O Culla ajuda você a classificar sua fototeca um deslize de cada vez. Vamos fazer um tour rápido."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Culla 帮你一次一滑地整理照片图库。来快速了解一下吧。"
-          }
-        }
-      }
-    },
     "Culla needs access to your photo library to organize your photos." : {
       "localizations" : {
         "de" : {
@@ -4802,52 +4756,6 @@
         }
       }
     },
-    "Let's Go!" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los geht's!"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¡Vamos!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "C'est parti !"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Andiamo!"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "さあ、始めよう!"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vamos lá!"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "开始吧!"
-          }
-        }
-      }
-    },
     "Light" : {
       "localizations" : {
         "de" : {
@@ -5120,52 +5028,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "载入中…"
-          }
-        }
-      }
-    },
-    "Make It Yours" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ganz dein Stil"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hazla tuya"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personnalisez-la"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rendila tua"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自分らしく"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deixe com a sua cara"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "个性化设置"
           }
         }
       }
@@ -6274,52 +6136,6 @@
         }
       }
     },
-    "Open any gallery from the list. Inside, tap the small color circle at the top to give it a neon color." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Öffne eine Galerie aus der Liste. Tippe darin oben auf den kleinen Farbkreis, um ihr eine Neonfarbe zu geben."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abre cualquier galería de la lista. Dentro, toca el pequeño círculo de color de arriba para darle un color neón."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ouvrez une galerie de la liste. À l'intérieur, touchez le petit cercle de couleur en haut pour lui donner une couleur néon."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apri una galleria dall'elenco. All'interno, tocca il cerchietto colorato in alto per darle un colore neon."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リストからギャラリーを開き、上部の小さなカラーサークルをタップしてネオンカラーを設定しましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abra qualquer galeria da lista. Dentro, toque no pequeno círculo de cor no topo para dar a ela uma cor neon."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从列表中打开任意影集,点按顶部的小色圈为它设置霓虹色。"
-          }
-        }
-      }
-    },
     "Open Settings" : {
       "localizations" : {
         "de" : {
@@ -6825,52 +6641,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择日期"
-          }
-        }
-      }
-    },
-    "Pick a date, tap Start, and swipe. Left to dismiss, right to sort, up to favourite, down to share." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wähle ein Datum, tippe auf Start und wische. Links zum Verwerfen, rechts zum Sortieren, oben für Favoriten, unten zum Teilen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elige una fecha, toca Empezar y desliza. Izquierda para descartar, derecha para clasificar, arriba para favorito, abajo para compartir."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisissez une date, touchez Démarrer et balayez. À gauche pour écarter, à droite pour trier, en haut pour les favoris, en bas pour partager."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scegli una data, tocca Inizia e scorri. Sinistra per scartare, destra per smistare, su per i preferiti, giù per condividere."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日付を選んでスタートをタップし、スワイプ。左で除外、右で仕分け、上でお気に入り、下で共有。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escolha uma data, toque em Iniciar e deslize. Esquerda para descartar, direita para classificar, cima para favoritar, baixo para compartilhar."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择日期,点按开始,然后滑动。左滑忽略,右滑整理,上滑收藏,下滑分享。"
           }
         }
       }
@@ -7983,52 +7753,6 @@
         }
       }
     },
-    "Set Up a Gallery" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Richte eine Galerie ein"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Configura una galería"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Configurez une galerie"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Configura una galleria"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ギャラリーを設定"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Configure uma galeria"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "设置影集"
-          }
-        }
-      }
-    },
     "Settings" : {
       "localizations" : {
         "de" : {
@@ -8583,52 +8307,6 @@
         }
       }
     },
-    "Spin the wheel to choose a date. Culla shows your photos from that day. Tap the wheel to open a full calendar." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Drehe das Rad, um ein Datum zu wählen. Culla zeigt deine Fotos von diesem Tag. Tippe auf das Rad für den vollständigen Kalender."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gira la rueda para elegir una fecha. Culla muestra tus fotos de ese día. Toca la rueda para abrir el calendario completo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Faites tourner la roue pour choisir une date. Culla affiche vos photos de ce jour. Touchez la roue pour ouvrir le calendrier complet."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gira la rotella per scegliere una data. Culla mostra le tue foto di quel giorno. Tocca la rotella per aprire il calendario completo."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ホイールを回して日付を選択。Cullaがその日の写真を表示します。ホイールをタップするとカレンダーが開きます。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gire a roda para escolher uma data. O Culla mostra suas fotos daquele dia. Toque na roda para abrir o calendário completo."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "转动转盘选择日期,Culla 会显示那天的照片。点按转盘可打开完整日历。"
-          }
-        }
-      }
-    },
     "Start %lld-day free trial" : {
       "localizations" : {
         "de" : {
@@ -9142,52 +8820,6 @@
         }
       }
     },
-    "Tap + to create a new gallery, or use the menu to import an existing iPhone album." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe auf +, um eine neue Galerie zu erstellen, oder importiere über das Menü ein vorhandenes iPhone-Album."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca + para crear una nueva galería o usa el menú para importar un álbum existente del iPhone."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez + pour créer une nouvelle galerie, ou utilisez le menu pour importer un album iPhone existant."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tocca + per creare una nuova galleria, oppure usa il menu per importare un album iPhone esistente."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "+をタップして新しいギャラリーを作成するか、メニューから既存のiPhoneアルバムを読み込みましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque em + para criar uma nova galeria ou use o menu para importar um álbum existente do iPhone."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点按 + 创建新影集,或通过菜单导入现有的 iPhone 相册。"
-          }
-        }
-      }
-    },
     "Tap a circle to activate galleries for swiping" : {
       "localizations" : {
         "de" : {
@@ -9276,144 +8908,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点按“管理”"
-          }
-        }
-      }
-    },
-    "Tap that icon to open your Galleries — the destinations photos fly into when you swipe right." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe auf dieses Symbol, um deine Galerien zu öffnen — die Ziele, in die Fotos beim Wischen nach rechts fliegen."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca ese icono para abrir tus galerías: los destinos a los que vuelan las fotos cuando deslizas a la derecha."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez cette icône pour ouvrir vos galeries — les destinations où vont les photos quand vous balayez vers la droite."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tocca quell'icona per aprire le tue gallerie: le destinazioni in cui volano le foto quando scorri a destra."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "そのアイコンをタップするとギャラリーが開きます。右スワイプした写真の行き先です。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque nesse ícone para abrir suas galerias — os destinos para onde as fotos voam quando você desliza para a direita."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点按该图标打开影集——右滑时照片就会飞入这些目的地。"
-          }
-        }
-      }
-    },
-    "Tap the color circle above to give this gallery a neon color (optional)." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe oben auf den Farbkreis, um dieser Galerie eine Neonfarbe zu geben (optional)."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca el círculo de color de arriba para darle a esta galería un color neón (opcional)."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez le cercle de couleur ci-dessus pour donner à cette galerie une couleur néon (facultatif)."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tocca il cerchio colorato qui sopra per dare a questa galleria un colore neon (facoltativo)."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上のカラーサークルをタップして、このギャラリーにネオンカラーを設定できます(任意)。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque no círculo de cor acima para dar a esta galeria uma cor neon (opcional)."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点按上方的色圈为此影集设置霓虹色(可选)。"
-          }
-        }
-      }
-    },
-    "Tap the icon above to open Galleries, then create a new one or import an existing iPhone album." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe oben auf das Symbol, um die Galerien zu öffnen, und erstelle eine neue oder importiere ein vorhandenes iPhone-Album."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca el icono de arriba para abrir Galerías y crea una nueva o importa un álbum existente del iPhone."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez l'icône ci-dessus pour ouvrir les galeries, puis créez-en une nouvelle ou importez un album iPhone existant."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tocca l'icona qui sopra per aprire le gallerie, poi creane una nuova o importa un album iPhone esistente."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上のアイコンをタップしてギャラリーを開き、新規作成するか既存のiPhoneアルバムを読み込みましょう。"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque no ícone acima para abrir as galerias, depois crie uma nova ou importe um álbum existente do iPhone."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点按上方图标打开影集,然后创建新影集或导入现有的 iPhone 相册。"
           }
         }
       }
@@ -10208,52 +9702,6 @@
         }
       }
     },
-    "You're All Set" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alles bereit"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todo listo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout est prêt"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutto pronto"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "準備完了"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tudo pronto"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一切就绪"
-          }
-        }
-      }
-    },
     "You've given Culla limited access but haven't selected any photos. Open Settings to choose which photos to share." : {
       "localizations" : {
         "de" : {
@@ -10346,52 +9794,6 @@
         }
       }
     },
-    "Your Galleries" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Galerien"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tus galerías"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vos galeries"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le tue gallerie"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ギャラリー"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suas galerias"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的影集"
-          }
-        }
-      }
-    },
     "“%@” couldn’t be saved. The albums before it were imported." : {
       "localizations" : {
         "de" : {
@@ -10434,6 +9836,466 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法保存“%@”。之前的相册已导入。"
+          }
+        }
+      }
+    },
+    "Pick a day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige un día"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle einen Tag"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un jour"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli un giorno"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um dia"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日付を選ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择日期"
+          }
+        }
+      }
+    },
+    "Spin the wheel, or tap it for the calendar. Culla starts from that day." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gira la rueda o tócala para ver el calendario. Culla empieza desde ese día."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drehe das Rad oder tippe darauf, um den Kalender zu öffnen. Culla beginnt an diesem Tag."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites tourner la roue ou touchez-la pour ouvrir le calendrier. Culla commence à partir de ce jour."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gira la rotella o toccala per aprire il calendario. Culla parte da quel giorno."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gire a roda ou toque nela para abrir o calendário. O Culla começa a partir desse dia."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホイールを回すか、タップしてカレンダーを開きます。Cullaはその日から始めます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转动转盘，或点按它打开日历。Culla 会从那一天开始。"
+          }
+        }
+      }
+    },
+    "Make a gallery" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea una galería"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstelle eine Galerie"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créez une galerie"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea una galleria"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crie uma galeria"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーを作る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建影集"
+          }
+        }
+      }
+    },
+    "Galleries are where photos land when you swipe right. Tap Galleries to make your first one." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las galerías son donde caen las fotos cuando deslizas a la derecha. Toca Galerías para crear la primera."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Galerien landen deine Fotos, wenn du nach rechts wischst. Tippe auf „Galerien“, um deine erste zu erstellen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les galeries accueillent les photos que vous balayez vers la droite. Touchez Galeries pour créer la première."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le gallerie sono dove finiscono le foto quando scorri a destra. Tocca Gallerie per creare la prima."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As galerias são para onde vão as fotos quando você desliza para a direita. Toque em Galerias para criar a primeira."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ギャラリーは、右にスワイプした写真の行き先です。「ギャラリー」をタップして最初の1つを作りましょう。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "影集是右滑照片的去处。点按“影集”创建第一个。"
+          }
+        }
+      }
+    },
+    "Start swiping" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza a deslizar"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt wischen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencez à balayer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inizia a scorrere"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comece a deslizar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スワイプを始める"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始滑动"
+          }
+        }
+      }
+    },
+    "Tap Start. The first photos show you how each swipe works." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca Empezar con Culla. Las primeras fotos te enseñan cómo funciona cada gesto."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf „Mit Culla loslegen“. Die ersten Fotos zeigen dir, wie jede Wischgeste funktioniert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez Lancer Culla. Les premières photos vous montrent comment fonctionne chaque geste."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocca Inizia con Culla. Le prime foto ti mostrano come funziona ogni gesto."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque em Começar com Culla. As primeiras fotos mostram como funciona cada gesto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「Cullaを始める」をタップ。最初の写真で、各スワイプの使い方がわかります。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按“开始 Culla”。最初的几张照片会教你每种滑动的用法。"
+          }
+        }
+      }
+    },
+    "Got it" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entendido"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verstanden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compris"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ho capito"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entendi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "知道了"
+          }
+        }
+      }
+    },
+    "Tap + to create a gallery or import an iPhone album." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca + para crear una galería o importar un álbum del iPhone."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf +, um eine Galerie zu erstellen oder ein iPhone-Album zu importieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez + pour créer une galerie ou importer un album de l’iPhone."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocca + per creare una galleria o importare un album dell’iPhone."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque em + para criar uma galeria ou importar um álbum do iPhone."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+をタップして、ギャラリーを作成するかiPhoneのアルバムを読み込みます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按 + 创建影集，或导入 iPhone 相册。"
+          }
+        }
+      }
+    },
+    "Sort your photos, one swipe at a time." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordena tus fotos, un gesto cada vez."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortiere deine Fotos, Wisch für Wisch."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triez vos photos, un geste à la fois."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordina le tue foto, un gesto alla volta."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organize suas fotos, um gesto de cada vez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スワイプひとつで、写真を整理。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次滑动，整理一张照片。"
+          }
+        }
+      }
+    },
+    "Show me" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enséñame"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeig’s mir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montrez-moi"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrami"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "見てみる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "带我看看"
           }
         }
       }
