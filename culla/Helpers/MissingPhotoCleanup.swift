@@ -5,10 +5,18 @@ import Photos
 /// Removes Culla's records for photos that no longer exist in the iPhone library —
 /// deleted through Culla's trash or in the Photos app — so they stop showing up as
 /// grey tiles in galleries and in the trash.
-enum MissingPhotoCleaner {
+///
+/// Works on its own database context, away from the main thread. With big imported
+/// galleries, deleting and saving these records on the main thread froze the app at
+/// launch for 10–20 seconds (long enough for iOS to kill it).
+///
+/// Create it inside `Task.detached`: a model actor made on the main thread does its
+/// work on the main thread too, which would bring the freeze back.
+@ModelActor
+actor MissingPhotoCleaner {
 
-    @MainActor
-    static func prune(in context: ModelContext) async {
+    /// Has no `await` inside, so two calls never overlap: the actor runs them one after the other.
+    func prune() {
         // With limited access PhotoKit only sees the photos the user shared, so
         // every other photo would look deleted. Only clean up with full access.
         guard PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized else { return }
@@ -19,18 +27,15 @@ enum MissingPhotoCleaner {
             sortedFetch.propertiesToFetch = [\.assetIdentifier]
             var dismissedFetch = FetchDescriptor<DismissedPhoto>()
             dismissedFetch.propertiesToFetch = [\.assetIdentifier]
-            recorded = Set(try context.fetch(sortedFetch).map(\.assetIdentifier))
-                .union(try context.fetch(dismissedFetch).map(\.assetIdentifier))
+            recorded = Set(try modelContext.fetch(sortedFetch).map(\.assetIdentifier))
+                .union(try modelContext.fetch(dismissedFetch).map(\.assetIdentifier))
         } catch {
             print("culla: Couldn't read records to check for deleted photos: \(error)")
             return
         }
         guard !recorded.isEmpty else { return }
 
-        // The PhotoKit lookup can take a moment on big libraries — keep it off the main thread.
-        let existing = await Task.detached {
-            PhotoLibraryService.existingIdentifiers(among: recorded)
-        }.value
+        let existing = PhotoLibraryService.existingIdentifiers(among: recorded)
         let missing = recorded.subtracting(existing)
         guard !missing.isEmpty else { return }
 
@@ -43,17 +48,18 @@ enum MissingPhotoCleaner {
 
         let missingIDs = Array(missing)
         do {
-            // Fetch again: records may have changed while PhotoKit was answering.
-            let staleSorted = try context.fetch(FetchDescriptor<SortedPhoto>(
+            let staleSorted = try modelContext.fetch(FetchDescriptor<SortedPhoto>(
                 predicate: #Predicate { missingIDs.contains($0.assetIdentifier) }
             ))
-            let staleDismissed = try context.fetch(FetchDescriptor<DismissedPhoto>(
+            let staleDismissed = try modelContext.fetch(FetchDescriptor<DismissedPhoto>(
                 predicate: #Predicate { missingIDs.contains($0.assetIdentifier) }
             ))
-            staleSorted.forEach { context.delete($0) }
-            staleDismissed.forEach { context.delete($0) }
-            try context.save()
+            staleSorted.forEach { modelContext.delete($0) }
+            staleDismissed.forEach { modelContext.delete($0) }
+            try modelContext.save()
         } catch {
+            // Drop the half-made deletes so nothing partial is saved later by accident.
+            modelContext.rollback()
             print("culla: Failed to remove records for deleted photos: \(error)")
         }
     }
@@ -64,6 +70,8 @@ enum MissingPhotoCleaner {
 struct MissingPhotoCleanup: View {
     @Environment(\.modelContext) private var modelContext
     private let photoService = PhotoLibraryService.shared
+    /// One cleaner for the whole session, so runs queue up instead of overlapping.
+    @State private var cleaner: MissingPhotoCleaner?
 
     var body: some View {
         Color.clear
@@ -75,7 +83,13 @@ struct MissingPhotoCleanup: View {
                 } catch {
                     return
                 }
-                await MissingPhotoCleaner.prune(in: modelContext)
+                if cleaner == nil {
+                    let container = modelContext.container
+                    cleaner = await Task.detached(priority: .utility) {
+                        MissingPhotoCleaner(modelContainer: container)
+                    }.value
+                }
+                await cleaner?.prune()
             }
     }
 }
