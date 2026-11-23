@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Displays selected galleries as colored panels that split the screen equally.
 /// 2 galleries = 50/50, 3 = 33/33/33, etc.
+/// The whole panel fades in with the drag, so nothing sits on the photo at rest.
 struct GallerySidebarView: View {
     let galleries: [Gallery]
     let highlightedID: UUID?
@@ -34,137 +35,84 @@ struct GallerySidebarView: View {
     }
 
     var body: some View {
-        if galleries.isEmpty {
-            VStack(spacing: 12) {
-                Spacer()
-                Image(systemName: "rectangle.stack.badge.plus")
-                    .font(.title2)
-                    .foregroundStyle(accent)
-                    .symbolEffect(.pulse, options: .repeating, isActive: isDragging)
-                    .frame(width: 64, height: 64)
-                    .glassSurface(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(accent.opacity(0.35), lineWidth: 1)
-                    )
-                    .shadow(color: accent.opacity(0.35), radius: 14, y: 6)
-                Text("Add a gallery\nto sort photos")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.center)
-                HStack(spacing: 4) {
-                    Text("Tap Manage")
-                        .font(.system(.caption, design: .rounded))
-                    Image(systemName: "arrow.down.right")
-                        .font(.caption)
+        Group {
+            if galleries.isEmpty {
+                emptyState
+            } else {
+                let spectrum: [Color] = sidebarTintMode == "accent"
+                    ? accentSpectrum(accent, count: galleries.count)
+                    : []
+                VStack(spacing: 0) {
+                    ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
+                        GallerySidebarItem(
+                            gallery: gallery,
+                            neonColor: spectrum.isEmpty ? gallery.color : spectrum[index],
+                            isHighlighted: gallery.id == highlightedID,
+                            isDragging: isDragging,
+                            dragProgress: dragProgress,
+                            isLongPress: isLongPress
+                        )
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear.preference(
+                                    key: GalleryFramePreferenceKey.self,
+                                    value: [gallery.id: geo.frame(in: .global)]
+                                )
+                            }
+                        )
+                    }
                 }
-                .foregroundStyle(.secondary)
-                Spacer()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(panelTint)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .opacity(isDragging ? 0.6 + 0.4 * dragProgress : 0.55)
-        } else {
-            let spectrum: [Color] = sidebarTintMode == "accent"
-                ? accentSpectrum(accent, count: galleries.count)
-                : []
-            VStack(spacing: 0) {
-                ForEach(Array(galleries.enumerated()), id: \.element.id) { index, gallery in
-                    GallerySidebarItem(
-                        gallery: gallery,
-                        neonColor: spectrum.isEmpty ? gallery.color : spectrum[index],
-                        isHighlighted: gallery.id == highlightedID,
-                        isDragging: isDragging,
-                        dragProgress: dragProgress,
-                        isLongPress: isLongPress
-                    )
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: GalleryFramePreferenceKey.self,
-                                value: [gallery.id: geo.frame(in: .global)]
-                            )
-                        }
-                    )
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .opacity(Double(dragProgress))
     }
 
-}
-
-// MARK: - Shared Neon Palette & Hex Support
-
-extension Color {
-
-    /// Canonical palette — stored in SwiftData and used as identity keys.
-    /// `nonisolated` because `Gallery.init` reads it from the background importer.
-    nonisolated static let neonHexes: [String] = [
-        "#FF2D78", "#00B4FF", "#39FF14", "#BF00FF",
-        "#FFE600", "#FF6600", "#00FFEE", "#FF0040",
-        "#CCFF00", "#FF00FF",
-        // Extended palette
-        "#FF4500", "#FFAA00", "#80FF00", "#00FF80",
-        "#00AAFF", "#5500FF", "#DD00FF", "#FF00AA",
-    ]
-
-    /// Dark mode display — slightly toned down where raw neons are too harsh.
-    private static let neonHexesDark: [String] = [
-        "#FF2D78", "#00B4FF", "#30E612", "#BF00FF",
-        "#FFCC00", "#FF6600", "#00E6D6", "#FF0040",
-        "#B8E600", "#FF00FF",
-        // Extended palette
-        "#FF4500", "#FFAA00", "#72E600", "#00E673",
-        "#00A3F5", "#5500FF", "#DD00FF", "#FF00AA",
-    ]
-
-    /// Light mode display — deeper, richer versions readable on white.
-    private static let neonHexesLight: [String] = [
-        "#D42560", "#0088CC", "#1DAF00", "#9500CC",
-        "#B88700", "#D45500", "#008877", "#CC0033",
-        "#6E9E00", "#CC00CC",
-        // Extended palette
-        "#CC3600", "#CC8500", "#4E9900", "#009950",
-        "#0077CC", "#3D00CC", "#AA00CC", "#CC0080",
-    ]
-
-    /// Returns a Color that automatically adapts between light and dark mode.
-    /// If the hex matches a known neon, it maps to the curated variant.
-    /// Custom colors pass through unchanged.
-    static func adaptiveNeon(hex: String) -> Color {
-        let darkHex: String
-        let lightHex: String
-        if let index = neonHexes.firstIndex(of: hex) {
-            darkHex = neonHexesDark[index]
-            lightHex = neonHexesLight[index]
-        } else {
-            darkHex = hex
-            lightHex = hex
-        }
-        return Color(UIColor { traits in
-            traits.userInterfaceStyle == .dark
-                ? UIColor(Color(hex: darkHex))
-                : UIColor(Color(hex: lightHex))
-        })
-    }
-
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
-        var rgb: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&rgb)
-        self.init(
-            red: Double((rgb >> 16) & 0xFF) / 255,
-            green: Double((rgb >> 8) & 0xFF) / 255,
-            blue: Double(rgb & 0xFF) / 255
+    /// Very faint top-to-bottom accent wash behind the rows — ties the panel
+    /// to the app accent without competing with the drop-target highlight.
+    private var panelTint: some View {
+        LinearGradient(
+            colors: [accent.opacity(0.10), accent.opacity(0.04)],
+            startPoint: .top,
+            endPoint: .bottom
         )
+        .allowsHitTesting(false)
     }
 
-    var hexString: String {
-        let uiColor = UIColor(self)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
-        return String(format: "#%02X%02X%02X",
-                      Int(r * 255), Int(g * 255), Int(b * 255))
+    /// Shown when no gallery is in the sidebar yet. It looks like a button,
+    /// but the sidebar ignores touches: letting go of the drag past halfway
+    /// opens Manage (see `SwipeView.handleSwipeEnd`), so the finger never
+    /// has to lift and tap.
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "rectangle.stack.badge.plus")
+                .font(.title2)
+                .foregroundStyle(accent)
+                .symbolEffect(.pulse, options: .repeating, isActive: isDragging)
+                .frame(width: 64, height: 64)
+                .glassSurface(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(accent.opacity(0.35), lineWidth: 1)
+                )
+                .shadow(color: accent.opacity(0.35), radius: 14, y: 6)
+
+            Text("Add galleries")
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .foregroundStyle(.primary)
+
+            Text("Release to open Manage")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        // Multiplied by the outer fade, so this only finishes the reveal
+        // over the back half of the drag (85% → 100%).
+        .opacity(0.85 + 0.15 * dragProgress)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -177,6 +125,8 @@ struct GallerySidebarItem: View {
     let isDragging: Bool
     let dragProgress: CGFloat
     var isLongPress: Bool = false
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack(alignment: .leading) {
@@ -206,18 +156,36 @@ struct GallerySidebarItem: View {
                 .frame(width: 3)
                 .opacity(isHighlighted ? 1.0 : 0.0)
 
-            Text(gallery.name)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
-                .foregroundStyle(isDragging ? .white : .secondary)
-                .shadow(color: isDragging ? .black.opacity(0.25) : .clear, radius: 2, x: 0, y: 1)
-                .padding(.leading, 20)
-                .opacity(textOpacity)
-                .scaleEffect(isHighlighted ? 1.08 : 1.0, anchor: .leading)
+            HStack(spacing: 12) {
+                GalleryCoverView(
+                    albumIdentifier: gallery.albumIdentifier,
+                    iconName: gallery.iconName,
+                    tint: neonColor
+                )
+                Text(gallery.name)
+                    .font(.system(.headline, design: .rounded))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+            .foregroundStyle(textColor)
+            .padding(.leading, 16)
+            .padding(.trailing, 12)
+            .opacity(textOpacity)
+            .scaleEffect(isHighlighted ? 1.06 : 1.0, anchor: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .animation(.spring(response: 0.32, dampingFraction: 0.82), value: isHighlighted)
         .animation(.easeInOut(duration: 0.2), value: isDragging)
+    }
+
+    /// White only on the drop target. Other rows sit on their own gallery
+    /// colour, so they use the shared contrast helper: white on dark tints
+    /// (e.g. #3D00CC in light mode), the normal text colour otherwise.
+    private var textColor: Color {
+        if isHighlighted { return .white }
+        guard isDragging else { return .secondary }
+        return neonColor.foregroundOnTintedGlass(in: colorScheme)
     }
 
     /// Swipe veils the photo with ultraThinMaterial as the user commits to a

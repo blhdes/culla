@@ -222,8 +222,8 @@ struct SwipeView: View {
                             dragProgress: progress,
                             isLongPress: isLongPressing
                         )
-                        .frame(width: geo.size.width * 0.5)
-                        .offset(x: (1.0 - progress) * 30)
+                        .frame(width: geo.size.width * 0.8)
+                        .offset(x: (1.0 - progress) * 80)
                     }
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -463,8 +463,12 @@ struct SwipeView: View {
         let pty = value.predictedEndTranslation.height
 
         // Right swipe with no galleries set up — guide the user to Manage
-        // instead of letting the swipe silently fall through.
-        if (tx > swipeThreshold || ptx > swipeThreshold), sidebarGalleries.isEmpty {
+        // instead of letting the swipe silently fall through. Halfway is
+        // enough, as the empty sidebar promises ("Release to open Manage"),
+        // as long as the drag is mostly sideways so a swipe up still favorites.
+        let releasedHalfway = tx > swipeThreshold / 2 && tx > abs(ty)
+        if sidebarGalleries.isEmpty,
+           releasedHalfway || tx > swipeThreshold || ptx > swipeThreshold {
             snapBack()
             showToast(String(localized: "Add a gallery first"))
             showGallerySelector = true
