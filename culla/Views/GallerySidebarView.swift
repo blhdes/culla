@@ -8,6 +8,10 @@ struct GallerySidebarView: View {
     let highlightedID: UUID?
     let dragProgress: CGFloat
     var isLongPress: Bool = false
+    /// From `GalleryPanelLayout`, the same maths the drag hit-tests with.
+    /// 0 until the panel's container has been measured: rows then share the
+    /// height on their own, which comes to the same split.
+    var rowHeight: CGFloat = 0
 
     @Environment(\.appAccent) private var accent
     @Environment(\.colorScheme) private var colorScheme
@@ -52,21 +56,31 @@ struct GallerySidebarView: View {
                             dragProgress: dragProgress,
                             isLongPress: isLongPress
                         )
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear.preference(
-                                    key: GalleryFramePreferenceKey.self,
-                                    value: [gallery.id: geo.frame(in: .global)]
-                                )
-                            }
-                        )
+                        .frame(height: rowHeight > 0 ? rowHeight : nil)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(panelTint)
+                .background {
+                    // One blur behind the whole panel. Each row used to draw
+                    // its own material, up to 10 blurs for the same look.
+                    ZStack {
+                        panelTint
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .opacity(materialOpacity)
+                    }
+                }
             }
         }
         .opacity(Double(dragProgress))
+    }
+
+    /// Veils the photo with ultraThinMaterial as the user commits to a
+    /// gallery, but caps at 0.85 so a sliver of the photo always bleeds
+    /// through (no full blackout at 100% pull). Long-press keeps the photo
+    /// readable behind a much lighter veil.
+    private var materialOpacity: Double {
+        isLongPress ? 0.35 : 0.85 * Double(dragProgress)
     }
 
     /// Very faint top-to-bottom accent wash behind the rows — ties the panel
@@ -130,11 +144,6 @@ struct GallerySidebarItem: View {
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Veil that obscures the photo as the user commits to a gallery.
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .opacity(materialOpacity)
-
             // Flat colour base — tints non-highlighted rows and carries the
             // long-press states. Highlighted rows get the full 0.85 fill.
             neonColor
@@ -188,14 +197,6 @@ struct GallerySidebarItem: View {
         return neonColor.foregroundOnTintedGlass(in: colorScheme)
     }
 
-    /// Swipe veils the photo with ultraThinMaterial as the user commits to a
-    /// gallery, but caps at 0.85 so a sliver of the photo always bleeds
-    /// through (no full blackout at 100% pull). Long-press keeps the photo
-    /// readable behind a much lighter veil.
-    private var materialOpacity: Double {
-        isLongPress ? 0.35 : 0.85 * Double(dragProgress)
-    }
-
     private var backgroundOpacity: Double {
         guard isDragging else { return 0 }
         if isLongPress, !isHighlighted { return 0.6 }
@@ -209,14 +210,5 @@ struct GallerySidebarItem: View {
         let p = Double(max(0, min(1, dragProgress)))
         let target: Double = isHighlighted ? 1.0 : 0.7
         return 0.5 + (target - 0.5) * p
-    }
-}
-
-// MARK: - Preference Key
-
-struct GalleryFramePreferenceKey: PreferenceKey {
-    static var defaultValue: [UUID: CGRect] = [:]
-    static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
-        value.merge(nextValue(), uniquingKeysWith: { $1 })
     }
 }

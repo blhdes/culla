@@ -10,8 +10,6 @@ struct PhotoCardView: View {
 
     @State private var loader: PhotoImageLoader
 
-    private let swipeThreshold: CGFloat = 100
-
     init(
         assetIdentifier: String,
         photoService: PhotoLibraryService,
@@ -70,7 +68,7 @@ struct PhotoCardView: View {
 
     private var photoOpacity: CGFloat {
         guard offset.width > 0 else { return 1.0 }
-        return 1.0 - 0.3 * min(offset.width / swipeThreshold, 1.0)
+        return 1.0 - 0.3 * min(offset.width / SwipeTuning.commitDistance, 1.0)
     }
 
     // MARK: - Directional overlays
@@ -78,11 +76,11 @@ struct PhotoCardView: View {
     @ViewBuilder
     private var swipeOverlay: some View {
         let isVertical = abs(offset.height) > abs(offset.width)
-        let isDraggingTowardGalleries = offset.width > 30
+        let isDraggingTowardGalleries = offset.width > SwipeTuning.rowHighlightStart
 
         if offset.width < 0 && !isVertical {
             // Left drag — red (dismiss)
-            let progress = min(abs(offset.width) / swipeThreshold, 1.0)
+            let progress = min(abs(offset.width) / SwipeTuning.commitDistance, 1.0)
             ZStack {
                 Color.red
                     .opacity(0.25 * progress)
@@ -93,7 +91,7 @@ struct PhotoCardView: View {
             .allowsHitTesting(false)
         } else if offset.height < 0 && isVertical && !isDraggingTowardGalleries {
             // Up drag — gold (favorite)
-            let progress = min(abs(offset.height) / swipeThreshold, 1.0)
+            let progress = min(abs(offset.height) / SwipeTuning.commitDistance, 1.0)
             ZStack {
                 Color.yellow
                     .opacity(0.25 * progress)
@@ -104,7 +102,7 @@ struct PhotoCardView: View {
             .allowsHitTesting(false)
         } else if offset.height > 0 && isVertical && !isDraggingTowardGalleries {
             // Down drag — blue (share)
-            let progress = min(abs(offset.height) / swipeThreshold, 1.0)
+            let progress = min(abs(offset.height) / SwipeTuning.commitDistance, 1.0)
             ZStack {
                 Color.blue
                     .opacity(0.25 * progress)

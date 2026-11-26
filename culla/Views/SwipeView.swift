@@ -13,7 +13,7 @@ struct SwipeView: View {
     var onBack: (() -> Void)?
     var onSessionEnd: (() -> Void)?
 
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) var modelContext
     @Environment(SubscriptionManager.self) private var subscriptions
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
@@ -21,25 +21,27 @@ struct SwipeView: View {
     private let photoService = PhotoLibraryService.shared
 
     // Video playback — one player, owned by whichever card is on top
-    @State private var videoPlayer = VideoCardPlayer()
+    @State var videoPlayer = VideoCardPlayer()
 
     // Drag state
     @State private var cardOffset: CGSize = .zero
     @State private var highlightedGalleryID: UUID?
-    @State private var galleryFrames: [UUID: CGRect] = [:]
+    /// Screen rect of the panel's full-screen container. Measured once; it
+    /// doesn't move with the drag. Feeds `panelLayout`.
+    @State private var panelGeometry = PanelGeometry()
 
     // Long-press preview
     @State private var isLongPressing = false
 
     // Sidebar gallery selection (up to 10)
-    @State private var showGallerySelector = false
+    @State var showGallerySelector = false
     /// Persisted across SwipeView re-creations so an explicit deselect-all
     /// in the Manage sheet doesn't get silently overwritten next session.
     @AppStorage("hasInitializedSidebar") private var hasInitializedSidebar = false
 
     // Toast state
-    @State private var toastMessage: String?
-    @State private var toastTask: Task<Void, Never>?
+    @State var toastMessage: String?
+    @State var toastTask: Task<Void, Never>?
 
     // Focus session timer
     @State private var remainingSeconds: Int = 0
@@ -61,25 +63,24 @@ struct SwipeView: View {
     @State private var isPhotoZoomed = false
 
     // Onboarding hints
-    @AppStorage(OnboardingKey.zoomTooltipSeen) private var hasSeenZoomTooltip = false
-    @AppStorage(OnboardingKey.swipeHintSeen) private var hasSeenSwipeHint = false
-    @AppStorage(OnboardingKey.skipTooltipSeen) private var hasSeenSkipTooltip = false
-    @State private var showZoomTooltip = false
-    @State private var showSwipeHint = false
-    @State private var showSkipTooltip = false
+    @AppStorage(OnboardingKey.zoomTooltipSeen) var hasSeenZoomTooltip = false
+    @AppStorage(OnboardingKey.swipeHintSeen) var hasSeenSwipeHint = false
+    @AppStorage(OnboardingKey.skipTooltipSeen) var hasSeenSkipTooltip = false
+    @State var showZoomTooltip = false
+    @State var showSwipeHint = false
+    @State var showSkipTooltip = false
 
     // Undo auto-hide
-    @State private var showUndo = false
-    @State private var undoHideTask: Task<Void, Never>?
+    @State var showUndo = false
+    @State var undoHideTask: Task<Void, Never>?
 
     // Delete state
-    @State private var isDeleting = false
-    @State private var deleteMessage: DeleteFeedback?
-    @AppStorage("totalDeletedPhotos") private var totalDeletedPhotos = 0
-    @AppStorage("totalSkippedPhotos") private var totalSkippedPhotos = 0
+    @State var isDeleting = false
+    @State var deleteMessage: DeleteFeedback?
+    @AppStorage("totalDeletedPhotos") var totalDeletedPhotos = 0
+    @AppStorage("totalSkippedPhotos") var totalSkippedPhotos = 0
     @AppStorage("totalFavouritedPhotos") private var totalFavouritedPhotos = 0
 
-    private let swipeThreshold: CGFloat = 100
     private var maxSidebarGalleries: Int {
         subscriptions.isPro ? 10 : SubscriptionManager.freeGalleryLimit
     }
@@ -198,127 +199,41 @@ struct SwipeView: View {
 
     @ViewBuilder
     private func swipeContent(viewModel: SwipeViewModel) -> some View {
-        GeometryReader { geo in
+        GeometryReader { _ in
             // Card stack — receives drag, double-tap, and long-press gestures
             cardStack(viewModel: viewModel)
                 .contentShape(Rectangle())
-                .onTapGesture(count: 2) {
-                    viewModel.skipCurrent()
-                    totalSkippedPhotos += 1
-                    DailyStats.upsert(in: modelContext, skippedDelta: 1)
-                }
+                .onTapGesture(count: 2) { skip(viewModel: viewModel) }
                 .gesture(longPressGesture)
                 .highPriorityGesture(dragGesture(viewModel: viewModel))
                 .simultaneousGesture(magnifyGesture)
 
-                // Sidebar overlay — fades in + subtle slide from right
+                // Galleries panel: fades in and slides in from the right
                 .overlay {
-                    let progress = isLongPressing ? 1.0 : rightDragProgress
-                    HStack(spacing: 0) {
-                        Spacer()
-                        GallerySidebarView(
-                            galleries: sidebarGalleries,
-                            highlightedID: highlightedGalleryID,
-                            dragProgress: progress,
-                            isLongPress: isLongPressing
-                        )
-                        .frame(width: geo.size.width * 0.8)
-                        .offset(x: (1.0 - progress) * 80)
-                    }
+                    let layout = panelLayout
+                    GallerySidebarView(
+                        galleries: sidebarGalleries,
+                        highlightedID: highlightedGalleryID,
+                        dragProgress: layout.progress,
+                        isLongPress: isLongPressing,
+                        rowHeight: layout.rowHeight
+                    )
+                    .frame(width: layout.panelWidth)
+                    .offset(x: layout.slideOffset)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
-                    .onPreferenceChange(GalleryFramePreferenceKey.self) { frames in
-                        galleryFrames = frames
+                    .onGeometryChange(for: PanelGeometry.self) { proxy in
+                        PanelGeometry(frame: proxy.frame(in: .global))
+                    } action: { geometry in
+                        panelGeometry = geometry
                     }
                 }
-
-                // Onboarding hints — disappear on first swipe action
-                .overlay {
-                    if showSwipeHint {
-                        SwipeDirectionsHint {
-                            hasSeenSwipeHint = true
-                            showSwipeHint = false
-                        }
-                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    } else if showSkipTooltip {
-                        TooltipBubble(text: "Double-tap to skip a photo")
-                            .padding(.horizontal, 48)
-                            .transition(.opacity)
-                    } else if showZoomTooltip {
-                        TooltipBubble(text: "Pinch to zoom in or out on any photo")
-                            .padding(.horizontal, 48)
-                            .transition(.opacity)
-                    }
-                }
-
-                // Tap anywhere to dismiss the active hint.
-                // Sits above the hints overlay but below the chrome buttons,
-                // so Manage / Delete / back stay tappable.
-                .overlay {
-                    if showSwipeHint || showSkipTooltip || showZoomTooltip {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture { dismissHints() }
-                    }
-                }
-
-                // "Manage" button — bottom right, tappable
-                .overlay(alignment: .bottomTrailing) {
-                    Button {
-                        showGallerySelector = true
-                    } label: {
-                        Text("Manage")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial, in: Capsule())
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 16)
-                    .opacity(chromeOpacity)
-                }
-
-                // "Delete All" button — bottom left
-                .overlay(alignment: .bottomLeading) {
-                    if viewModel.dismissedCount > 0 {
-                        Button {
-                            performBatchDelete(viewModel: viewModel)
-                        } label: {
-                            Text("Delete \(viewModel.dismissedCount)")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(.ultraThinMaterial, in: Capsule())
-                        }
-                        .disabled(isDeleting)
-                        .padding(.leading, 16)
-                        .padding(.bottom, 16)
-                        .opacity(chromeOpacity)
-                    }
-                }
-
-                // Speaker button — top right, only while a video card is playing.
-                // Lives here (not inside the card) so the high-priority drag
-                // gesture can't swallow its taps.
-                .overlay(alignment: .topTrailing) {
-                    if videoPlayer.player != nil,
-                       videoPlayer.activeIdentifier == viewModel.currentIdentifier {
-                        Button {
-                            videoPlayer.isMuted.toggle()
-                        } label: {
-                            Image(systemName: videoPlayer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                                .font(.title3)
-                                .frame(width: 24, height: 24)
-                                .padding(10)
-                                .background(.ultraThinMaterial, in: Circle())
-                        }
-                        .padding(.trailing, 16)
-                        .padding(.top, 8)
-                        .opacity(chromeOpacity)
-                    }
-                }
+                .overlay { hintOverlay }
+                .overlay { hintDismissLayer }
+                .overlay(alignment: .bottomTrailing) { manageButton }
+                .overlay(alignment: .bottomLeading) { deleteButton(viewModel: viewModel) }
+                .overlay(alignment: .topTrailing) { speakerButton(viewModel: viewModel) }
 
                 // Navigation buttons (replaces toolbar so they can fade)
                 .swipeTopNav(onBack: onBack, opacity: chromeOpacity)
@@ -431,7 +346,7 @@ struct SwipeView: View {
     private func dragGesture(viewModel: SwipeViewModel) -> some Gesture {
         DragGesture(coordinateSpace: .global)
             .onChanged { value in
-                if showSwipeHint || showSkipTooltip || showZoomTooltip { dismissHints() }
+                if isShowingHint { dismissHints() }
                 cardOffset = value.translation
                 updateHighlight(
                     translation: value.translation,
@@ -449,39 +364,32 @@ struct SwipeView: View {
         // Highlight galleries whenever there's meaningful rightward movement.
         // No axis dominance check — top/bottom galleries naturally require
         // steep angles, and the highlight should still work.
-        if translation.width > 30 {
-            highlightedGalleryID = findGallery(at: location)
+        if translation.width > SwipeTuning.rowHighlightStart {
+            highlightedGalleryID = galleryID(at: location, in: panelLayout)
         } else {
             highlightedGalleryID = nil
         }
     }
 
     private func handleSwipeEnd(_ value: DragGesture.Value, viewModel: SwipeViewModel) {
-        let tx = value.translation.width
-        let ty = value.translation.height
-        let ptx = value.predictedEndTranslation.width
-        let pty = value.predictedEndTranslation.height
+        let outcome = SwipeResolver.resolve(SwipeRelease(
+            translation: value.translation,
+            predictedTranslation: value.predictedEndTranslation,
+            highlightedGallery: highlightedGalleryID,
+            panelIsEmpty: sidebarGalleries.isEmpty
+        ))
+        perform(outcome, viewModel: viewModel)
+    }
 
-        // Right swipe with no galleries set up — guide the user to Manage
-        // instead of letting the swipe silently fall through. Halfway is
-        // enough, as the empty sidebar promises ("Release to open Manage"),
-        // as long as the drag is mostly sideways so a swipe up still favorites.
-        let releasedHalfway = tx > swipeThreshold / 2 && tx > abs(ty)
-        if sidebarGalleries.isEmpty,
-           releasedHalfway || tx > swipeThreshold || ptx > swipeThreshold {
-            snapBack()
-            showToast(String(localized: "Add a gallery first"))
-            showGallerySelector = true
-            return
-        }
-
-        // Right swipe with a highlighted gallery always wins —
-        // even if the angle is steep (top/bottom galleries).
-        // The highlight means the finger is over a sidebar panel,
-        // so the user's intent is clear.
-        if tx > swipeThreshold || ptx > swipeThreshold,
-           let id = highlightedGalleryID,
-           let gallery = sidebarGalleries.first(where: { $0.id == id }) {
+    /// Turns the resolver's decision into motion, haptics and the view-model
+    /// call. The daily limit is checked here, before a sort or a dismiss.
+    private func perform(_ outcome: SwipeOutcome, viewModel: SwipeViewModel) {
+        switch outcome {
+        case .assign(let id):
+            guard let gallery = sidebarGalleries.first(where: { $0.id == id }) else {
+                snapBack()
+                return
+            }
             if subscriptions.hasReachedDailyLimit {
                 snapBack()
                 showPaywall = true
@@ -493,53 +401,8 @@ struct SwipeView: View {
                 Haptics.swipeRight()
                 showToast("\u{2192} \(gallery.name)")
             }
-            return
-        }
 
-        // Vertical swipe: primary axis is vertical
-        if abs(ty) > abs(tx) {
-            // Swipe UP → favorite
-            if ty < -swipeThreshold || pty < -swipeThreshold {
-                snapBack()
-                Task {
-                    guard let identifier = viewModel.currentIdentifier else { return }
-                    let isFavorite = await photoService.toggleFavorite(identifier: identifier)
-                    viewModel.currentPhotoIsFavorite = isFavorite
-                    Haptics.swipeUp()
-                    if isFavorite {
-                        totalFavouritedPhotos += 1
-                        DailyStats.upsert(in: modelContext, favouritedDelta: 1)
-                    } else {
-                        totalFavouritedPhotos = max(0, totalFavouritedPhotos - 1)
-                        DailyStats.upsert(in: modelContext, favouritedDelta: -1)
-                    }
-                    showToast(isFavorite ? String(localized: "Favorited ♥") : String(localized: "Unfavorited"))
-                }
-                return
-            }
-            // Swipe DOWN → share
-            if ty > swipeThreshold || pty > swipeThreshold {
-                Haptics.swipeDown()
-                snapBack()
-                Task {
-                    guard let identifier = viewModel.currentIdentifier else { return }
-                    // Read now: after the loads below, the stack may have moved on.
-                    let date = viewModel.currentPhotoDate
-                    let screenSize = UIScreen.main.bounds.size
-                    let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
-                    // nil for images and for iCloud-only videos without a local file —
-                    // those fall back to sharing the poster frame below.
-                    let videoURL = await photoService.loadVideoURL(for: identifier)
-                    if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
-                        shareItem = ShareItem(image: image, videoURL: videoURL, date: date)
-                    }
-                }
-                return
-            }
-        }
-
-        // Left swipe: dismiss if actual OR predicted distance exceeds threshold
-        if tx < -swipeThreshold || ptx < -swipeThreshold {
+        case .dismiss:
             if subscriptions.hasReachedDailyLimit {
                 snapBack()
                 showPaywall = true
@@ -551,11 +414,64 @@ struct SwipeView: View {
                 Haptics.swipeLeft()
                 showToast(String(localized: "Dismissed"))
             }
-            return
-        }
 
-        // Below threshold and no gallery → snap back
-        snapBack()
+        case .favorite:
+            snapBack()
+            toggleFavorite(viewModel: viewModel)
+
+        case .share:
+            Haptics.swipeDown()
+            snapBack()
+            presentShare(viewModel: viewModel)
+
+        case .openManage:
+            snapBack()
+            showToast(String(localized: "Add a gallery first"))
+            showGallerySelector = true
+
+        case .snapBack:
+            snapBack()
+        }
+    }
+
+    /// Double-tap: skip without dismissing — it will reappear next session.
+    private func skip(viewModel: SwipeViewModel) {
+        viewModel.skipCurrent()
+        totalSkippedPhotos += 1
+        DailyStats.upsert(in: modelContext, skippedDelta: 1)
+    }
+
+    private func toggleFavorite(viewModel: SwipeViewModel) {
+        Task {
+            guard let identifier = viewModel.currentIdentifier else { return }
+            let isFavorite = await photoService.toggleFavorite(identifier: identifier)
+            viewModel.currentPhotoIsFavorite = isFavorite
+            Haptics.swipeUp()
+            if isFavorite {
+                totalFavouritedPhotos += 1
+                DailyStats.upsert(in: modelContext, favouritedDelta: 1)
+            } else {
+                totalFavouritedPhotos = max(0, totalFavouritedPhotos - 1)
+                DailyStats.upsert(in: modelContext, favouritedDelta: -1)
+            }
+            showToast(isFavorite ? String(localized: "Favorited ♥") : String(localized: "Unfavorited"))
+        }
+    }
+
+    private func presentShare(viewModel: SwipeViewModel) {
+        Task {
+            guard let identifier = viewModel.currentIdentifier else { return }
+            // Read now: after the loads below, the stack may have moved on.
+            let date = viewModel.currentPhotoDate
+            let screenSize = UIScreen.main.bounds.size
+            let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
+            // nil for images and for iCloud-only videos without a local file —
+            // those fall back to sharing the poster frame below.
+            let videoURL = await photoService.loadVideoURL(for: identifier)
+            if let image = await photoService.loadImage(for: identifier, targetSize: targetSize) {
+                shareItem = ShareItem(image: image, videoURL: videoURL, date: date)
+            }
+        }
     }
 
     private func flyOff(x: CGFloat, y: CGFloat = 0, action: @escaping () -> Void) {
@@ -591,100 +507,38 @@ struct SwipeView: View {
             }
     }
 
-    // MARK: - Toast
-
-    private func showToast(_ message: String) {
-        toastTask?.cancel()
-        toastMessage = message
-        toastTask = Task {
-            try? await Task.sleep(for: .seconds(1.2))
-            guard !Task.isCancelled else { return }
-            await MainActor.run {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    toastMessage = nil
-                }
-            }
-        }
-    }
-
     // MARK: - Helpers
 
     private var rightDragProgress: CGFloat {
-        min(max(cardOffset.width / swipeThreshold, 0), 1.0)
+        min(max(cardOffset.width / SwipeTuning.commitDistance, 0), 1.0)
     }
 
     /// Fade out UI chrome as the user drags toward galleries,
     /// so gallery names aren't blocked by buttons and labels.
     /// On long-press, fully hide chrome to spotlight the sidebar.
-    private var chromeOpacity: Double {
+    var chromeOpacity: Double {
         if isLongPressing { return 0 }
         return Double(1.0 - rightDragProgress)
     }
 
-    private func findGallery(at point: CGPoint) -> UUID? {
-        for (id, frame) in galleryFrames {
-            if point.x >= frame.minX && point.x <= frame.maxX &&
-               point.y >= frame.minY && point.y <= frame.maxY {
-                return id
-            }
-        }
-        return nil
+    /// Reveal that drives the panel: the drag's, or fully open during the
+    /// long-press peek.
+    private var panelProgress: CGFloat {
+        isLongPressing ? 1.0 : rightDragProgress
     }
 
-    // MARK: - Undo
-
-    private func performUndo(viewModel: SwipeViewModel) {
-        if case .skipped = viewModel.actionHistory.last {
-            totalSkippedPhotos = max(0, totalSkippedPhotos - 1)
-            DailyStats.upsert(in: modelContext, skippedDelta: -1)
-        }
-        withAnimation(.easeInOut(duration: 0.2)) {
-            viewModel.undo()
-        }
-        flashUndo()
+    private var panelLayout: GalleryPanelLayout {
+        GalleryPanelLayout(
+            container: panelGeometry.frame,
+            rowCount: sidebarGalleries.count,
+            progress: panelProgress
+        )
     }
 
-    private func dismissHints() {
-        if showSwipeHint { hasSeenSwipeHint = true }
-        if showSkipTooltip { hasSeenSkipTooltip = true }
-        if showZoomTooltip { hasSeenZoomTooltip = true }
-        withAnimation(.easeOut(duration: 0.2)) {
-            showZoomTooltip = false
-            showSwipeHint = false
-            showSkipTooltip = false
-        }
-    }
-
-    private func flashUndo() {
-        undoHideTask?.cancel()
-        withAnimation(.spring) { showUndo = true }
-        undoHideTask = Task {
-            try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
-            await MainActor.run {
-                withAnimation(.easeOut(duration: 0.3)) { showUndo = false }
-            }
-        }
-    }
-
-    // MARK: - Batch Delete
-
-    private func performBatchDelete(viewModel: SwipeViewModel) {
-        isDeleting = true
-        Task {
-            let count = await viewModel.batchDeleteDismissed()
-            await MainActor.run {
-                isDeleting = false
-                if count > 0 {
-                    totalDeletedPhotos += count
-                    DailyStats.upsert(in: modelContext, deletedDelta: count)
-                    // The .deleteFeedback modifier hides this again by itself.
-                    deleteMessage = DeleteFeedback(
-                        sessionCount: count,
-                        totalCount: totalDeletedPhotos
-                    )
-                }
-            }
-        }
+    /// The panel gallery under `point`.
+    private func galleryID(at point: CGPoint, in layout: GalleryPanelLayout) -> UUID? {
+        guard let index = layout.rowIndex(at: point) else { return nil }
+        let galleries = sidebarGalleries
+        return galleries.indices.contains(index) ? galleries[index].id : nil
     }
 }
