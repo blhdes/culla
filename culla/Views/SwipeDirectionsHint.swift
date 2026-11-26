@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SwipeDirectionsHint: View {
+    /// Sort sits on this side of the map, Dismiss on the other.
+    var panelEdge: SwipePanelEdge = .right
     var onDismiss: () -> Void
 
     @Environment(\.appAccent) private var accent
@@ -14,24 +16,12 @@ struct SwipeDirectionsHint: View {
             )
 
             HStack(spacing: 36) {
-                HStack(spacing: 10) {
-                    Image(systemName: "chevron.left")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.tertiary)
-                    iconBubble(icon: "trash.fill", color: .red)
-                    Text("Dismiss")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack(spacing: 10) {
-                    Text("Sort")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                    iconBubble(icon: "rectangle.stack.fill", color: accent)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.tertiary)
+                if panelEdge == .right {
+                    sideItem(.dismiss, pointsLeft: true)
+                    sideItem(.sort, pointsLeft: false)
+                } else {
+                    sideItem(.sort, pointsLeft: true)
+                    sideItem(.dismiss, pointsLeft: false)
                 }
             }
 
@@ -56,6 +46,39 @@ struct SwipeDirectionsHint: View {
             try? await Task.sleep(for: .seconds(10))
             dismiss()
         }
+    }
+
+    private enum SideAction { case sort, dismiss }
+
+    /// A left or right item: the chevron sits on the outer side, the label
+    /// on the inner side, so the map reads as a cross around its centre.
+    private func sideItem(_ action: SideAction, pointsLeft: Bool) -> some View {
+        let icon = action == .sort ? "rectangle.stack.fill" : "trash.fill"
+        let color: Color = action == .sort ? accent : .red
+        let label: LocalizedStringKey = action == .sort ? "Sort" : "Dismiss"
+        return HStack(spacing: 10) {
+            if pointsLeft {
+                chevronImage("chevron.left")
+                iconBubble(icon: icon, color: color)
+                sideLabel(label)
+            } else {
+                sideLabel(label)
+                iconBubble(icon: icon, color: color)
+                chevronImage("chevron.right")
+            }
+        }
+    }
+
+    private func sideLabel(_ label: LocalizedStringKey) -> some View {
+        Text(label)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.secondary)
+    }
+
+    private func chevronImage(_ name: String) -> some View {
+        Image(systemName: name)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.tertiary)
     }
 
     // Top / bottom direction items (chevron above or below)

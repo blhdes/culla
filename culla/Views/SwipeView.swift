@@ -15,6 +15,8 @@ struct SwipeView: View {
 
     @Environment(\.modelContext) var modelContext
     @Environment(SubscriptionManager.self) private var subscriptions
+    @Environment(\.appAccent) var accent
+    @Environment(\.colorScheme) var colorScheme
     @Query(sort: \Gallery.displayOrder) private var galleries: [Gallery]
 
     @State private var viewModel: SwipeViewModel?
@@ -24,20 +26,32 @@ struct SwipeView: View {
     @State var videoPlayer = VideoCardPlayer()
 
     // Drag state
-    @State private var cardOffset: CGSize = .zero
-    @State private var highlightedGalleryID: UUID?
+    @State var cardOffset: CGSize = .zero
+    @State var highlightedGalleryID: UUID?
+    /// The highlighted row is armed: releasing now drops the photo there.
+    @State var isArmed = false
+    /// Where the finger is during a drag, for the target pill above it.
+    @State var fingerLocation: CGPoint?
+    /// The top card is fading into a gallery (see `flyOff`).
+    @State private var isDropping = false
+    /// Galleries the current photo is already in, read once per photo.
+    /// Their panel rows show a check.
+    @State var memberGalleryIDs: Set<UUID> = []
     /// Screen rect of the panel's full-screen container. Measured once; it
     /// doesn't move with the drag. Feeds `panelLayout`.
-    @State private var panelGeometry = PanelGeometry()
+    @State var panelGeometry = PanelGeometry()
 
     // Long-press preview
-    @State private var isLongPressing = false
+    @State var isLongPressing = false
 
     // Sidebar gallery selection (up to 10)
     @State var showGallerySelector = false
     /// Persisted across SwipeView re-creations so an explicit deselect-all
     /// in the Manage sheet doesn't get silently overwritten next session.
     @AppStorage("hasInitializedSidebar") private var hasInitializedSidebar = false
+    /// Settings → Galleries panel. Dismiss takes the other side.
+    @AppStorage(SwipePanelEdge.storageKey) var panelEdgeRaw = SwipePanelEdge.right.rawValue
+    @AppStorage("sidebarTintMode") var sidebarTintMode = "gallery"
 
     // Toast state
     @State var toastMessage: String?
@@ -87,7 +101,7 @@ struct SwipeView: View {
 
     /// Only galleries the user has selected, in display order (the query
     /// above already sorts by `displayOrder`, and filtering keeps that order).
-    private var sidebarGalleries: [Gallery] {
+    var sidebarGalleries: [Gallery] {
         galleries.filter { sidebarGalleryIDs.contains($0.id) }
     }
 
@@ -143,6 +157,7 @@ struct SwipeView: View {
                 await vm.loadInitialBatch()
                 // onChange below misses the initial value, so kick off here too
                 await videoPlayer.prepare(for: vm.currentIdentifier, service: photoService)
+                refreshMemberships(for: vm.currentIdentifier)
 
                 if let duration = focusDuration {
                     remainingSeconds = Int(duration)
@@ -171,6 +186,7 @@ struct SwipeView: View {
         }
         .onChange(of: viewModel?.currentIdentifier) { _, newID in
             Task { await videoPlayer.prepare(for: newID, service: photoService) }
+            refreshMemberships(for: newID)
         }
         .onDisappear {
             videoPlayer.teardown()
@@ -199,7 +215,7 @@ struct SwipeView: View {
 
     @ViewBuilder
     private func swipeContent(viewModel: SwipeViewModel) -> some View {
-        GeometryReader { _ in
+        GeometryReader { geo in
             // Card stack — receives drag, double-tap, and long-press gestures
             cardStack(viewModel: viewModel)
                 .contentShape(Rectangle())
@@ -208,19 +224,26 @@ struct SwipeView: View {
                 .highPriorityGesture(dragGesture(viewModel: viewModel))
                 .simultaneousGesture(magnifyGesture)
 
-                // Galleries panel: fades in and slides in from the right
+                // Galleries panel: fades in and slides in from the side
+                // picked in Settings
                 .overlay {
                     let layout = panelLayout
                     GallerySidebarView(
                         galleries: sidebarGalleries,
                         highlightedID: highlightedGalleryID,
+                        isArmed: isArmed,
                         dragProgress: layout.progress,
                         isLongPress: isLongPressing,
-                        rowHeight: layout.rowHeight
+                        rowHeight: layout.rowHeight,
+                        memberIDs: memberGalleryIDs
                     )
                     .frame(width: layout.panelWidth)
                     .offset(x: layout.slideOffset)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: layout.edge == .right ? .trailing : .leading
+                    )
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
                     .onGeometryChange(for: PanelGeometry.self) { proxy in
@@ -237,6 +260,32 @@ struct SwipeView: View {
 
                 // Navigation buttons (replaces toolbar so they can fade)
                 .swipeTopNav(onBack: onBack, opacity: chromeOpacity)
+
+                // The row under the finger, named just above it where the
+                // thumb can't cover it.
+                .overlay {
+                    ZStack {
+                        if let target = targetGallery, let finger = fingerLocation {
+                            let origin = panelGeometry.frame.origin
+                            AboveFingerLayout(
+                                finger: CGPoint(x: finger.x - origin.x, y: finger.y - origin.y),
+                                topInset: geo.safeAreaInsets.top
+                            ) {
+                                GalleryTargetLift(
+                                    gallery: target.gallery,
+                                    color: target.color,
+                                    isArmed: isArmed
+                                )
+                            }
+                            .transition(.opacity)
+                        }
+                    }
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    // Scoped to the pill: on the outer chain it would also
+                    // animate the card's drag offset in the same transaction.
+                    .animation(.easeOut(duration: 0.15), value: highlightedGalleryID)
+                }
         }
         .deleteFeedback($deleteMessage)
         // Counter + toast at top
@@ -303,6 +352,8 @@ struct SwipeView: View {
                 )
                 .id(nextID)
                 .allowsHitTesting(false)
+                // Only the top card is offered to VoiceOver, with its actions.
+                .accessibilityHidden(true)
             }
 
             // Opaque divider — hides next card at rest,
@@ -317,9 +368,21 @@ struct SwipeView: View {
                     photoService: photoService,
                     offset: cardOffset,
                     isZoomed: isPhotoZoomed,
-                    videoPlayer: videoPlayer
+                    videoPlayer: videoPlayer,
+                    panelEdge: panelEdge,
+                    dockProgress: panelProgress
                 )
+                .opacity(isDropping ? 0 : 1)
                 .id(currentID)
+                // VoiceOver sorts from the card's Actions rotor instead of a drag.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(photoAccessibilityLabel(viewModel: viewModel))
+                .accessibilityAddTraits(.isImage)
+                .accessibilityActions {
+                    ForEach(sortActions(viewModel: viewModel)) { action in
+                        Button(action.name, action: action.perform)
+                    }
+                }
             }
         }
     }
@@ -348,10 +411,9 @@ struct SwipeView: View {
             .onChanged { value in
                 if isShowingHint { dismissHints() }
                 cardOffset = value.translation
-                updateHighlight(
-                    translation: value.translation,
-                    location: value.location
-                )
+                fingerLocation = value.location
+                let target = panelTarget(of: value, in: panelLayout)
+                setTarget(target.row, armed: target.armed)
             }
             .onEnded { value in
                 handleSwipeEnd(value, viewModel: viewModel)
@@ -360,30 +422,26 @@ struct SwipeView: View {
 
     // MARK: - Gesture Handling
 
-    private func updateHighlight(translation: CGSize, location: CGPoint) {
-        // Highlight galleries whenever there's meaningful rightward movement.
-        // No axis dominance check — top/bottom galleries naturally require
-        // steep angles, and the highlight should still work.
-        if translation.width > SwipeTuning.rowHighlightStart {
-            highlightedGalleryID = galleryID(at: location, in: panelLayout)
-        } else {
-            highlightedGalleryID = nil
-        }
-    }
-
     private func handleSwipeEnd(_ value: DragGesture.Value, viewModel: SwipeViewModel) {
+        let layout = panelLayout
+        let target = panelTarget(of: value, in: layout)
+        let toward = value.translation.width * panelEdge.sign
         let outcome = SwipeResolver.resolve(SwipeRelease(
+            edge: panelEdge,
             translation: value.translation,
             predictedTranslation: value.predictedEndTranslation,
+            isInPanel: layout.isInPanel(value.location, toward: toward),
+            galleryUnderFinger: target.row,
             highlightedGallery: highlightedGalleryID,
-            panelIsEmpty: sidebarGalleries.isEmpty
+            panelIsEmpty: sidebarGalleries.isEmpty,
+            panelCommit: target.commit
         ))
         perform(outcome, viewModel: viewModel)
     }
 
     /// Turns the resolver's decision into motion, haptics and the view-model
     /// call. The daily limit is checked here, before a sort or a dismiss.
-    private func perform(_ outcome: SwipeOutcome, viewModel: SwipeViewModel) {
+    func perform(_ outcome: SwipeOutcome, viewModel: SwipeViewModel) {
         switch outcome {
         case .assign(let id):
             guard let gallery = sidebarGalleries.first(where: { $0.id == id }) else {
@@ -395,11 +453,19 @@ struct SwipeView: View {
                 showPaywall = true
                 return
             }
-            flyOff(x: 500) {
-                viewModel.assignToGallery(gallery)
+            flyOff(x: 500 * panelEdge.sign, dropping: true) {
+                let change = viewModel.assignToGallery(gallery)
                 subscriptions.recordSwipe()
                 Haptics.swipeRight()
-                showToast("\u{2192} \(gallery.name)")
+                switch change {
+                case .some(.unchanged), .some(.confirmedImport):
+                    // Already there (a check on its row): nothing new is added
+                    // to the album, and Undo still brings the photo back.
+                    showToast(String(localized: "Already in \(gallery.name)"))
+                default:
+                    let arrow = panelEdge == .right ? "\u{2192}" : "\u{2190}"
+                    showToast("\(arrow) \(gallery.name)")
+                }
             }
 
         case .dismiss:
@@ -408,7 +474,7 @@ struct SwipeView: View {
                 showPaywall = true
                 return
             }
-            flyOff(x: -500) {
+            flyOff(x: -500 * panelEdge.sign) {
                 viewModel.dismissCurrent()
                 subscriptions.recordSwipe()
                 Haptics.swipeLeft()
@@ -435,7 +501,7 @@ struct SwipeView: View {
     }
 
     /// Double-tap: skip without dismissing — it will reappear next session.
-    private func skip(viewModel: SwipeViewModel) {
+    func skip(viewModel: SwipeViewModel) {
         viewModel.skipCurrent()
         totalSkippedPhotos += 1
         DailyStats.upsert(in: modelContext, skippedDelta: 1)
@@ -474,13 +540,19 @@ struct SwipeView: View {
         }
     }
 
-    private func flyOff(x: CGFloat, y: CGFloat = 0, action: @escaping () -> Void) {
+    /// `dropping`: the photo goes into a gallery. Docked beside the panel it
+    /// barely moves with the offset, so it fades out instead.
+    private func flyOff(x: CGFloat, y: CGFloat = 0, dropping: Bool = false, action: @escaping () -> Void) {
         withAnimation(.easeIn(duration: 0.25)) {
             cardOffset = CGSize(width: x, height: y)
+            if dropping { isDropping = true }
         }
+        fingerLocation = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             cardOffset = .zero
+            isDropping = false
             highlightedGalleryID = nil
+            isArmed = false
             isLongPressing = false
             action()
         }
@@ -491,6 +563,8 @@ struct SwipeView: View {
             cardOffset = .zero
         }
         highlightedGalleryID = nil
+        isArmed = false
+        fingerLocation = nil
         isLongPressing = false
     }
 
@@ -505,40 +579,5 @@ struct SwipeView: View {
                     isPhotoZoomed = false
                 }
             }
-    }
-
-    // MARK: - Helpers
-
-    private var rightDragProgress: CGFloat {
-        min(max(cardOffset.width / SwipeTuning.commitDistance, 0), 1.0)
-    }
-
-    /// Fade out UI chrome as the user drags toward galleries,
-    /// so gallery names aren't blocked by buttons and labels.
-    /// On long-press, fully hide chrome to spotlight the sidebar.
-    var chromeOpacity: Double {
-        if isLongPressing { return 0 }
-        return Double(1.0 - rightDragProgress)
-    }
-
-    /// Reveal that drives the panel: the drag's, or fully open during the
-    /// long-press peek.
-    private var panelProgress: CGFloat {
-        isLongPressing ? 1.0 : rightDragProgress
-    }
-
-    private var panelLayout: GalleryPanelLayout {
-        GalleryPanelLayout(
-            container: panelGeometry.frame,
-            rowCount: sidebarGalleries.count,
-            progress: panelProgress
-        )
-    }
-
-    /// The panel gallery under `point`.
-    private func galleryID(at point: CGPoint, in layout: GalleryPanelLayout) -> UUID? {
-        guard let index = layout.rowIndex(at: point) else { return nil }
-        let galleries = sidebarGalleries
-        return galleries.indices.contains(index) ? galleries[index].id : nil
     }
 }

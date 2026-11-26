@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("appColorScheme") private var colorSchemeString = "system"
     @AppStorage("accentColorMode") private var accentMode = "random"
     @AppStorage("sidebarTintMode") private var sidebarTintMode = "gallery"
+    @AppStorage(SwipePanelEdge.storageKey) private var panelEdgeRaw = SwipePanelEdge.right.rawValue
     @AppStorage("statusBarVisible") private var statusBarVisible = false
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
@@ -129,6 +130,23 @@ struct SettingsView: View {
                     .init(id: "gallery", label: "Per gallery"),
                     .init(id: "accent",  label: "Accent")
                 ])
+            }
+
+            rowDivider
+
+            // Which side the galleries panel slides in from. The line under
+            // it spells out the swap, since Dismiss moves to the other side.
+            labeledControl("Galleries panel") {
+                VStack(alignment: .leading, spacing: 8) {
+                    GlassChipPicker(selection: $panelEdgeRaw, options: [
+                        .init(id: SwipePanelEdge.right.rawValue, label: "Right", icon: SwipePanelEdge.right.systemImage),
+                        .init(id: SwipePanelEdge.left.rawValue, label: "Left", icon: SwipePanelEdge.left.systemImage)
+                    ])
+                    Text((SwipePanelEdge(rawValue: panelEdgeRaw) ?? .right).gestureSummary)
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.opacity)
+                }
             }
         }
     }

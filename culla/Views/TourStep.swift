@@ -44,7 +44,11 @@ enum TourStep: Int, CaseIterable {
         switch self {
         case .welcome:   return String(localized: "Sort your photos, one swipe at a time.")
         case .pickDate:  return String(localized: "Spin the wheel, or tap it for the calendar. Culla starts from that day.")
-        case .galleries: return String(localized: "Galleries are where photos land when you swipe right. Tap Galleries to make your first one.")
+        case .galleries:
+            // Follows Settings → Galleries panel: the panel can open from either side.
+            return SwipePanelEdge.current == .left
+                ? String(localized: "Galleries are where photos land when you swipe left. Tap Galleries to make your first one.")
+                : String(localized: "Galleries are where photos land when you swipe right. Tap Galleries to make your first one.")
         case .start:     return String(localized: "Tap Start. The first photos show you how each swipe works.")
         }
     }

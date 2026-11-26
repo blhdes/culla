@@ -7,6 +7,13 @@ struct PhotoCardView: View {
     var isZoomed: Bool = false
     /// Set only on the top card — background cards stay poster-frame only.
     var videoPlayer: VideoCardPlayer?
+    /// The side the galleries panel opens from: a drag that way docks the
+    /// photo, the other way previews Dismiss.
+    var panelEdge: SwipePanelEdge = .right
+    /// How far the galleries panel is open (0…1). As it opens the card stops
+    /// following the finger and the photo shrinks into the free strip beside
+    /// the panel, so it stays in view while a gallery is picked.
+    var dockProgress: CGFloat = 0
 
     @State private var loader: PhotoImageLoader
 
@@ -15,13 +22,17 @@ struct PhotoCardView: View {
         photoService: PhotoLibraryService,
         offset: CGSize = .zero,
         isZoomed: Bool = false,
-        videoPlayer: VideoCardPlayer? = nil
+        videoPlayer: VideoCardPlayer? = nil,
+        panelEdge: SwipePanelEdge = .right,
+        dockProgress: CGFloat = 0
     ) {
         self.assetIdentifier = assetIdentifier
         self.photoService = photoService
         self.offset = offset
         self.isZoomed = isZoomed
         self.videoPlayer = videoPlayer
+        self.panelEdge = panelEdge
+        self.dockProgress = dockProgress
         self._loader = State(initialValue: PhotoImageLoader(
             service: photoService,
             assetIdentifier: assetIdentifier,
@@ -31,6 +42,7 @@ struct PhotoCardView: View {
 
     var body: some View {
         GeometryReader { geo in
+            let dock = dockTransform(width: geo.size.width)
             ZStack {
                 Group {
                     if let image = loader.image {
@@ -56,19 +68,42 @@ struct PhotoCardView: View {
                 swipeOverlay
             }
             .clipped()
-            .opacity(photoOpacity)
-            .rotationEffect(.degrees(Double(offset.width / 40)))
-            .offset(x: offset.width, y: offset.height * 0.4)
+            // Docking: the photo shrinks and slides into the strip the
+            // galleries panel leaves free.
+            .scaleEffect(dock.scale)
+            .offset(x: dock.x)
+            .rotationEffect(.degrees(Double(offset.width / 40 * (1 - dockProgress))))
+            .offset(x: cardOffsetX, y: offset.height * 0.4)
         }
         .ignoresSafeArea()
         .task { await loader.load() }
     }
 
-    // MARK: - Progressive transparency on right drag
+    // MARK: - Docking beside the panel
 
-    private var photoOpacity: CGFloat {
-        guard offset.width > 0 else { return 1.0 }
-        return 1.0 - 0.3 * min(offset.width / SwipeTuning.commitDistance, 1.0)
+    /// Horizontal travel toward the panel (negative = toward Dismiss).
+    private var towardPanel: CGFloat { offset.width * panelEdge.sign }
+
+    /// Horizontal position of the card. Toward the panel it follows the
+    /// finger until the panel starts to open, then slows to
+    /// `dockedCardTravel` of the drag. Toward Dismiss it follows 1:1.
+    private var cardOffsetX: CGFloat {
+        guard towardPanel > 0 else { return offset.width }
+        return offset.width * (1 - (1 - SwipeTuning.dockedCardTravel) * dockProgress)
+    }
+
+    /// Scale and shift that park the photo in the middle of the free strip
+    /// beside the panel, blended in by `dockProgress`. The photo no longer
+    /// fades: it sits beside the panel, not under it.
+    private func dockTransform(width: CGFloat) -> (scale: CGFloat, x: CGFloat) {
+        guard dockProgress > 0, width > 0 else { return (1, 0) }
+        let panelWidth = width * SwipeTuning.panelWidthFraction
+        let strip = width - panelWidth
+        let stripCenter = panelEdge == .right ? strip / 2 : panelWidth + strip / 2
+        let targetScale = min(1, max(SwipeTuning.dockMinScale, (strip - SwipeTuning.dockInset) / width))
+        // The photo sits at the card's centre; the card itself moves by cardOffsetX.
+        let photoCenter = width / 2 + cardOffsetX
+        return (1 + (targetScale - 1) * dockProgress, (stripCenter - photoCenter) * dockProgress)
     }
 
     // MARK: - Directional overlays
@@ -76,10 +111,10 @@ struct PhotoCardView: View {
     @ViewBuilder
     private var swipeOverlay: some View {
         let isVertical = abs(offset.height) > abs(offset.width)
-        let isDraggingTowardGalleries = offset.width > SwipeTuning.rowHighlightStart
+        let isDraggingTowardGalleries = towardPanel > SwipeTuning.rowHighlightStart
 
-        if offset.width < 0 && !isVertical {
-            // Left drag — red (dismiss)
+        if towardPanel < 0 && !isVertical {
+            // Drag away from the panel — red (dismiss)
             let progress = min(abs(offset.width) / SwipeTuning.commitDistance, 1.0)
             ZStack {
                 Color.red

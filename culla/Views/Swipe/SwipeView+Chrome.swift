@@ -77,7 +77,7 @@ extension SwipeView {
     @ViewBuilder
     var hintOverlay: some View {
         if showSwipeHint {
-            SwipeDirectionsHint {
+            SwipeDirectionsHint(panelEdge: panelEdge) {
                 hasSeenSwipeHint = true
                 showSwipeHint = false
             }

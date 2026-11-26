@@ -15,6 +15,8 @@ enum Haptics {
     static func swipeRight()     { impact(.medium) }  // assign to gallery
     static func swipeUp()        { impact(.light)  }  // favourite
     static func swipeDown()      { impact(.light)  }  // share
+    static func rowTick()        { selection()     }  // finger slides onto another panel row
+    static func armed()          { impact(.rigid)  }  // letting go now would drop the photo
 
     // MARK: Duplicate Sweep
     static func keepPhoto()      { impact(.medium) }  // tap the photo to keep
@@ -41,6 +43,11 @@ enum Haptics {
     private static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         guard isEnabled else { return }
         UIImpactFeedbackGenerator(style: style).impactOccurred()
+    }
+
+    private static func selection() {
+        guard isEnabled else { return }
+        UISelectionFeedbackGenerator().selectionChanged()
     }
 
     private static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {

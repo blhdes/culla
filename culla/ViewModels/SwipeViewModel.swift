@@ -170,10 +170,13 @@ final class SwipeViewModel {
         advance()
     }
 
-    /// Called when user sorts a photo into a gallery.
+    /// Called when user sorts a photo into a gallery. Returns what changed,
+    /// so the screen can say "Already in …" when the photo was there before
+    /// (nil when there was no photo to sort).
     @MainActor
-    func assignToGallery(_ gallery: Gallery) {
-        guard let identifier = currentIdentifier else { return }
+    @discardableResult
+    func assignToGallery(_ gallery: Gallery) -> SortChange? {
+        guard let identifier = currentIdentifier else { return nil }
 
         let change = recordSort(of: identifier, into: gallery)
 
@@ -193,6 +196,7 @@ final class SwipeViewModel {
                 await photoService.removePhoto(assetIdentifier: identifier, fromAlbum: sourceAlbum)
             }
         }
+        return change
     }
 
     /// Saves that `identifier` belongs to `gallery`. This Day and imported photos can
