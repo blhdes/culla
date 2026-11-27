@@ -12,6 +12,7 @@ final class SwipeViewModel {
             #if DEBUG
             if let currentIdentifier, currentIdentifier != oldValue {
                 PhotoQualitySpike.shared.cardShown(currentIdentifier)
+                VideoHighlightSpike.shared.cardShown(currentIdentifier)
             }
             #endif
         }

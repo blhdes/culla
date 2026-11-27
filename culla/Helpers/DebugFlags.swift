@@ -13,8 +13,12 @@ nonisolated enum DebugFlags {
     /// lens-smudge requests, log what he did with it, and print a summary
     /// every 30 photos (`[quality]`). Remove once Q1 picks the thresholds.
     static let logPhotoQuality = true
+    /// Part H0: run MediaIntelligence's highlight and key-frame analysis on
+    /// every video card and log the times (`[video]`). Remove once H1 is decided.
+    static let logVideoHighlights = true
     #else
     static let logDuplicateDistances = false
     static let logPhotoQuality = false
+    static let logVideoHighlights = false
     #endif
 }
