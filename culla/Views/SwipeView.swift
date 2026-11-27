@@ -272,6 +272,9 @@ struct SwipeView: View {
                 .overlay(alignment: .bottomLeading) { deleteButton(viewModel: viewModel) }
                 .overlay(alignment: .topTrailing) { speakerButton(viewModel: viewModel) }
                 .overlay(alignment: .topTrailing) { clutterChip(viewModel: viewModel) }
+                #if DEBUG
+                .overlay(alignment: .topTrailing) { ratingSpike(viewModel: viewModel) }   // R0 spike
+                #endif
 
                 // Navigation buttons (replaces toolbar so they can fade)
                 .swipeTopNav(onBack: onBack, opacity: chromeOpacity)
