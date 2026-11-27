@@ -47,6 +47,53 @@
         }
       }
     },
+    "%@ · %lld of %lld" : {
+      "comment" : "Subtitle of iOS's background import progress: album name · position of count",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld von %3$lld"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld de %3$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld sur %3$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld di %3$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld/%3$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld de %3$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld/%3$lld"
+          }
+        }
+      }
+    },
     "%lld new galleries" : {
       "localizations" : {
         "de" : {
@@ -691,6 +738,53 @@
         }
       }
     },
+    "Importing albums" : {
+      "comment" : "Title of iOS's progress UI while albums import in the background",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alben werden importiert"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando álbumes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importation des albums"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importazione degli album"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アルバムを読み込み中"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando álbuns"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在导入相册"
+          }
+        }
+      }
+    },
     "Left" : {
       "localizations" : {
         "de" : {
@@ -1103,6 +1197,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "右滑整理，左滑忽略"
+          }
+        }
+      }
+    },
+    "The import was stopped at “%@”. The albums before it were imported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import wurde bei „%@“ gestoppt. Die Alben davor wurden importiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La importación se detuvo en «%@». Los álbumes anteriores sí se han importado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’importation s’est arrêtée à « %@ ». Les albums précédents ont bien été importés."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’importazione si è interrotta a «%@». Gli album precedenti sono stati importati."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」で読み込みが停止しました。それより前のアルバムは読み込まれました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importação parou em “%@”. Os álbuns anteriores foram importados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入在“%@”处停止。之前的相册已导入。"
           }
         }
       }

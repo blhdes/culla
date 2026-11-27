@@ -44,6 +44,10 @@ nonisolated struct AlbumImportFailure: Error {
     let albumName: String
     let importedGalleryIDs: [UUID]
     let underlying: any Error
+
+    /// True when the import was cancelled (iOS stopped the background task,
+    /// or he stopped it from iOS's progress UI), not a save error.
+    var wasStopped: Bool { underlying is CancellationError }
 }
 
 /// Creates galleries from iPhone albums on its own database context, away
@@ -60,7 +64,8 @@ actor AlbumImporter {
     /// Imports each album as a gallery and returns the new gallery IDs.
     ///
     /// Each album is saved as soon as it's done, so if the app closes
-    /// mid-import, the albums already saved stay whole.
+    /// mid-import, the albums already saved stay whole. Cancelling the task
+    /// stops it at the next progress step and drops only the album in progress.
     func importAlbums(
         _ albums: [AlbumImportRequest],
         startingDisplayOrder: Int,
@@ -72,8 +77,10 @@ actor AlbumImporter {
             photosTotal: albums.reduce(0) { $0 + $1.estimatedPhotoCount }
         )
         var newGalleryIDs: [UUID] = []
+        let start = Date()
 
         for (index, album) in albums.enumerated() {
+            try stopIfCancelled(album: album.name, savedIDs: newGalleryIDs, progress: progress, start: start)
             progress.albumName = album.name
             progress.albumIndex = index
             progress.albumPhotosDone = 0
@@ -105,6 +112,7 @@ actor AlbumImporter {
                     progress.photosDone = photosDoneBefore + inserted
                     progress.albumPhotosDone = inserted
                     await onProgress(progress)
+                    try stopIfCancelled(album: album.name, savedIDs: newGalleryIDs, progress: progress, start: start)
                 }
             }
 
@@ -128,6 +136,23 @@ actor AlbumImporter {
             await onProgress(progress)
         }
 
+        print("[import] \(albums.count) albums, \(progress.photosDone) photos in \(Self.timing(progress.photosDone, since: start))")
         return newGalleryIDs
+    }
+
+    /// Throws when the task was cancelled, after dropping the unsaved records
+    /// of the album in progress. Albums saved before it stay imported.
+    private func stopIfCancelled(album: String, savedIDs: [UUID], progress: AlbumImportProgress, start: Date) throws {
+        guard Task.isCancelled else { return }
+        modelContext.rollback()
+        print("[import] stopped at \"\(album)\" after \(progress.albumsFinished) of \(progress.albumCount) albums, \(progress.photosDone) photos in \(Self.timing(progress.photosDone, since: start))")
+        throw AlbumImportFailure(albumName: album, importedGalleryIDs: savedIDs, underlying: CancellationError())
+    }
+
+    /// "4.21 s (1624 photos/s)". The rate sets `AlbumImportBackgroundTask.minimumPhotos`.
+    private static func timing(_ photos: Int, since start: Date) -> String {
+        let seconds = Date().timeIntervalSince(start)
+        let rate = seconds > 0 ? Int(Double(photos) / seconds) : 0
+        return String(format: "%.2f s (%d photos/s)", seconds, rate)
     }
 }

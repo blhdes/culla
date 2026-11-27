@@ -31,6 +31,9 @@ struct AlbumImportSheet: View {
     /// Set when an import stops early: the name of the album that failed
     /// ("" when it isn't known). Shows the error alert.
     @State private var failedAlbumName: String?
+    /// True when that stop was a cancel (iOS ended the background import, or
+    /// he stopped it from iOS's progress UI), not a save error.
+    @State private var importWasStopped = false
     @State private var sortOption: AlbumSortOption = .name
 
     private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
@@ -155,7 +158,9 @@ struct AlbumImportSheet: View {
             ) {
                 Button("OK") { dismiss() }
             } message: {
-                if let failedAlbumName, !failedAlbumName.isEmpty {
+                if let failedAlbumName, !failedAlbumName.isEmpty, importWasStopped {
+                    Text("The import was stopped at “\(failedAlbumName)”. The albums before it were imported.")
+                } else if let failedAlbumName, !failedAlbumName.isEmpty {
                     Text("“\(failedAlbumName)” couldn’t be saved. The albums before it were imported.")
                 } else {
                     Text("Some albums couldn’t be saved. Please try again.")
@@ -263,43 +268,56 @@ struct AlbumImportSheet: View {
         }
         let startingOrder = galleries.count
         let container = modelContext.container
-        let report: @MainActor @Sendable (AlbumImportProgress) -> Void = { importProgress = $0 }
 
         importStartingOrder = startingOrder
         importIndexByAlbumID = Dictionary(
             uniqueKeysWithValues: albumsToImport.enumerated().map { ($1.collectionIdentifier, $0) }
         )
         // Show the capsule right away, before the first report arrives.
-        importProgress = AlbumImportProgress(
+        let firstProgress = AlbumImportProgress(
             albumName: firstAlbum.name,
             albumCount: requests.count,
             photosTotal: requests.reduce(0) { $0 + $1.estimatedPhotoCount }
         )
+        importProgress = firstProgress
         withAnimation(.snappy) { isImporting = true }
+
+        // A big import keeps going if he leaves the app (iOS 26+; nil otherwise).
+        let background = AlbumImportBackgroundTask.start(for: firstProgress)
+        let report: @MainActor @Sendable (AlbumImportProgress) -> Void = {
+            importProgress = $0
+            background?.update($0)
+        }
 
         let newGalleryIDs: [UUID]
         do {
             // Everything (reading albums, creating and saving records) runs in
             // the background, so the screen keeps moving during big imports.
-            newGalleryIDs = try await Task.detached(priority: .userInitiated) {
+            let importTask = Task.detached(priority: .userInitiated) {
                 let importer = AlbumImporter(modelContainer: container)
                 return try await importer.importAlbums(
                     requests,
                     startingDisplayOrder: startingOrder,
                     onProgress: report
                 )
-            }.value
+            }
+            background?.onExpire = { importTask.cancel() }
+            newGalleryIDs = try await importTask.value
         } catch let failure as AlbumImportFailure {
+            background?.finish(success: false)
             print("culla: Album import stopped at \"\(failure.albumName)\": \(failure.underlying)")
             onImport?(failure.importedGalleryIDs)
+            importWasStopped = failure.wasStopped
             failedAlbumName = failure.albumName
             return
         } catch {
+            background?.finish(success: false)
             print("culla: Album import failed: \(error)")
             failedAlbumName = ""
             return
         }
 
+        background?.finish(success: true)
         onImport?(newGalleryIDs)
         importFinished = true
         Haptics.importFinished()
