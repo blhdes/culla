@@ -39,6 +39,11 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
         invalidateCalendarDataCache()
         Task { @MainActor in
             self.libraryChangeCount += 1
+            #if DEBUG
+            // Part C2: how often the calendar cache is rebuilt while swiping. The
+            // cleanup's `[cleanup] … changes:` line says what kind of changes they were.
+            print("[cleanup] library change #\(self.libraryChangeCount): calendar cache dropped")
+            #endif
         }
     }
 
