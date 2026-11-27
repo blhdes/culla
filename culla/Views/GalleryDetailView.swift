@@ -71,6 +71,14 @@ struct GalleryDetailView: View {
         .navigationTitle(gallery.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            #if DEBUG
+            // Part S0 spike: share this gallery as an iCloud Shared Album.
+            ToolbarItem(placement: .topBarTrailing) {
+                if #available(iOS 27, *) {
+                    SharedAlbumSpikeMenu(galleryName: gallery.name, identifiers: allIdentifiers)
+                }
+            }
+            #endif
             ToolbarItem(placement: .topBarTrailing) {
                 Button(role: .destructive) {
                     showDeleteConfirmation = true
