@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("showCullaEyes") private var showCullaEyes = false
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @AppStorage("includeVideos") private var includeVideos = true
+    @AppStorage(ClutterFlag.settingKey) private var showsClutterChip = true
     @AppStorage("dynamicBackgroundMode") private var backgroundMode = "off"
     @AppStorage("dynamicBackgroundStyle") private var backgroundStyle = "stream"
     @AppStorage("backgroundBlur") private var backgroundBlur = 7.0
@@ -160,6 +161,13 @@ struct SettingsView: View {
             SettingsToggleRow(title: "Haptics", isOn: $hapticsEnabled)
             rowDivider
             SettingsToggleRow(title: "Include videos", isOn: $includeVideos)
+            rowDivider
+            VStack(alignment: .leading, spacing: 6) {
+                SettingsToggleRow(title: "Flag clutter", isOn: $showsClutterChip)
+                Text("Screenshots, documents, low-quality shots and a dirty lens get a small label while you swipe.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

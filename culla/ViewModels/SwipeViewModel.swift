@@ -7,7 +7,15 @@ final class SwipeViewModel {
 
     // MARK: - State
 
-    var currentIdentifier: String?
+    var currentIdentifier: String? {
+        didSet {
+            #if DEBUG
+            if let currentIdentifier, currentIdentifier != oldValue {
+                PhotoQualitySpike.shared.cardShown(currentIdentifier)
+            }
+            #endif
+        }
+    }
     var nextIdentifier: String?
     var isLoading = false
     var isEmpty = false
@@ -38,6 +46,12 @@ final class SwipeViewModel {
 
     private var identifierQueue: [String] = []
     private var cachedIdentifiers: [String] = []
+
+    /// The top card and the two after it, for work that should be ready
+    /// before a card shows (the clutter chip's scores).
+    var upcomingIdentifiers: [String] {
+        [currentIdentifier, nextIdentifier].compactMap { $0 } + identifierQueue.prefix(1)
+    }
 
     // MARK: - Album Sync
 
@@ -157,6 +171,9 @@ final class SwipeViewModel {
         try? modelContext.save()
 
         actionHistory.append(.dismissed(assetIdentifier: identifier, record: dismissed))
+        #if DEBUG
+        PhotoQualitySpike.shared.record(.dismissed, for: identifier)
+        #endif
         dismissedCount += 1
         sessionDismissedCount += 1
         advance()
@@ -167,6 +184,9 @@ final class SwipeViewModel {
     func skipCurrent() {
         guard let identifier = currentIdentifier else { return }
         actionHistory.append(.skipped(assetIdentifier: identifier))
+        #if DEBUG
+        PhotoQualitySpike.shared.record(.skipped, for: identifier)
+        #endif
         advance()
     }
 
@@ -181,6 +201,9 @@ final class SwipeViewModel {
         let change = recordSort(of: identifier, into: gallery)
 
         actionHistory.append(.sorted(assetIdentifier: identifier, gallery: gallery, change: change))
+        #if DEBUG
+        PhotoQualitySpike.shared.record(.sorted, for: identifier)
+        #endif
         sessionSortedCount += 1
         sessionGalleries.insert(gallery.id)
         advance()
@@ -346,6 +369,9 @@ final class SwipeViewModel {
     }
 
     private func pushBackToFront(identifier: String) {
+        #if DEBUG
+        PhotoQualitySpike.shared.undo(identifier)
+        #endif
         processedCount = max(processedCount - 1, 0)
         // Move next → back to queue front, current → next, restored → current
         if let next = nextIdentifier {

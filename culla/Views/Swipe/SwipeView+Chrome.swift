@@ -67,6 +67,29 @@ extension SwipeView {
         }
     }
 
+    /// Clutter chip, top right: the speaker button's spot, which is always
+    /// free on photos because videos never get a chip. Fades in when the
+    /// photo's scores arrive, and never takes a touch from the card.
+    func clutterChip(viewModel: SwipeViewModel) -> some View {
+        let flag = showsClutterChip ? clutterFlags.flag(for: viewModel.currentIdentifier) : nil
+        // Changes when the card or its flag does, so each new chip fades in.
+        let chipKey = flag.map { "\(viewModel.currentIdentifier ?? "")|\($0.rawValue)" }
+
+        return ZStack {
+            if let flag {
+                ClutterChip(flag: flag)
+                    .id(chipKey)
+                    .transition(.opacity)
+            }
+        }
+        .frame(height: 44)   // centred on the back button's row
+        .padding(.trailing, 16)
+        .padding(.top, 8)
+        .opacity(chromeOpacity)
+        .animation(.easeOut(duration: 0.25), value: chipKey)
+        .allowsHitTesting(false)
+    }
+
     // MARK: - Hints
 
     var isShowingHint: Bool {

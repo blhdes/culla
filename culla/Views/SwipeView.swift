@@ -46,6 +46,10 @@ struct SwipeView: View {
 
     // Sidebar gallery selection (up to 10)
     @State var showGallerySelector = false
+
+    // Clutter chip (Part Q): the Settings switch and this deck's flags.
+    @AppStorage(ClutterFlag.settingKey) var showsClutterChip = true
+    @State var clutterFlags = ClutterFlagStore()
     /// Persisted across SwipeView re-creations so an explicit deselect-all
     /// in the Manage sheet doesn't get silently overwritten next session.
     @AppStorage("hasInitializedSidebar") private var hasInitializedSidebar = false
@@ -191,6 +195,9 @@ struct SwipeView: View {
         .onDisappear {
             videoPlayer.teardown()
         }
+        .onChange(of: clutterPrefetchIDs, initial: true) { _, identifiers in
+            clutterFlags.prefetch(identifiers)
+        }
         .onChange(of: viewModel?.actionHistory.count) { old, new in
             flashUndo()
             if (old ?? 0) == 0, (new ?? 0) > 0 {
@@ -199,6 +206,13 @@ struct SwipeView: View {
         }
         .onChange(of: galleries.count) { initializeSidebarIfNeeded() }
         .onAppear { initializeSidebarIfNeeded() }
+    }
+
+    /// The photos the clutter chip should be ready for: the top card and the
+    /// next two. Empty while the Settings switch is off.
+    private var clutterPrefetchIDs: [String] {
+        guard showsClutterChip, let viewModel else { return [] }
+        return viewModel.upcomingIdentifiers
     }
 
     /// On first gallery creation, auto-add galleries to the sidebar
@@ -257,6 +271,7 @@ struct SwipeView: View {
                 .overlay(alignment: .bottomTrailing) { manageButton }
                 .overlay(alignment: .bottomLeading) { deleteButton(viewModel: viewModel) }
                 .overlay(alignment: .topTrailing) { speakerButton(viewModel: viewModel) }
+                .overlay(alignment: .topTrailing) { clutterChip(viewModel: viewModel) }
 
                 // Navigation buttons (replaces toolbar so they can fade)
                 .swipeTopNav(onBack: onBack, opacity: chromeOpacity)

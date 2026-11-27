@@ -9,7 +9,12 @@ nonisolated enum DebugFlags {
     /// both distances (`[dupes] old=0.41 new=0.41`). Remove once the device
     /// session confirms the two match.
     static let logDuplicateDistances = true
+    /// Part Q0: score every swipe card with Vision's aesthetics and
+    /// lens-smudge requests, log what he did with it, and print a summary
+    /// every 30 photos (`[quality]`). Remove once Q1 picks the thresholds.
+    static let logPhotoQuality = true
     #else
     static let logDuplicateDistances = false
+    static let logPhotoQuality = false
     #endif
 }
