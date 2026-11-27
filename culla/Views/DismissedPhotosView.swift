@@ -119,6 +119,7 @@ struct DismissedPhotosView: View {
                 let vm = DismissedPhotosViewModel(modelContext: modelContext)
                 vm.loadDismissedPhotos()
                 viewModel = vm
+                await vm.measureSizes()
             }
         }
     }
@@ -129,34 +130,47 @@ struct DismissedPhotosView: View {
     private func actionBar(viewModel: DismissedPhotosViewModel) -> some View {
         VStack(spacing: 0) {
             Divider()
-            HStack(spacing: 12) {
-                if viewModel.hasSelection {
-                    recoverButton("Recover (\(viewModel.selectedCount))") {
-                        withAnimation { viewModel.recoverSelected() }
-                    }
-                    deleteButton("Delete (\(viewModel.selectedCount))", disabled: viewModel.isDeleting) {
-                        Haptics.deleteConfirm()
-                        Task {
-                            let count = await viewModel.deleteSelected()
-                            showDeleteFeedback(count)
+            VStack(spacing: 0) {
+                // iOS 27 only. Shown above the buttons because a size doesn't fit
+                // inside the half-width Delete capsule in most languages.
+                if let bytes = viewModel.bytesToFree {
+                    Text("Deleting frees \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))")
+                        .font(.system(.footnote, design: .rounded).weight(.medium))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 10)
+                        .transition(.opacity)
+                }
+                HStack(spacing: 12) {
+                    if viewModel.hasSelection {
+                        recoverButton("Recover (\(viewModel.selectedCount))") {
+                            withAnimation { viewModel.recoverSelected() }
                         }
-                    }
-                } else {
-                    recoverButton("Recover All") {
-                        withAnimation { viewModel.recoverAll() }
-                    }
-                    deleteButton("Delete All", disabled: viewModel.isDeleting) {
-                        Haptics.deleteConfirm()
-                        Task {
-                            let count = await viewModel.deleteAll()
-                            showDeleteFeedback(count)
+                        deleteButton("Delete (\(viewModel.selectedCount))", disabled: viewModel.isDeleting) {
+                            Haptics.deleteConfirm()
+                            Task {
+                                let count = await viewModel.deleteSelected()
+                                showDeleteFeedback(count)
+                            }
+                        }
+                    } else {
+                        recoverButton("Recover All") {
+                            withAnimation { viewModel.recoverAll() }
+                        }
+                        deleteButton("Delete All", disabled: viewModel.isDeleting) {
+                            Haptics.deleteConfirm()
+                            Task {
+                                let count = await viewModel.deleteAll()
+                                showDeleteFeedback(count)
+                            }
                         }
                     }
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
             .background(.ultraThinMaterial)
+            .animation(.easeOut(duration: 0.25), value: viewModel.bytesToFree)
         }
     }
 

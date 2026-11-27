@@ -19,7 +19,7 @@ extension PhotoLibraryService {
             invalidateCalendarDataCache()
             return newValue
         } catch {
-            print("culla: Failed to toggle favorite: \(error)")
+            print("culla: Failed to toggle favorite: \(Self.describe(error))")
             return asset.isFavorite
         }
     }
@@ -50,7 +50,7 @@ extension PhotoLibraryService {
             )
             return result.firstObject?.localIdentifier
         } catch {
-            print("culla: Failed to create album '\(name)': \(error)")
+            print("culla: Failed to create album '\(name)': \(Self.describe(error))")
             return nil
         }
     }
@@ -71,7 +71,7 @@ extension PhotoLibraryService {
             }
             invalidateCalendarDataCache()
         } catch {
-            print("culla: Failed to add photo to album: \(error)")
+            print("culla: Failed to add photo to album: \(Self.describe(error))")
         }
     }
 
@@ -91,7 +91,7 @@ extension PhotoLibraryService {
             }
             invalidateCalendarDataCache()
         } catch {
-            print("culla: Failed to remove photo from album: \(error)")
+            print("culla: Failed to remove photo from album: \(Self.describe(error))")
         }
     }
 
@@ -107,7 +107,7 @@ extension PhotoLibraryService {
                 request.title = newName
             }
         } catch {
-            print("culla: Failed to rename album: \(error)")
+            print("culla: Failed to rename album: \(Self.describe(error))")
         }
     }
 
@@ -124,7 +124,7 @@ extension PhotoLibraryService {
                 )
             }
         } catch {
-            print("culla: Failed to delete album: \(error)")
+            print("culla: Failed to delete album: \(Self.describe(error))")
         }
     }
 
@@ -146,8 +146,16 @@ extension PhotoLibraryService {
         let count = assets.count
         // Measure freed space BEFORE deletion — the assets are gone afterwards.
         var freedBytes: Int64 = 0
+        var unknownSizes = 0
         assets.enumerateObjects { asset, _, _ in
-            freedBytes += Self.assetByteSize(asset)
+            if let bytes = Self.assetByteSize(asset) {
+                freedBytes += bytes
+            } else {
+                unknownSizes += 1
+            }
+        }
+        if unknownSizes > 0 {
+            print("[storage] \(unknownSizes) of \(count) deleted photos had no known size; the Storage card undercounts them")
         }
         do {
             try await PHPhotoLibrary.shared().performChanges {
@@ -158,25 +166,23 @@ extension PhotoLibraryService {
             CalendarThumbnailCache.shared.evict(identifiers)
             return count
         } catch {
-            print("culla: Failed to delete photos: \(error)")
+            print("culla: Failed to delete photos: \(Self.describe(error))")
             return 0
         }
     }
 
-    // MARK: - Reclaimed storage tracking
+    // MARK: - Errors
 
-    /// Best-effort byte size of an asset, summed across its resources. There is
-    /// no public PHAsset file-size API, so we read the undocumented `fileSize`
-    /// resource value via KVC. Reading a key that doesn't exist crashes (Swift
-    /// can't catch that error), so we first check that iOS still has it and
-    /// return 0 otherwise: the Storage card just stops growing.
-    private static func assetByteSize(_ asset: PHAsset) -> Int64 {
-        let fileSizeSelector = NSSelectorFromString("fileSize")
-        return PHAssetResource.assetResources(for: asset).reduce(Int64(0)) { total, resource in
-            guard resource.responds(to: fileSizeSelector) else { return total }
-            return total + ((resource.value(forKey: "fileSize") as? NSNumber)?.int64Value ?? 0)
+    /// Error text for the console. Names Photos' "limit exceeded" error (new
+    /// in iOS 26.1) so a hit stands out from ordinary failures.
+    nonisolated static func describe(_ error: any Error) -> String {
+        if #available(iOS 26.1, *), (error as? PHPhotosError)?.code == .limitExceeded {
+            return "Photos limit exceeded (PHPhotosError.limitExceeded): \(error)"
         }
+        return "\(error)"
     }
+
+    // MARK: - Reclaimed storage tracking
 
     /// Accumulates freed bytes into the running total the Insights "Storage"
     /// card reads. Stored in UserDefaults so it survives relaunch, mirroring

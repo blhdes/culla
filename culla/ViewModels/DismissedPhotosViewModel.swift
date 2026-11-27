@@ -11,6 +11,24 @@ final class DismissedPhotosViewModel {
     var hasSelection: Bool { !selectedIdentifiers.isEmpty }
     var selectedCount: Int { selectedIdentifiers.count }
 
+    /// Bytes per dismissed photo, measured once when the trash opens (iOS 27).
+    /// A photo whose size Photos doesn't report has no entry.
+    private var byteSizes: [String: Int64] = [:]
+
+    /// What the Delete button would free right now: the selection, or the
+    /// whole trash when nothing is selected. `nil` (so nothing is shown) below
+    /// iOS 27, while measuring, when nothing would be freed, or when any of
+    /// the photos has an unknown size, so the number is never a guess.
+    var bytesToFree: Int64? {
+        let targets = hasSelection ? Array(selectedIdentifiers) : dismissedPhotos.map(\.assetIdentifier)
+        var total: Int64 = 0
+        for identifier in targets {
+            guard let bytes = byteSizes[identifier] else { return nil }
+            total += bytes
+        }
+        return total > 0 ? total : nil
+    }
+
     private let photoService = PhotoLibraryService.shared
     private let modelContext: ModelContext
 
@@ -25,6 +43,19 @@ final class DismissedPhotosViewModel {
             sortBy: [SortDescriptor(\.dismissedAt, order: .reverse)]
         )
         dismissedPhotos = (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    /// Reads every dismissed photo's size off the main thread. Only on iOS 27,
+    /// where Photos has a public size API; the older hidden value is too
+    /// fragile to show before a delete. The trash only shrinks while it's open,
+    /// so one measurement per visit is enough.
+    func measureSizes() async {
+        guard #available(iOS 27, *) else { return }
+        let identifiers = dismissedPhotos.map(\.assetIdentifier)
+        guard !identifiers.isEmpty else { return }
+        byteSizes = await Task.detached(priority: .utility) {
+            PhotoLibraryService.byteSizes(of: identifiers)
+        }.value
     }
 
     // MARK: - Selection
