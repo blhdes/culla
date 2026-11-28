@@ -41,30 +41,16 @@ final class PhotoBackgroundManager {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         // Decorative background — intentionally image-only even when "Include videos" is on.
-        fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+        let imagesOnly = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
 
-        let result: PHFetchResult<PHAsset>
-
-        if showFavourites {
-            // Fetch only favorited photos
-            let favOptions = PHFetchOptions()
-            favOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-            favOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-                NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue),
-                NSPredicate(format: "favorite == YES")
-            ])
-            result = PHAsset.fetchAssets(with: favOptions)
-        } else if let albumID = albumIdentifier, albumID != PhoneAlbum.clutterIdentifier {
-            // (The clutter deck isn't an album: it falls through to the whole library.)
-            let collections = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil)
-            if let collection = collections.firstObject {
-                result = PHAsset.fetchAssets(in: collection, options: fetchOptions)
-            } else {
-                result = PHFetchResult<PHAsset>()
-            }
-        } else {
-            result = PHAsset.fetchAssets(with: fetchOptions)
-        }
+        // The same scope rule the swipe deck uses, so Culla's own sources
+        // (Favorites, "From the very first photo", the clutter deck) resolve
+        // like they do there instead of being looked up as missing albums.
+        let result = PhotoLibraryService.scopedAssets(
+            inAlbum: showFavourites ? PhoneAlbum.favoritesIdentifier : albumIdentifier,
+            matching: imagesOnly,
+            options: fetchOptions
+        )
 
         guard result.count > 0 else {
             // Nothing to show for this scope (e.g. an album of only videos, or
