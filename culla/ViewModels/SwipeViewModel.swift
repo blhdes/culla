@@ -54,6 +54,27 @@ final class SwipeViewModel {
         [currentIdentifier, nextIdentifier].compactMap { $0 } + identifierQueue.prefix(1)
     }
 
+    // MARK: - Clutter Deck
+
+    /// The search that fills the clutter deck while swiping (Part Q5); nil
+    /// for every other deck. The search itself lives in `ClutterDeckSearch`.
+    private(set) var clutterSearch: ClutterDeckSearch?
+
+    /// The clutter deck's total keeps growing while its search runs.
+    var isTotalGrowing: Bool {
+        clutterSearch.map { !$0.isFinished } ?? false
+    }
+
+    /// The clutter deck has no card to show yet, but is still looking.
+    var isWaitingForClutter: Bool {
+        currentIdentifier == nil && isTotalGrowing
+    }
+
+    /// Found photos not swiped yet: the top card, the one behind it and the queue.
+    private var waitingCount: Int {
+        (currentIdentifier == nil ? 0 : 1) + (nextIdentifier == nil ? 0 : 1) + identifierQueue.count
+    }
+
     // MARK: - Album Sync
 
     /// The most recent iPhone-album write. Each new write waits for the one
@@ -66,8 +87,7 @@ final class SwipeViewModel {
     private var moveSourceAlbum: String? {
         guard sortMode == .move,
               let albumIdentifier,
-              albumIdentifier != PhoneAlbum.unsortedIdentifier,
-              albumIdentifier != PhoneAlbum.favoritesIdentifier else { return nil }
+              !PhoneAlbum.isVirtual(albumIdentifier) else { return nil }
         return albumIdentifier
     }
 
@@ -114,6 +134,11 @@ final class SwipeViewModel {
         actionHistory.removeAll()
 
         let excludedIDs = fetchExcludedIdentifiers()
+        if albumIdentifier == PhoneAlbum.clutterIdentifier {
+            await startClutterSearch(excluding: excludedIDs)
+            return
+        }
+
         let service = photoService
         let onThisDay = isOnThisDay
         let start = startDate
@@ -335,6 +360,8 @@ final class SwipeViewModel {
 
     @MainActor
     private func advance() {
+        // One fewer found photo is waiting: the clutter search may go on.
+        defer { clutterSearch?.resume() }
         processedCount += 1
         currentIdentifier = nextIdentifier
 
@@ -349,15 +376,19 @@ final class SwipeViewModel {
 
         if identifierQueue.isEmpty {
             nextIdentifier = nil
-            if currentIdentifier == nil {
+            // A clutter deck that's still searching isn't empty: it waits.
+            if currentIdentifier == nil && !isTotalGrowing {
                 isEmpty = true
             }
             return
         }
 
         nextIdentifier = identifierQueue.removeFirst()
+        refreshCacheWindow()
+    }
 
-        // Update cache window — stop caching old images, start caching new ones
+    /// Preloads the next three queued photos and lets go of the ones before.
+    private func refreshCacheWindow() {
         let screenSize = UIScreen.main.bounds.size
         let targetSize = CGSize(width: screenSize.width * 2, height: screenSize.height * 2)
         let newWindow = Array(identifierQueue.prefix(3))
@@ -367,6 +398,68 @@ final class SwipeViewModel {
         }
         cachedIdentifiers = newWindow
         photoService.startCaching(identifiers: newWindow, targetSize: targetSize)
+    }
+
+    // MARK: - Clutter Search
+
+    /// Opens the clutter deck: lists the photos from the start date, then
+    /// lets the search add cards while the user swipes.
+    @MainActor
+    private func startClutterSearch(excluding excludedIDs: Set<String>) async {
+        let service = photoService
+        let start = startDate
+        let candidates = await Task.detached(priority: .userInitiated) {
+            service.clutterCandidates(from: start, excluding: excludedIDs)
+        }.value
+
+        let search = ClutterDeckSearch(
+            candidates: candidates,
+            wantsMore: { [weak self] in
+                guard let self else { return false }
+                return self.waitingCount < ClutterDeckSearch.lookahead
+            },
+            onFound: { [weak self] identifier in self?.appendFound(identifier) },
+            onFinished: { [weak self] in self?.clutterSearchFinished() }
+        )
+        clutterSearch = search
+        isLoading = false
+        if search.isFinished {
+            isEmpty = true
+            return
+        }
+        search.resume()
+    }
+
+    /// Adds a photo the clutter search just found to the end of the deck.
+    @MainActor
+    private func appendFound(_ identifier: String) {
+        totalCount += 1
+        if currentIdentifier == nil {
+            currentIdentifier = identifier
+            let info = photoService.assetInfo(for: identifier)
+            currentPhotoDate = info?.creationDate
+            currentPhotoIsFavorite = info?.isFavorite ?? false
+            isEmpty = false
+        } else if nextIdentifier == nil {
+            nextIdentifier = identifier
+        } else {
+            identifierQueue.append(identifier)
+            // Only the first three queued photos are preloaded.
+            if identifierQueue.count <= 3 {
+                refreshCacheWindow()
+            }
+        }
+    }
+
+    private func clutterSearchFinished() {
+        if currentIdentifier == nil {
+            isEmpty = true
+        }
+    }
+
+    /// Stops the clutter search for good. Called when the deck closes.
+    func stopClutterSearch() {
+        clutterSearch?.cancel()
     }
 
     private func pushBackToFront(identifier: String) {

@@ -122,10 +122,14 @@ struct SwipeView: View {
                         dismissedCount: viewModel.dismissedCount,
                         isDeleting: isDeleting,
                         onDelete: { performBatchDelete(viewModel: viewModel) },
-                        onBack: onBack
+                        onBack: onBack,
+                        isClutterDeck: albumIdentifier == PhoneAlbum.clutterIdentifier
                     )
                     .swipeTopNav(onBack: onBack)
                     .deleteFeedback($deleteMessage)
+                } else if viewModel.isWaitingForClutter {
+                    ClutterSearchWaitView(checkedCount: viewModel.clutterSearch?.checkedCount ?? 0)
+                        .swipeTopNav(onBack: onBack)
                 } else {
                     swipeContent(viewModel: viewModel)
                 }
@@ -194,6 +198,7 @@ struct SwipeView: View {
         }
         .onDisappear {
             videoPlayer.teardown()
+            viewModel?.stopClutterSearch()
         }
         .onChange(of: clutterPrefetchIDs, initial: true) { _, identifiers in
             clutterFlags.prefetch(identifiers)
@@ -314,6 +319,7 @@ struct SwipeView: View {
                 totalSeconds: Int(focusDuration ?? 0),
                 processedCount: viewModel.processedCount,
                 totalCount: viewModel.totalCount,
+                totalIsGrowing: viewModel.isTotalGrowing,
                 toastMessage: toastMessage
             )
             .padding(.top, 8)

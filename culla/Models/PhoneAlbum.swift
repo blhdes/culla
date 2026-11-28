@@ -30,6 +30,33 @@ nonisolated struct PhoneAlbum: Identifiable, Hashable {
     /// Whether this represents the virtual "Favorites" filter.
     var isFavorites: Bool { collectionIdentifier == Self.favoritesIdentifier }
 
+    /// Sentinel identifier for the clutter deck (Part Q5 of the iOS 27 kits
+    /// plan): screenshots, documents, blurry shots and a dirty lens.
+    nonisolated static let clutterIdentifier = "__culla_clutter__"
+
+    /// Whether this represents the clutter deck.
+    var isClutter: Bool { collectionIdentifier == Self.clutterIdentifier }
+
+    /// Whether an identifier is one of Culla's own sources rather than a real
+    /// iPhone album, so there's no album to read from or move photos out of.
+    nonisolated static func isVirtual(_ identifier: String) -> Bool {
+        identifier == unsortedIdentifier || identifier == favoritesIdentifier || identifier == clutterIdentifier
+    }
+
+    /// Creates the virtual album behind the clutter deck. Its size isn't known
+    /// until the search runs while swiping, so it has no photo count.
+    static func clutter() -> PhoneAlbum {
+        PhoneAlbum(
+            id: clutterIdentifier,
+            // Localized: this name is shown on the home screen's album button.
+            name: String(localized: "Clutter"),
+            photoCount: 0,
+            startDate: nil,
+            endDate: nil,
+            collectionIdentifier: clutterIdentifier
+        )
+    }
+
     /// Creates a virtual album representing the user's favorited photos.
     static func favorites(photoCount: Int) -> PhoneAlbum {
         PhoneAlbum(

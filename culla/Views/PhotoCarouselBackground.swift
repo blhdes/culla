@@ -54,7 +54,8 @@ final class PhotoBackgroundManager {
                 NSPredicate(format: "favorite == YES")
             ])
             result = PHAsset.fetchAssets(with: favOptions)
-        } else if let albumID = albumIdentifier {
+        } else if let albumID = albumIdentifier, albumID != PhoneAlbum.clutterIdentifier {
+            // (The clutter deck isn't an album: it falls through to the whole library.)
             let collections = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil)
             if let collection = collections.firstObject {
                 result = PHAsset.fetchAssets(in: collection, options: fetchOptions)

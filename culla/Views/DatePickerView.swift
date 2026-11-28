@@ -20,6 +20,7 @@ struct DatePickerView: View {
     @Binding var selectedMode: CullaMode
 
     @Environment(\.appAccent) private var accent
+    @Environment(SubscriptionManager.self) private var subscriptions
 
     @State private var showPaywall = false
 
@@ -149,7 +150,7 @@ struct DatePickerView: View {
                             .transition(.opacity)
                     }
 
-                    if selectedMode == .cullaing && selectedAlbum.map({ !$0.isUnsorted && !$0.isFavorites }) == true {
+                    if selectedMode == .cullaing && selectedAlbum.map({ !PhoneAlbum.isVirtual($0.collectionIdentifier) }) == true {
                         sortModePicker
                             .transition(.scale(scale: 0.85, anchor: .top).combined(with: .opacity))
                     }
@@ -328,6 +329,12 @@ struct DatePickerView: View {
     // MARK: - Actions
 
     private func startAction() {
+        // The clutter deck is Pro. Its row in the album list already asks;
+        // this catches a subscription that ended after it was picked.
+        if selectedMode == .cullaing, selectedAlbum?.isClutter == true, !subscriptions.isPro {
+            showPaywall = true
+            return
+        }
         Haptics.startCullaing()
         switch selectedMode {
         case .cullaing:

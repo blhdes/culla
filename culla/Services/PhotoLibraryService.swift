@@ -83,8 +83,9 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
     // MARK: - Album Scope
 
     /// Fetches sortable assets in one album scope: Favorites, a real album, or
-    /// the whole library (`nil`, or the "unsorted" sentinel, whose sorted photos
-    /// the caller filters out). `extra` narrows the search, e.g. a date range.
+    /// the whole library (`nil`, the "unsorted" sentinel, whose sorted photos
+    /// the caller filters out, or the clutter deck, which picks its photos
+    /// while swiping). `extra` narrows the search, e.g. a date range.
     /// Sets `options.predicate`; set sorting and limits before calling.
     nonisolated static func scopedAssets(
         inAlbum albumIdentifier: String?,
@@ -102,7 +103,7 @@ final class PhotoLibraryService: NSObject, PHPhotoLibraryChangeObserver {
 
         options.predicate = mediaPredicate(and: extra)
         if let albumIdentifier,
-           albumIdentifier != PhoneAlbum.unsortedIdentifier,
+           !PhoneAlbum.isVirtual(albumIdentifier),
            let collection = PHAssetCollection.fetchAssetCollections(
                withLocalIdentifiers: [albumIdentifier], options: nil
            ).firstObject {

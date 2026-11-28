@@ -7,6 +7,9 @@ struct AlbumPickerView: View {
     let onSelect: (PhoneAlbum) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appAccent) private var accent
+    @Environment(SubscriptionManager.self) private var subscriptions
+    @State private var showPaywall = false
     @State private var searchText = ""
     @State private var sortOption: AlbumSortOption = .name
     @State private var sortAscending = true
@@ -14,7 +17,7 @@ struct AlbumPickerView: View {
     var body: some View {
         List {
             // Virtual collections — pinned at the top
-            if searchText.isEmpty, unsortedCount > 0 || favoritesCount > 0 {
+            if searchText.isEmpty {
                 Section {
                     if unsortedCount > 0 {
                         Button {
@@ -69,6 +72,8 @@ struct AlbumPickerView: View {
                             .alignmentGuide(.listRowSeparatorLeading) { d in d[.leading] }
                         }
                     }
+
+                    clutterRow
                 }
             }
 
@@ -101,6 +106,9 @@ struct AlbumPickerView: View {
             }
         }
         .listStyle(.plain)
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet(onClose: { showPaywall = false })
+        }
         .searchable(text: $searchText, prompt: "Search albums")
         .navigationTitle("Albums")
         .navigationBarTitleDisplayMode(.inline)
@@ -108,6 +116,51 @@ struct AlbumPickerView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 sortMenu
             }
+        }
+    }
+
+    // MARK: - Clutter Deck
+
+    /// The clutter deck (Part Q5): screenshots, documents and poor shots,
+    /// found while swiping. Pro only, like Duplicates: everyone else gets
+    /// the paywall.
+    private var clutterRow: some View {
+        Button {
+            guard subscriptions.isPro else {
+                showPaywall = true
+                return
+            }
+            onSelect(.clutter())
+            dismiss()
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(accent)
+                    .frame(width: 10)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Clutter")
+                        .font(.system(.body, design: .rounded).weight(.medium))
+                        .foregroundStyle(.primary)
+
+                    Text("Screenshots, documents, blurry shots")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                }
+
+                Spacer()
+
+                if !subscriptions.isPro {
+                    Label("Pro", systemImage: "lock.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(accent)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(accent.opacity(0.15), in: Capsule())
+                }
+            }
+            .padding(.vertical, 4)
+            .alignmentGuide(.listRowSeparatorLeading) { d in d[.leading] }
         }
     }
 

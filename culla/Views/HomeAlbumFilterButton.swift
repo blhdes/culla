@@ -7,12 +7,19 @@ struct HomeAlbumFilterButton: View {
     let onTap: () -> Void
     let onClear: () -> Void
 
+    @Environment(\.appAccent) private var accent
+
     var body: some View {
         Button {
             onTap()
         } label: {
             HStack {
-                Image(systemName: "rectangle.stack")
+                if selectedAlbum?.isClutter == true {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(accent)
+                } else {
+                    Image(systemName: "rectangle.stack")
+                }
                 if let selectedAlbum {
                     Text(selectedAlbum.name)
                     Spacer()

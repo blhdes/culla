@@ -7,6 +7,8 @@ struct SwipeTopStatus: View {
     let totalSeconds: Int
     let processedCount: Int
     let totalCount: Int
+    /// The clutter deck is still finding photos, so the total gets a "+".
+    var totalIsGrowing = false
     let toastMessage: String?
 
     var body: some View {
@@ -18,7 +20,13 @@ struct SwipeTopStatus: View {
                 )
             }
             if totalCount > 0 {
-                Text("\(processedCount + 1) / \(totalCount)")
+                Group {
+                    if totalIsGrowing {
+                        Text("\(processedCount + 1) / \(totalCount)+")
+                    } else {
+                        Text("\(processedCount + 1) / \(totalCount)")
+                    }
+                }
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)

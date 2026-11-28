@@ -94,6 +94,17 @@
         }
       }
     },
+    "%lld / %lld+" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld+"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
     "%lld new galleries" : {
       "localizations" : {
         "de" : {
@@ -226,6 +237,53 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld photos checked" : {
+      "comment" : "Clutter deck: how many photos the search has looked at so far.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Fotos geprüft"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fotos revisadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld photos vérifiées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld foto controllate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld枚を確認済み"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fotos verificadas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已检查 %lld 张照片"
           }
         }
       }
@@ -410,6 +468,53 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已在 %@ 中"
+          }
+        }
+      }
+    },
+    "Clutter" : {
+      "comment" : "Name of the deck of clutter photos (screenshots, documents, blurry shots), shown in the album list and on the home screen's album button.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überflüssiges"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prescindibles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos inutiles"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto superflue"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不要な写真"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos dispensáveis"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "杂乱照片"
           }
         }
       }
@@ -831,6 +936,53 @@
         }
       }
     },
+    "Looking for clutter…" : {
+      "comment" : "Clutter deck: shown while the app looks for the next clutter photo.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche nach Überflüssigem…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando fotos prescindibles…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche de photos inutiles…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerco foto superflue…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不要な写真を探しています…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurando fotos dispensáveis…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在查找杂乱照片…"
+          }
+        }
+      }
+    },
     "Low quality" : {
       "comment" : "Clutter chip on a swipe card: the photo is blurry, badly exposed or badly framed.",
       "localizations" : {
@@ -874,6 +1026,100 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "低画质"
+          }
+        }
+      }
+    },
+    "No clutter left" : {
+      "comment" : "Clutter deck: title when no clutter photos are left to swipe.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts Überflüssiges mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No quedan fotos prescindibles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de photos inutiles"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuna foto superflua rimasta"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不要な写真はもうありません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há mais fotos dispensáveis"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有更多杂乱照片了"
+          }
+        }
+      }
+    },
+    "No other photos from this date on look like clutter." : {
+      "comment" : "Clutter deck: message when no clutter photos are left from the chosen start date onward.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab diesem Datum wirken keine weiteren Fotos überflüssig."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna otra foto desde esta fecha parece prescindible."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune autre photo depuis cette date ne semble inutile."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun'altra foto da questa data in poi sembra superflua."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この日付以降に、不要そうな写真は他にありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma outra foto a partir desta data parece dispensável."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从这个日期起，没有其他看起来杂乱的照片了。"
           }
         }
       }
@@ -1013,6 +1259,53 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "截屏"
+          }
+        }
+      }
+    },
+    "Screenshots, documents, blurry shots" : {
+      "comment" : "Subtitle of the clutter deck in the album list.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildschirmfotos, Dokumente, unscharfe Fotos"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas, documentos, fotos borrosas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captures d'écran, documents, photos floues"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screenshot, documenti, foto sfocate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリーンショット、書類、ぼやけた写真"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas de tela, documentos, fotos borradas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "截屏、文稿、模糊照片"
           }
         }
       }

@@ -6,6 +6,8 @@ struct SwipeEmptyStateView: View {
     let isDeleting: Bool
     let onDelete: () -> Void
     let onBack: (() -> Void)?
+    /// The clutter deck ran out of flagged photos, not of photos.
+    var isClutterDeck = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -15,11 +17,23 @@ struct SwipeEmptyStateView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
 
-            Text("No more photos")
+            Group {
+                if isClutterDeck {
+                    Text("No clutter left")
+                } else {
+                    Text("No more photos")
+                }
+            }
                 .font(.title3)
                 .fontWeight(.medium)
 
-            Text("All photos from this date have been sorted or dismissed.")
+            Group {
+                if isClutterDeck {
+                    Text("No other photos from this date on look like clutter.")
+                } else {
+                    Text("All photos from this date have been sorted or dismissed.")
+                }
+            }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
